@@ -1,0 +1,121 @@
+import { Link } from 'react-router-dom'
+import { MapPinIcon, ClockIcon, TicketIcon } from '@heroicons/react/24/outline'
+import type { Event } from '../lib/types'
+import { formatEventDate, formatEventTime, getSectionBadge, truncateText } from '../lib/utils'
+
+interface EventCardProps {
+  event: Event
+  variant?: 'default' | 'compact'
+}
+
+export default function EventCard({ event, variant = 'default' }: EventCardProps) {
+  const badge = getSectionBadge(event.section)
+
+  if (variant === 'compact') {
+    return (
+      <Link
+        to={`/events/${event.id}`}
+        className="flex gap-4 p-3 bg-white rounded-lg hover:bg-sand/50 transition-colors border border-transparent hover:border-dogwood/30 group"
+      >
+        {/* Date Block */}
+        <div className="flex-shrink-0 w-14 h-14 bg-brick/10 rounded-lg flex flex-col items-center justify-center">
+          <span className="text-xs font-medium text-brick uppercase">
+            {formatEventDate(event.start_datetime).split(', ')[1]?.split(' ')[0]}
+          </span>
+          <span className="text-xl font-bold text-brick">
+            {formatEventDate(event.start_datetime).split(' ').pop()}
+          </span>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-gray-900 truncate group-hover:text-brick transition-colors">
+            {event.title}
+          </h3>
+          <p className="text-sm text-stone">
+            {formatEventTime(event.start_datetime)}
+            {event.location_name && ` • ${event.location_name}`}
+          </p>
+        </div>
+
+        {/* Badge */}
+        <span className={`${badge.className} self-center hidden sm:flex`}>
+          <span>{badge.emoji}</span>
+          {badge.label}
+        </span>
+      </Link>
+    )
+  }
+
+  return (
+    <Link
+      to={`/events/${event.id}`}
+      className="card group block"
+    >
+      {/* Image */}
+      {event.image_url ? (
+        <div className="aspect-video relative overflow-hidden bg-sand">
+          <img
+            src={event.image_url}
+            alt={event.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+          {/* Section Badge */}
+          <span className={`absolute top-3 left-3 ${badge.className}`}>
+            <span>{badge.emoji}</span>
+            {badge.label}
+          </span>
+        </div>
+      ) : (
+        <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-brick/10 to-capefear/10 flex items-center justify-center">
+          <span className="text-4xl opacity-50">📅</span>
+          {/* Section Badge */}
+          <span className={`absolute top-3 left-3 ${badge.className}`}>
+            <span>{badge.emoji}</span>
+            {badge.label}
+          </span>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="p-4 space-y-2">
+        {/* Date & Time */}
+        <div className="flex items-center gap-2 text-sm text-stone">
+          <ClockIcon className="w-4 h-4 flex-shrink-0" />
+          <span>{formatEventDate(event.start_datetime)}</span>
+          <span className="text-dogwood">•</span>
+          <span>{formatEventTime(event.start_datetime)}</span>
+        </div>
+
+        {/* Title */}
+        <h3 className="font-body text-lg font-semibold text-gray-900 group-hover:text-brick transition-colors line-clamp-2">
+          {event.title}
+        </h3>
+
+        {/* Location */}
+        {event.location_name && (
+          <p className="text-sm text-stone flex items-center gap-1">
+            <MapPinIcon className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{event.location_name}</span>
+          </p>
+        )}
+
+        {/* Description */}
+        {event.description && (
+          <p className="text-sm text-stone/80 line-clamp-2">
+            {truncateText(event.description, 120)}
+          </p>
+        )}
+
+        {/* Ticket indicator */}
+        {event.ticket_url && (
+          <div className="flex items-center gap-1 text-xs text-capefear font-medium pt-1">
+            <TicketIcon className="w-4 h-4" />
+            <span>Tickets Available</span>
+          </div>
+        )}
+      </div>
+    </Link>
+  )
+}

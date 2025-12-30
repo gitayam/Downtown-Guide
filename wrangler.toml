@@ -1,0 +1,36 @@
+name = "downtown-guide"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 1. D1 Database: The Source of Truth
+# Run: npx wrangler d1 create downtown-events
+# Then replace the binding details below:
+[[d1_databases]]
+binding = "DB"
+database_name = "downtown-events"
+database_id = "fd953a64-4f1a-452c-aac4-84ad28c68370"
+
+# 2. R2 Bucket: Raw Data Lake & Assets
+# Run: npx wrangler r2 bucket create downtown-raw-data
+# Then replace the binding details below:
+[[r2_buckets]]
+binding = "RAW_DATA"
+bucket_name = "downtown-raw-data"
+
+# 3. Scheduled Workers (Cron Triggers) for Syncing
+# Run every hour at minute 0
+[triggers]
+crons = ["0 * * * *"]
+
+# 4. Smart Placement (Speed)
+[placement]
+mode = "smart"
+
+# 5. Build Configuration (Wrangler handles TypeScript natively)
+# [build]
+# watch_dir = "src"
+
+# 6. Observability
+[observability]
+enabled = true

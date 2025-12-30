@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+@import "tailwindcss";
+
+@source "../src/**/*.{js,ts,jsx,tsx}";
+
+@theme {
+  /* Primary - Fayetteville Palette */
+  --color-dogwood-50: #FDF8F5;
+  --color-dogwood-100: #FCF1ED;
+  --color-dogwood-200: #F8D9E0;
+  --color-dogwood-300: #F2BDC9;
+  --color-dogwood-400: #E8A4B8;
+  --color-dogwood-500: #D47A94;
+  --color-dogwood-600: #B85A73;
+  --color-dogwood: #E8A4B8;
+
+  --color-brick-50: #FAF5F4;
+  --color-brick-100: #F2E8E7;
+  --color-brick-200: #E5D1CF;
+  --color-brick-300: #D4B0AC;
+  --color-brick-400: #B98580;
+  --color-brick-500: #A65D57;
+  --color-brick-600: #8B4A45;
+  --color-brick-700: #6E3B38;
+  --color-brick: #A65D57;
+
+  --color-capefear-50: #F0F5F3;
+  --color-capefear-100: #E1EBE7;
+  --color-capefear-200: #C3D7CF;
+  --color-capefear-300: #94B8A8;
+  --color-capefear-400: #5E9278;
+  --color-capefear-500: #2D5A47;
+  --color-capefear-600: #244A3A;
+  --color-capefear-700: #1A3D2E;
+  --color-capefear: #2D5A47;
+
+  --color-liberty-50: #F2F5F8;
+  --color-liberty-100: #E5EBF1;
+  --color-liberty-200: #C7D4E3;
+  --color-liberty-300: #9DB3CD;
+  --color-liberty-400: #6A8AAF;
+  --color-liberty-500: #1E3A5F;
+  --color-liberty-600: #1A3250;
+  --color-liberty-700: #152841;
+  --color-liberty: #1E3A5F;
+
+  /* Neutrals */
+  --color-sand: #F5E6D3;
+  --color-stone: #6B7B8A;
+  --color-forest: #1A3D2E;
+
+  /* Fonts */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: #1a1a1a;
+    background-color: var(--color-dogwood-50);
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-brick text-white font-medium rounded-lg hover:bg-brick-600 active:bg-brick-700 transition-colors shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-transparent text-brick font-medium rounded-lg border-2 border-brick hover:bg-brick/5 transition-colors;
+  }
+
+  .btn-liberty {
+    @apply px-6 py-3 bg-liberty text-white font-medium rounded-lg hover:bg-liberty-600 active:bg-liberty-700 transition-colors shadow-sm;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 text-stone hover:text-brick hover:bg-sand rounded-lg transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-sand overflow-hidden;
+  }
+
+  .section-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full;
+  }
+
+  .section-badge-downtown {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-brick text-white;
+  }
+
+  .section-badge-liberty {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-liberty text-white;
+  }
+
+  .container-page {
+    @apply max-w-6xl mx-auto px-4;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: color-mix(in srgb, var(--color-sand) 50%, transparent);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-stone) 30%, transparent);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--color-stone) 50%, transparent);
+}
+
+/* Hide scrollbar for horizontal date picker - only on desktop */
+@media (min-width: 1024px) {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}

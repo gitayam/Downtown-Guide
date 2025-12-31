@@ -1,4 +1,4 @@
-export type EventSection = 'downtown' | 'fort_bragg'
+export type EventSection = 'downtown' | 'fort_bragg' | 'crown'
 
 export interface Event {
   id: string
@@ -16,6 +16,7 @@ export interface Event {
   section: EventSection
   status: string
   source_name: string | null
+  featured?: number | boolean
 }
 
 export interface Source {

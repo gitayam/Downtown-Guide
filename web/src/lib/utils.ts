@@ -104,9 +104,16 @@ export function parseCategories(categoriesJson: string | null): string[] {
 export function getSectionBadge(section: string): { label: string; emoji: string; className: string } {
   if (section === 'fort_bragg') {
     return {
-      label: 'Fort Liberty',
+      label: 'Fort Bragg',
       emoji: '🎖️',
       className: 'section-badge-liberty',
+    }
+  }
+  if (section === 'crown') {
+    return {
+      label: 'Crown',
+      emoji: '🏟️',
+      className: 'section-badge-crown',
     }
   }
   return {
@@ -123,6 +130,7 @@ export function getSourceBadge(sourceId: string): { label: string; emoji: string
     distinctly_fayetteville: { label: 'CVB', emoji: '🎭' },
     dogwood_festival: { label: 'Dogwood', emoji: '🌸' },
     fort_liberty_mwr: { label: 'Fort Liberty', emoji: '🎖️' },
+    crown_complex: { label: 'Crown', emoji: '🏟️' },
   }
   return badges[sourceId] || { label: 'Event', emoji: '📅' }
 }

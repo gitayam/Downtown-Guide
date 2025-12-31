@@ -106,6 +106,10 @@
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-liberty text-white;
   }
 
+  .section-badge-crown {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-capefear text-white;
+  }
+
   .container-page {
     @apply max-w-6xl mx-auto px-4;
   }

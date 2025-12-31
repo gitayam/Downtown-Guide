@@ -229,7 +229,7 @@ export default function CalendarGrid({ events, onDateSelect }: CalendarGridProps
           </div>
           <div className="flex items-center gap-1.5 text-xs text-stone">
             <span className="w-2 h-2 rounded-full bg-liberty" />
-            Fort Liberty
+            Fort Bragg
           </div>
         </div>
 
@@ -405,7 +405,7 @@ export default function CalendarGrid({ events, onDateSelect }: CalendarGridProps
                             className={`w-1.5 h-1.5 rounded-full ${
                               isSelected ? 'bg-white/80' : 'bg-liberty'
                             }`}
-                            title={`${libertyCount} Fort Liberty event${libertyCount > 1 ? 's' : ''}`}
+                            title={`${libertyCount} Fort Bragg event${libertyCount > 1 ? 's' : ''}`}
                           />
                         )}
                       </div>
@@ -423,7 +423,7 @@ export default function CalendarGrid({ events, onDateSelect }: CalendarGridProps
               </div>
               <div className="flex items-center gap-1.5 text-xs text-stone">
                 <span className="w-2 h-2 rounded-full bg-liberty" />
-                Fort Liberty
+                Fort Bragg
               </div>
             </div>
           </div>

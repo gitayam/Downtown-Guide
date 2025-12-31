@@ -6,7 +6,8 @@ interface SectionTabsProps {
 const tabs = [
   { id: 'all', label: 'All Events', emoji: '📅' },
   { id: 'downtown', label: 'Downtown', emoji: '🏙️' },
-  { id: 'fort_bragg', label: 'Fort Liberty', emoji: '🎖️' },
+  { id: 'crown', label: 'Crown', emoji: '🏟️' },
+  { id: 'fort_bragg', label: 'Fort Bragg', emoji: '🎖️' },
 ]
 
 export default function SectionTabs({ value, onChange }: SectionTabsProps) {

@@ -6,7 +6,7 @@ import {
   DevicePhoneMobileIcon,
   ComputerDesktopIcon,
 } from '@heroicons/react/24/outline'
-import { ICAL_URL, ICAL_DOWNTOWN_URL, ICAL_FORTLIBERTY_URL } from '../lib/api'
+import { ICAL_URL, ICAL_DOWNTOWN_URL, ICAL_CROWN_URL, ICAL_FORTBRAGG_URL } from '../lib/api'
 
 export default function CalendarPage() {
   const [copied, setCopied] = useState<string | null>(null)
@@ -21,7 +21,7 @@ export default function CalendarPage() {
     {
       id: 'all',
       label: 'All Events',
-      description: 'Downtown Fayetteville + Fort Liberty events',
+      description: 'Downtown, Crown Complex & Fort Bragg events',
       emoji: '📅',
       url: ICAL_URL,
       color: 'brick',
@@ -35,11 +35,19 @@ export default function CalendarPage() {
       color: 'brick',
     },
     {
-      id: 'fortliberty',
-      label: 'Fort Liberty Only',
-      description: 'MWR events at Fort Liberty',
+      id: 'crown',
+      label: 'Crown Only',
+      description: 'Crown Coliseum, Arena & Expo Center',
+      emoji: '🏟️',
+      url: ICAL_CROWN_URL,
+      color: 'capefear',
+    },
+    {
+      id: 'fortbragg',
+      label: 'Fort Bragg Only',
+      description: 'MWR events at Fort Bragg',
       emoji: '🎖️',
-      url: ICAL_FORTLIBERTY_URL,
+      url: ICAL_FORTBRAGG_URL,
       color: 'liberty',
     },
   ]

@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
 import { MapPinIcon, ClockIcon, TicketIcon } from '@heroicons/react/24/outline'
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
 import type { Event } from '../lib/types'
-import { formatEventDate, formatEventTime, getSectionBadge, truncateText } from '../lib/utils'
+import { formatEventDate, formatEventTime, getSectionBadge, truncateText, parseCategories } from '../lib/utils'
+import { ShareIconButton } from './share/ShareButton'
+import type { ShareableContent } from '../hooks/useShare'
 
 interface EventCardProps {
   event: Event
@@ -10,6 +13,17 @@ interface EventCardProps {
 
 export default function EventCard({ event, variant = 'default' }: EventCardProps) {
   const badge = getSectionBadge(event.section)
+  const isFeatured = event.featured === 1 || event.featured === true
+
+  const shareContent: ShareableContent = {
+    type: 'event',
+    id: event.id,
+    title: event.title,
+    description: event.description || '',
+    url: `/events/${event.id}`,
+    date: formatEventDate(event.start_datetime),
+    location: event.location_name || undefined,
+  }
 
   if (variant === 'compact') {
     return (
@@ -50,7 +64,7 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
   return (
     <Link
       to={`/events/${event.id}`}
-      className="card group block"
+      className={`card group block ${isFeatured ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-100' : ''}`}
     >
       {/* Image */}
       {event.image_url ? (
@@ -61,19 +75,47 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
-          {/* Section Badge */}
-          <span className={`absolute top-3 left-3 ${badge.className}`}>
+          {/* Featured Badge */}
+          {isFeatured && (
+            <span className="absolute top-3 left-3 bg-gradient-to-r from-amber-400 to-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
+              <StarIconSolid className="w-3.5 h-3.5" />
+              Featured
+            </span>
+          )}
+          {/* Section Badge - move down if featured */}
+          <span className={`absolute ${isFeatured ? 'top-12' : 'top-3'} left-3 ${badge.className}`}>
             <span>{badge.emoji}</span>
             {badge.label}
+          </span>
+          {/* Share Button */}
+          <span
+            className="absolute top-3 right-3"
+            onClick={(e) => e.preventDefault()}
+          >
+            <ShareIconButton content={shareContent} className="shadow-md" />
           </span>
         </div>
       ) : (
         <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-brick/10 to-capefear/10 flex items-center justify-center">
           <span className="text-4xl opacity-50">📅</span>
-          {/* Section Badge */}
-          <span className={`absolute top-3 left-3 ${badge.className}`}>
+          {/* Featured Badge */}
+          {isFeatured && (
+            <span className="absolute top-3 left-3 bg-gradient-to-r from-amber-400 to-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
+              <StarIconSolid className="w-3.5 h-3.5" />
+              Featured
+            </span>
+          )}
+          {/* Section Badge - move down if featured */}
+          <span className={`absolute ${isFeatured ? 'top-12' : 'top-3'} left-3 ${badge.className}`}>
             <span>{badge.emoji}</span>
             {badge.label}
+          </span>
+          {/* Share Button */}
+          <span
+            className="absolute top-3 right-3"
+            onClick={(e) => e.preventDefault()}
+          >
+            <ShareIconButton content={shareContent} className="shadow-md" />
           </span>
         </div>
       )}
@@ -92,6 +134,20 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
         <h3 className="font-body text-lg font-semibold text-gray-900 group-hover:text-brick transition-colors line-clamp-2">
           {event.title}
         </h3>
+
+        {/* Categories */}
+        {parseCategories(event.categories).length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {parseCategories(event.categories).slice(0, 2).map((cat) => (
+              <span
+                key={cat}
+                className="px-2 py-0.5 text-xs font-medium bg-sand text-stone rounded-full"
+              >
+                {cat}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Location */}
         {event.location_name && (

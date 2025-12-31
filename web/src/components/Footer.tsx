@@ -99,6 +99,26 @@ export default function Footer() {
               </li>
               <li>
                 <a
+                  href="https://www.faydta.com/our-events/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  Downtown Alliance (FayDTA)
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.thedogwoodfestival.com/2025-2026-events"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  Dogwood Festival
+                </a>
+              </li>
+              <li>
+                <a
                   href="https://www.segrastadium.com/events-calendar"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -124,7 +144,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-white/70 hover:text-dogwood transition-colors"
                 >
-                  Fort Bragg MWR
+                  Fort Liberty MWR
                 </a>
               </li>
             </ul>

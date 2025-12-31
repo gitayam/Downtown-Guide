@@ -9,6 +9,7 @@
  * 5. Fort Liberty MWR (Web Scraping)
  * 6. Crown Complex (Web Scraping)
  * 7. Downtown Alliance / FayDTA (MEC API + Signature Events)
+ * 8. MLK Committee (Signature Annual Events)
  *
  * Enhanced with researchtoolspy API for additional metadata extraction.
  *
@@ -740,6 +741,8 @@ async function fetchCrownComplexEvents(): Promise<UnifiedEvent[]> {
 const FAYDTA_API = 'https://www.faydta.com/wp-json/mec/v1/events';
 const DICKENS_HOLIDAY_URL = 'http://adickensholiday.com/';
 
+const MLK_URL = 'https://mlkmemorialpark.org/upcoming-events/';
+
 async function fetchFayDTAEvents(): Promise<UnifiedEvent[]> {
   console.error('Fetching: Downtown Alliance (FayDTA)...');
 
@@ -839,6 +842,82 @@ function getLastFridayOfNovember(year: number): Date {
     date.setDate(date.getDate() - 1);
   }
   return date;
+}
+
+// =============================================================================
+// Source 8: MLK Committee (Signature Annual Events)
+// =============================================================================
+
+/**
+ * Get MLK Day (3rd Monday of January) for a given year
+ */
+function getMLKDay(year: number): Date {
+  // Start from January 1 and find the 3rd Monday
+  const date = new Date(year, 0, 1); // January 1
+  let mondayCount = 0;
+
+  while (mondayCount < 3) {
+    if (date.getDay() === 1) { // 1 = Monday
+      mondayCount++;
+      if (mondayCount === 3) break;
+    }
+    date.setDate(date.getDate() + 1);
+  }
+  return date;
+}
+
+async function fetchMLKEvents(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: MLK Committee...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  // MLK Parade - held on or around MLK Day (3rd Monday of January)
+  // The parade is typically the Saturday before MLK Day
+  let mlkDay = getMLKDay(currentYear);
+
+  // If MLK Day has passed, use next year
+  if (mlkDay < now) {
+    mlkDay = getMLKDay(currentYear + 1);
+  }
+
+  // Parade is typically the Saturday before MLK Day
+  const paradeDate = new Date(mlkDay);
+  paradeDate.setDate(paradeDate.getDate() - 2); // Saturday before Monday
+
+  // Only add if within next 12 months
+  const oneYearFromNow = new Date(now);
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+  if (paradeDate <= oneYearFromNow) {
+    results.push({
+      id: `mlk_parade_${paradeDate.getFullYear()}`,
+      source: 'mlk_committee',
+      sourceId: `parade_${paradeDate.getFullYear()}`,
+      title: 'Dr. Martin Luther King Jr. Parade',
+      description: 'Annual MLK Parade through Downtown Fayetteville celebrating the life and legacy of Dr. Martin Luther King Jr. The parade features local organizations, schools, marching bands, and community groups. Free to attend.',
+      startDateTime: new Date(paradeDate.setHours(10, 0, 0, 0)), // Starts at 10 AM
+      endDateTime: new Date(paradeDate.setHours(13, 0, 0, 0)), // Ends around 1 PM
+      venue: {
+        name: 'Downtown Fayetteville',
+        address: 'Hay Street',
+        city: 'Fayetteville',
+        state: 'NC',
+      },
+      categories: ['Parades', 'Community', 'Cultural'],
+      url: MLK_URL,
+      lastModified: new Date(),
+      section: 'downtown',
+    });
+  }
+
+  // MLK Banquet - typically held in late January or February
+  // Date varies each year, so we'll add it when announced
+  // For now, just add the parade as the signature event
+
+  console.error(`  Found ${results.length} events`);
+  return results;
 }
 
 function parseTimeString(timeStr: string): { hours: number; minutes: number } | null {
@@ -964,7 +1043,7 @@ function slugify(text: string): string {
 // Main
 // =============================================================================
 
-type SourceName = 'downtown' | 'segra' | 'distinctly' | 'dogwood' | 'fortliberty' | 'crown' | 'faydta' | 'all';
+type SourceName = 'downtown' | 'segra' | 'distinctly' | 'dogwood' | 'fortliberty' | 'crown' | 'faydta' | 'mlk' | 'all';
 
 async function syncEvents(source: SourceName = 'all', useEnhanced = false): Promise<UnifiedEvent[]> {
   const fetchers: Record<string, () => Promise<UnifiedEvent[]>> = {
@@ -975,6 +1054,7 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
     fortliberty: () => fetchFortLibertyEvents(useEnhanced),
     crown: fetchCrownComplexEvents,
     faydta: fetchFayDTAEvents,
+    mlk: fetchMLKEvents,
   };
 
   let allEvents: UnifiedEvent[] = [];
@@ -989,6 +1069,7 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
       fetchFortLibertyEvents(useEnhanced),
       fetchCrownComplexEvents(),
       fetchFayDTAEvents(),
+      fetchMLKEvents(),
     ]);
 
     for (const result of results) {
@@ -1338,6 +1419,7 @@ function mapSourceId(source: string): string {
     'fort_liberty_mwr': 'fort_liberty_mwr',
     'crown_complex': 'crown_complex',
     'faydta': 'faydta',
+    'mlk_committee': 'mlk_committee',
   };
   return mapping[source] || source;
 }
@@ -1463,6 +1545,7 @@ async function main() {
         fort_liberty_mwr: 'MWR',
         crown_complex: 'Crown Complex',
         faydta: 'Downtown Alliance',
+        mlk_committee: 'MLK Committee',
       };
 
       for (const [section, sectionEvents] of bySection) {

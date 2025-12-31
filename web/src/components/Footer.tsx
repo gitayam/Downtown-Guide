@@ -147,6 +147,16 @@ export default function Footer() {
                   Fort Liberty MWR
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://mlkmemorialpark.org/upcoming-events/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  MLK Committee
+                </a>
+              </li>
             </ul>
           </div>
         </div>

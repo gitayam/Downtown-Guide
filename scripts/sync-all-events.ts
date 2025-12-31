@@ -11,6 +11,7 @@
  * 7. Downtown Alliance / FayDTA (MEC API + Signature Events)
  * 8. MLK Committee (Signature Annual Events)
  * 9. Headquarters Library (Web Scraping - filtered by location)
+ * 10. Fort Liberty Training Holidays (Static FY26 Schedule)
  *
  * Enhanced with researchtoolspy API for additional metadata extraction.
  *
@@ -746,6 +747,33 @@ const MLK_URL = 'https://mlkmemorialpark.org/upcoming-events/';
 
 const LIBRARY_URL = 'https://cumberland.librarycalendar.com/events/upcoming';
 
+// FY26 Training Holiday Schedule (Oct 2025 - Sep 2026)
+// Source: XVIII Airborne Corps Compensatory Schedule
+const FY26_TRAINING_HOLIDAYS = [
+  // October 2025
+  { name: 'Columbus Day Weekend', start: '2025-10-10', end: '2025-10-13', days: 4, type: 'federal' },
+  // November 2025
+  { name: 'Veterans Day Weekend', start: '2025-11-08', end: '2025-11-11', days: 4, type: 'federal' },
+  { name: 'Thanksgiving Weekend', start: '2025-11-27', end: '2025-11-30', days: 4, type: 'federal' },
+  // December 2025
+  { name: 'Christmas Block Leave', start: '2025-12-22', end: '2025-12-26', days: 5, type: 'block' },
+  { name: 'New Year Block Leave', start: '2025-12-29', end: '2026-01-02', days: 5, type: 'block' },
+  // January 2026
+  { name: 'MLK Day Weekend', start: '2026-01-16', end: '2026-01-19', days: 4, type: 'federal' },
+  // February 2026
+  { name: 'Presidents Day Weekend', start: '2026-02-13', end: '2026-02-16', days: 4, type: 'federal' },
+  // March 2026
+  { name: 'Training Holiday Weekend', start: '2026-03-13', end: '2026-03-15', days: 3, type: 'training' },
+  // April 2026
+  { name: 'Easter Weekend', start: '2026-04-03', end: '2026-04-06', days: 4, type: 'federal' },
+  // May 2026
+  { name: 'Memorial Day Weekend', start: '2026-05-22', end: '2026-05-25', days: 4, type: 'federal' },
+  // July 2026
+  { name: 'Independence Day Weekend', start: '2026-07-03', end: '2026-07-06', days: 4, type: 'federal' },
+  // September 2026
+  { name: 'Labor Day Weekend', start: '2026-09-04', end: '2026-09-07', days: 4, type: 'federal' },
+];
+
 async function fetchFayDTAEvents(): Promise<UnifiedEvent[]> {
   console.error('Fetching: Downtown Alliance (FayDTA)...');
 
@@ -1054,6 +1082,60 @@ async function fetchLibraryEvents(): Promise<UnifiedEvent[]> {
   return results;
 }
 
+// =============================================================================
+// Source 10: Fort Liberty Training Holidays (Static Schedule)
+// =============================================================================
+
+async function fetchFortLibertyHolidays(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Fort Liberty Training Holidays...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+
+  for (const holiday of FY26_TRAINING_HOLIDAYS) {
+    const startDate = new Date(holiday.start + 'T00:00:00');
+    const endDate = new Date(holiday.end + 'T23:59:59');
+
+    // Skip past holidays
+    if (endDate < now) continue;
+
+    // Create a merchant-friendly title
+    const title = `🎖️ ${holiday.days}-Day Weekend: ${holiday.name}`;
+
+    // Create description based on type
+    let description = '';
+    if (holiday.type === 'federal') {
+      description = `Fort Liberty soldiers have a ${holiday.days}-day weekend for ${holiday.name}. Expect increased activity in downtown Fayetteville as military families enjoy time off.`;
+    } else if (holiday.type === 'block') {
+      description = `Fort Liberty Block Leave period - many soldiers will be on leave. Some may travel, others will stay local. Good time for family-friendly events and promotions.`;
+    } else {
+      description = `Corps Training Holiday - soldiers have a ${holiday.days}-day weekend. Great opportunity for local businesses to welcome military families.`;
+    }
+
+    results.push({
+      id: `ft_liberty_holiday_${holiday.start}`,
+      source: 'fort_liberty_holidays',
+      sourceId: `holiday_${holiday.start}`,
+      title: title,
+      description: description,
+      startDateTime: startDate,
+      endDateTime: endDate,
+      venue: {
+        name: 'Fort Liberty',
+        city: 'Fort Liberty',
+        state: 'NC',
+      },
+      categories: ['Military', 'Training Holiday', `${holiday.days}-Day Weekend`],
+      url: 'https://home.army.mil/liberty',
+      lastModified: new Date(),
+      section: 'fort_bragg',
+    });
+  }
+
+  console.error(`  Found ${results.length} events`);
+  return results;
+}
+
 function parseTimeString(timeStr: string): { hours: number; minutes: number } | null {
   const match = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
   if (!match) return null;
@@ -1177,7 +1259,7 @@ function slugify(text: string): string {
 // Main
 // =============================================================================
 
-type SourceName = 'downtown' | 'segra' | 'distinctly' | 'dogwood' | 'fortliberty' | 'crown' | 'faydta' | 'mlk' | 'library' | 'all';
+type SourceName = 'downtown' | 'segra' | 'distinctly' | 'dogwood' | 'fortliberty' | 'crown' | 'faydta' | 'mlk' | 'library' | 'holidays' | 'all';
 
 async function syncEvents(source: SourceName = 'all', useEnhanced = false): Promise<UnifiedEvent[]> {
   const fetchers: Record<string, () => Promise<UnifiedEvent[]>> = {
@@ -1190,6 +1272,7 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
     faydta: fetchFayDTAEvents,
     mlk: fetchMLKEvents,
     library: fetchLibraryEvents,
+    holidays: fetchFortLibertyHolidays,
   };
 
   let allEvents: UnifiedEvent[] = [];
@@ -1206,6 +1289,7 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
       fetchFayDTAEvents(),
       fetchMLKEvents(),
       fetchLibraryEvents(),
+      fetchFortLibertyHolidays(),
     ]);
 
     for (const result of results) {
@@ -1557,6 +1641,7 @@ function mapSourceId(source: string): string {
     'faydta': 'faydta',
     'mlk_committee': 'mlk_committee',
     'library_hq': 'library_hq',
+    'fort_liberty_holidays': 'fort_liberty_holidays',
   };
   return mapping[source] || source;
 }
@@ -1684,6 +1769,7 @@ async function main() {
         faydta: 'Downtown Alliance',
         mlk_committee: 'MLK Committee',
         library_hq: 'Headquarters Library',
+        fort_liberty_holidays: 'Training Holidays',
       };
 
       for (const [section, sectionEvents] of bySection) {

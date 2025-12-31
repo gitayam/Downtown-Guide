@@ -270,7 +270,20 @@ export function hasCachedEvents(params?: Record<string, unknown>): boolean {
   return getCache(CACHE_KEYS.events, cacheParams) !== null
 }
 
+// iCal feed URLs (HTTPS - for download)
 export const ICAL_URL = `${API_BASE}/cal/events.ics`
 export const ICAL_DOWNTOWN_URL = `${API_BASE}/cal/events.ics?section=downtown`
 export const ICAL_CROWN_URL = `${API_BASE}/cal/events.ics?section=crown`
-export const ICAL_FORTBRAGG_URL = `${API_BASE}/cal/events.ics?section=fort_bragg`
+export const ICAL_FORTLIBERTY_URL = `${API_BASE}/cal/events.ics?section=fort_bragg`
+export const ICAL_HOLIDAYS_URL = `${API_BASE}/cal/events.ics?source=fort_liberty_holidays`
+
+// WebCal URLs (for one-click subscription on mobile/desktop)
+const WEBCAL_BASE = API_BASE.replace('https://', 'webcal://')
+export const WEBCAL_URL = `${WEBCAL_BASE}/cal/events.ics`
+export const WEBCAL_DOWNTOWN_URL = `${WEBCAL_BASE}/cal/events.ics?section=downtown`
+export const WEBCAL_CROWN_URL = `${WEBCAL_BASE}/cal/events.ics?section=crown`
+export const WEBCAL_FORTLIBERTY_URL = `${WEBCAL_BASE}/cal/events.ics?section=fort_bragg`
+export const WEBCAL_HOLIDAYS_URL = `${WEBCAL_BASE}/cal/events.ics?source=fort_liberty_holidays`
+
+// Legacy alias
+export const ICAL_FORTBRAGG_URL = ICAL_FORTLIBERTY_URL

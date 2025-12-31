@@ -1,4 +1,10 @@
-import { ICAL_URL, ICAL_DOWNTOWN_URL, ICAL_CROWN_URL, ICAL_FORTBRAGG_URL } from '../lib/api'
+import {
+  WEBCAL_URL,
+  WEBCAL_DOWNTOWN_URL,
+  WEBCAL_CROWN_URL,
+  WEBCAL_FORTLIBERTY_URL,
+  WEBCAL_HOLIDAYS_URL
+} from '../lib/api'
 
 // Discord icon component
 const DiscordIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -37,10 +43,11 @@ export default function Footer() {
           {/* Calendar Feeds */}
           <div>
             <h3 className="font-semibold mb-4">Subscribe to Calendar</h3>
+            <p className="text-white/50 text-xs mb-3">Click to add to your calendar app</p>
             <ul className="space-y-2 text-sm">
               <li>
                 <a
-                  href={ICAL_URL}
+                  href={WEBCAL_URL}
                   className="text-white/70 hover:text-dogwood transition-colors flex items-center gap-2"
                 >
                   <span>📅</span> All Events
@@ -48,7 +55,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href={ICAL_DOWNTOWN_URL}
+                  href={WEBCAL_DOWNTOWN_URL}
                   className="text-white/70 hover:text-dogwood transition-colors flex items-center gap-2"
                 >
                   <span>🏙️</span> Downtown Only
@@ -56,18 +63,26 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href={ICAL_CROWN_URL}
+                  href={WEBCAL_CROWN_URL}
                   className="text-white/70 hover:text-dogwood transition-colors flex items-center gap-2"
                 >
-                  <span>🏟️</span> Crown Only
+                  <span>🏟️</span> Crown Complex
                 </a>
               </li>
               <li>
                 <a
-                  href={ICAL_FORTBRAGG_URL}
+                  href={WEBCAL_FORTLIBERTY_URL}
                   className="text-white/70 hover:text-dogwood transition-colors flex items-center gap-2"
                 >
-                  <span>🎖️</span> Fort Bragg Only
+                  <span>🎖️</span> Fort Liberty
+                </a>
+              </li>
+              <li>
+                <a
+                  href={WEBCAL_HOLIDAYS_URL}
+                  className="text-white/70 hover:text-dogwood transition-colors flex items-center gap-2"
+                >
+                  <span>🗓️</span> Training Holidays
                 </a>
               </li>
             </ul>

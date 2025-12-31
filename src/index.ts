@@ -292,10 +292,20 @@ app.get('/api/events', async (c) => {
 // GET /cal/events.ics - iCal Feed
 // =============================================================================
 
+// Calendar names by section
+const CALENDAR_NAMES: Record<string, string> = {
+  downtown: 'Fayetteville Downtown Events',
+  crown: 'Crown Complex Events',
+  fort_bragg: 'Fort Liberty Events',
+  holidays: 'Fort Liberty Training Holidays',
+  all: 'Fayetteville Events (All)',
+};
+
 app.get('/cal/events.ics', async (c) => {
   const { DB } = c.env;
 
   const section = c.req.query('section');
+  const source = c.req.query('source'); // Allow filtering by source (e.g., holidays)
   const now = new Date().toISOString();
 
   let query = `
@@ -310,39 +320,78 @@ app.get('/cal/events.ics', async (c) => {
     params.push(section);
   }
 
+  if (source) {
+    query += ' AND source_id = ?';
+    params.push(source);
+  }
+
   query += ' ORDER BY featured DESC, start_datetime ASC LIMIT 500';
 
   const result = await DB.prepare(query).bind(...params).all();
   const events = result.results || [];
 
+  // Determine calendar name
+  let calendarName = CALENDAR_NAMES.all;
+  if (source === 'fort_liberty_holidays') {
+    calendarName = CALENDAR_NAMES.holidays;
+  } else if (section && CALENDAR_NAMES[section]) {
+    calendarName = CALENDAR_NAMES[section];
+  }
+
+  // Determine filename
+  const filename = source === 'fort_liberty_holidays'
+    ? 'fort-liberty-holidays.ics'
+    : section && section !== 'all'
+      ? `fayetteville-${section.replace('_', '-')}-events.ics`
+      : 'fayetteville-events.ics';
+
   // Generate iCal
-  const ical = generateICalFeed(events);
+  const ical = generateICalFeed(events, calendarName);
 
   return new Response(ical, {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="fayetteville-events.ics"',
+      'Content-Disposition': `attachment; filename="${filename}"`,
       'Cache-Control': 'public, max-age=3600', // 1 hour cache
     },
   });
 });
 
-function generateICalFeed(events: any[]): string {
+function generateICalFeed(events: any[], calendarName: string = 'Fayetteville Events'): string {
+  const now = new Date();
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Fayetteville Central Calendar//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:Fayetteville Events',
+    `X-WR-CALNAME:${calendarName}`,
     'X-WR-TIMEZONE:America/New_York',
+    // Add VTIMEZONE for America/New_York
+    'BEGIN:VTIMEZONE',
+    'TZID:America/New_York',
+    'BEGIN:DAYLIGHT',
+    'TZOFFSETFROM:-0500',
+    'TZOFFSETTO:-0400',
+    'DTSTART:19700308T020000',
+    'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU',
+    'TZNAME:EDT',
+    'END:DAYLIGHT',
+    'BEGIN:STANDARD',
+    'TZOFFSETFROM:-0400',
+    'TZOFFSETTO:-0500',
+    'DTSTART:19701101T020000',
+    'RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU',
+    'TZNAME:EST',
+    'END:STANDARD',
+    'END:VTIMEZONE',
   ];
 
   for (const event of events) {
     const uid = `${event.id}@fayetteville-calendar`;
     const dtstart = formatICalDate(event.start_datetime);
     const dtend = formatICalDate(event.end_datetime);
-    const created = formatICalDate(event.created_at || new Date().toISOString());
+    const dtstamp = formatICalDate(now.toISOString());
     const summary = escapeICalText(event.title);
     const description = escapeICalText(event.description || '');
     const location = escapeICalText(event.location_name || '');
@@ -353,7 +402,7 @@ function generateICalFeed(events: any[]): string {
       `UID:${uid}`,
       `DTSTART:${dtstart}`,
       `DTEND:${dtend}`,
-      `DTSTAMP:${created}`,
+      `DTSTAMP:${dtstamp}`,
       `SUMMARY:${summary}`,
     );
 
@@ -369,7 +418,14 @@ function generateICalFeed(events: any[]): string {
 }
 
 function formatICalDate(isoDate: string): string {
-  return isoDate.replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  // Convert ISO date to iCal format: YYYYMMDDTHHMMSSZ
+  // Input: 2025-12-31T20:00:00.000Z or 2025-12-31T20:00:00
+  const date = new Date(isoDate);
+  if (isNaN(date.getTime())) {
+    // Fallback if date is invalid
+    return isoDate.replace(/[-:]/g, '').replace(/\.\d{3}/, '').replace(' ', 'T');
+  }
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
 function escapeICalText(text: string): string {

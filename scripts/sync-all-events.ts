@@ -10,6 +10,7 @@
  * 6. Crown Complex (Web Scraping)
  * 7. Downtown Alliance / FayDTA (MEC API + Signature Events)
  * 8. MLK Committee (Signature Annual Events)
+ * 9. Headquarters Library (Web Scraping - filtered by location)
  *
  * Enhanced with researchtoolspy API for additional metadata extraction.
  *
@@ -743,6 +744,8 @@ const DICKENS_HOLIDAY_URL = 'http://adickensholiday.com/';
 
 const MLK_URL = 'https://mlkmemorialpark.org/upcoming-events/';
 
+const LIBRARY_URL = 'https://cumberland.librarycalendar.com/events/upcoming';
+
 async function fetchFayDTAEvents(): Promise<UnifiedEvent[]> {
   console.error('Fetching: Downtown Alliance (FayDTA)...');
 
@@ -920,6 +923,137 @@ async function fetchMLKEvents(): Promise<UnifiedEvent[]> {
   return results;
 }
 
+// =============================================================================
+// Source 9: Cumberland County Library - Headquarters (Web Scraping)
+// =============================================================================
+
+async function fetchLibraryEvents(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Headquarters Library...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+
+  try {
+    const response = await fetch(LIBRARY_URL);
+    if (!response.ok) {
+      console.error(`  HTTP error: ${response.status}`);
+      return results;
+    }
+
+    const html = await response.text();
+
+    // Parse event blocks - look for event links and their associated data
+    // Pattern: /event/[slug]-[id]
+    const eventPattern = /href="\/event\/([^"]+)"[^>]*>.*?<\/a>/gs;
+    const eventUrls = new Set<string>();
+
+    // Extract unique event URLs
+    const urlMatches = html.matchAll(/href="(\/event\/[^"]+)"/g);
+    for (const match of urlMatches) {
+      eventUrls.add(match[1]);
+    }
+
+    // For each unique event, extract its details from the page
+    // The page shows events in a featured carousel and list format
+    // We'll extract from the structured data in the HTML
+
+    // Find event blocks that contain "Headquarters Library" in the location field
+    const eventBlocks = html.split(/class="lc-featured-event-content"/);
+
+    for (let i = 1; i < eventBlocks.length; i++) {
+      const block = eventBlocks[i];
+
+      // Check if this event is at Headquarters Library by looking at the location div specifically
+      // The location is in: <div class="lc-featured-event-location">...at Headquarters Library</div>
+      const locationMatch = block.match(/class="lc-featured-event-location"[^>]*>([^<]+(?:<[^>]+>[^<]*)*?)at\s+([\w\s]+Library)/i);
+      if (!locationMatch || !locationMatch[2].includes('Headquarters')) {
+        continue;
+      }
+
+      // Extract event URL
+      const urlMatch = block.match(/href="(\/event\/[^"]+)"/);
+      if (!urlMatch) continue;
+      const eventUrl = urlMatch[1];
+      const eventId = eventUrl.split('/').pop() || '';
+
+      // Extract title from aria-label or link text
+      const titleMatch = block.match(/aria-label="View Details - ([^"]+)"/);
+      const title = titleMatch ? titleMatch[1] : 'Library Event';
+
+      // Extract date and time
+      // Format: "Saturday, January 3, 2026 at 10:00am - 10:30am"
+      const dateMatch = block.match(/([A-Z][a-z]+day),\s+([A-Z][a-z]+)\s+(\d{1,2}),\s+(\d{4})\s+at\s+(\d{1,2}:\d{2}[ap]m)\s*-\s*(\d{1,2}:\d{2}[ap]m)/i);
+
+      if (!dateMatch) continue;
+
+      const [, , month, day, year, startTime, endTime] = dateMatch;
+
+      // Parse date
+      const monthIndex = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'].indexOf(month);
+
+      if (monthIndex === -1) continue;
+
+      const startDate = new Date(parseInt(year), monthIndex, parseInt(day));
+      const endDate = new Date(parseInt(year), monthIndex, parseInt(day));
+
+      // Parse start time
+      const startTimeParsed = parseTimeString(startTime);
+      if (startTimeParsed) {
+        startDate.setHours(startTimeParsed.hours, startTimeParsed.minutes, 0, 0);
+      }
+
+      // Parse end time
+      const endTimeParsed = parseTimeString(endTime);
+      if (endTimeParsed) {
+        endDate.setHours(endTimeParsed.hours, endTimeParsed.minutes, 0, 0);
+      }
+
+      // Skip past events
+      if (endDate < now) continue;
+
+      // Extract program type/category
+      const categoryMatch = block.match(/Program Type:<\/h4>\s*([^<]+)/);
+      const category = categoryMatch ? categoryMatch[1].trim() : 'Library Programs';
+
+      // Extract age group
+      const ageMatch = block.match(/Age Group:<\/h4>\s*([^<]+)/);
+      const ageGroup = ageMatch ? ageMatch[1].trim() : '';
+
+      // Extract room/location detail
+      const roomMatch = block.match(/at Headquarters Library\s*<\/div>\s*<\/div>/i);
+      const locationDetail = block.match(/([^>]+)\s+at Headquarters Library/);
+      const room = locationDetail ? locationDetail[1].trim() : '';
+
+      results.push({
+        id: `library_hq_${eventId}`,
+        source: 'library_hq',
+        sourceId: eventId,
+        title: title,
+        description: ageGroup ? `${category} program for ${ageGroup}. ${room ? `Location: ${room}` : ''}`.trim() : `${category} program at Headquarters Library.`,
+        startDateTime: startDate,
+        endDateTime: endDate,
+        venue: {
+          name: 'Headquarters Library',
+          address: '300 Maiden Lane',
+          city: 'Fayetteville',
+          state: 'NC',
+          zip: '28301',
+        },
+        categories: [category, 'Library Programs'].filter(Boolean),
+        url: `https://cumberland.librarycalendar.com${eventUrl}`,
+        lastModified: new Date(),
+        section: 'downtown',
+      });
+    }
+  } catch (error) {
+    console.error('  Error fetching library events:', error);
+  }
+
+  console.error(`  Found ${results.length} events`);
+  return results;
+}
+
 function parseTimeString(timeStr: string): { hours: number; minutes: number } | null {
   const match = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
   if (!match) return null;
@@ -1043,7 +1177,7 @@ function slugify(text: string): string {
 // Main
 // =============================================================================
 
-type SourceName = 'downtown' | 'segra' | 'distinctly' | 'dogwood' | 'fortliberty' | 'crown' | 'faydta' | 'mlk' | 'all';
+type SourceName = 'downtown' | 'segra' | 'distinctly' | 'dogwood' | 'fortliberty' | 'crown' | 'faydta' | 'mlk' | 'library' | 'all';
 
 async function syncEvents(source: SourceName = 'all', useEnhanced = false): Promise<UnifiedEvent[]> {
   const fetchers: Record<string, () => Promise<UnifiedEvent[]>> = {
@@ -1055,6 +1189,7 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
     crown: fetchCrownComplexEvents,
     faydta: fetchFayDTAEvents,
     mlk: fetchMLKEvents,
+    library: fetchLibraryEvents,
   };
 
   let allEvents: UnifiedEvent[] = [];
@@ -1070,6 +1205,7 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
       fetchCrownComplexEvents(),
       fetchFayDTAEvents(),
       fetchMLKEvents(),
+      fetchLibraryEvents(),
     ]);
 
     for (const result of results) {
@@ -1420,6 +1556,7 @@ function mapSourceId(source: string): string {
     'crown_complex': 'crown_complex',
     'faydta': 'faydta',
     'mlk_committee': 'mlk_committee',
+    'library_hq': 'library_hq',
   };
   return mapping[source] || source;
 }
@@ -1546,6 +1683,7 @@ async function main() {
         crown_complex: 'Crown Complex',
         faydta: 'Downtown Alliance',
         mlk_committee: 'MLK Committee',
+        library_hq: 'Headquarters Library',
       };
 
       for (const [section, sectionEvents] of bySection) {

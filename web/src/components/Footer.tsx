@@ -157,6 +157,16 @@ export default function Footer() {
                   MLK Committee
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://cumberland.librarycalendar.com/events/upcoming"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  Headquarters Library
+                </a>
+              </li>
             </ul>
           </div>
         </div>

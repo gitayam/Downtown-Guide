@@ -23,6 +23,20 @@ const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL ||
 
 const SENT_LOG_PATH = join(process.cwd(), 'data', 'sent-reminders.json');
 
+// Production website URL
+const SITE_URL = 'https://ncfayetteville.com';
+
+// Movie-related keywords to filter out (too much noise)
+const MOVIE_KEYWORDS = [
+  'movie', 'film', 'cinema', 'screening', 'matinee',
+  'imax', 'showing', 'theater showing', 'theatre showing'
+];
+
+// Movie-related categories to filter out
+const MOVIE_CATEGORIES = [
+  'movies', 'film', 'cinema', 'movie screenings', 'films'
+];
+
 // Colors for embed messages
 const COLORS = {
   ONE_WEEK: 15965202,   // Orange
@@ -82,6 +96,35 @@ interface UnifiedEvent {
   url: string;
   ticketUrl?: string;
   imageUrl?: string;
+  section: 'downtown' | 'fort_bragg';
+}
+
+// Helper to check if an event is a movie (to filter out)
+function isMovieEvent(event: UnifiedEvent): boolean {
+  const titleLower = event.title.toLowerCase();
+  const descLower = event.description.toLowerCase();
+
+  // Check title and description for movie keywords
+  for (const keyword of MOVIE_KEYWORDS) {
+    if (titleLower.includes(keyword) || descLower.includes(keyword)) {
+      return true;
+    }
+  }
+
+  // Check categories
+  for (const cat of event.categories) {
+    const catLower = cat.toLowerCase();
+    if (MOVIE_CATEGORIES.includes(catLower)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Get the ncfayetteville.com URL for an event
+function getSiteUrl(event: UnifiedEvent): string {
+  return `${SITE_URL}/events/${event.id}`;
 }
 
 interface DiscordEmbed {
@@ -187,6 +230,7 @@ async function fetchDowntownEvents(): Promise<UnifiedEvent[]> {
           venue: { name: 'Downtown Fayetteville', city: 'Fayetteville', state: 'NC' },
           categories: [],
           url: event.link,
+          section: 'downtown',
         });
       }
     }
@@ -215,6 +259,7 @@ async function fetchSegraEvents(): Promise<UnifiedEvent[]> {
       url: `https://www.segrastadium.com${item.fullUrl}`,
       ticketUrl: item.sourceUrl,
       imageUrl: item.assetUrl ? `https:${item.assetUrl}` : undefined,
+      section: 'downtown' as const,
     }));
   } catch (error) {
     console.error('Error fetching Segra events:', error);
@@ -270,6 +315,7 @@ async function fetchDistinctlyEvents(): Promise<UnifiedEvent[]> {
         categories,
         url: link || '',
         imageUrl: imgMatch?.[1],
+        section: 'downtown',
       });
     }
     return results;
@@ -303,6 +349,7 @@ async function fetchDogwoodEvents(): Promise<UnifiedEvent[]> {
           venue: { name: 'Fayetteville', city: 'Fayetteville', state: 'NC' },
           categories: ['Festivals & Fairs'],
           url: DOGWOOD_URL,
+          section: 'downtown',
         });
       }
     }
@@ -324,6 +371,7 @@ async function fetchDogwoodEvents(): Promise<UnifiedEvent[]> {
           venue: { name: 'Festival Park', city: 'Fayetteville', state: 'NC' },
           categories: ['Festivals & Fairs', 'Signature Events'],
           url: DOGWOOD_URL,
+          section: 'downtown',
         });
       }
     }
@@ -379,6 +427,7 @@ async function fetchFortLibertyEvents(): Promise<UnifiedEvent[]> {
           venue: { name: 'Fort Liberty', city: 'Fort Liberty', state: 'NC' },
           categories: ['Military', 'MWR'],
           url: `https://bragg.armymwr.com${fullPath}`,
+          section: 'fort_bragg',
         });
       }
       await new Promise(r => setTimeout(r, 300));
@@ -407,11 +456,19 @@ async function fetchAllEvents(): Promise<UnifiedEvent[]> {
     }
   }
 
-  // Filter to future events and sort
+  // Filter to future events, exclude movies, and sort by section then date
   const now = new Date();
   return allEvents
     .filter(e => e.endDateTime > now)
-    .sort((a, b) => a.startDateTime.getTime() - b.startDateTime.getTime());
+    .filter(e => !isMovieEvent(e))
+    .sort((a, b) => {
+      // Sort by section first (downtown before fort_bragg)
+      if (a.section !== b.section) {
+        return a.section === 'downtown' ? -1 : 1;
+      }
+      // Then by date
+      return a.startDateTime.getTime() - b.startDateTime.getTime();
+    });
 }
 
 // =============================================================================
@@ -506,9 +563,10 @@ function formatTime(date: Date): string {
 function buildReminderEmbed(event: UnifiedEvent, type: ReminderType): DiscordEmbed {
   const emoji = getCategoryEmoji(event.categories);
   const sourceBadge = SOURCE_BADGES[event.source] || event.source;
+  const sectionLabel = event.section === 'downtown' ? '🏙️ Downtown' : '🎖️ Fort Liberty';
 
   const isOneDay = type === '1_day';
-  const title = isOneDay ? '⏰ Tomorrow!' : '🗓️ Coming Up Next Week';
+  const title = isOneDay ? `⏰ Tomorrow! ${sectionLabel}` : `🗓️ Coming Up Next Week - ${sectionLabel}`;
   const color = isOneDay ? COLORS.ONE_DAY : COLORS.ONE_WEEK;
   const description = isOneDay
     ? "Don't forget - this event is happening tomorrow!"
@@ -561,11 +619,11 @@ function buildReminderEmbed(event: UnifiedEvent, type: ReminderType): DiscordEmb
   const embed: DiscordEmbed = {
     title,
     description,
-    url: event.url,
+    url: getSiteUrl(event),
     color,
     fields,
     footer: {
-      text: `${sourceBadge} • Fayetteville Central Calendar`,
+      text: `${sourceBadge} • ncfayetteville.com`,
     },
     timestamp: event.startDateTime.toISOString(),
   };

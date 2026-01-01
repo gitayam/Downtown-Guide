@@ -368,6 +368,184 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     hours_of_operation: 'By appointment',
     aliases: ['226 The Warehouse', 'The Warehouse at 226', '226 Donaldson St']
   },
+
+  // Bars & Entertainment
+  {
+    id: 'paddys_irish_pub',
+    name: "Paddy's Irish Public House",
+    short_name: "Paddy's",
+    description: 'Award-winning Irish Pub with live music, comedy, and dance events.',
+    address: '2606 Raeford Rd, Ste B',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28303',
+    phone: '(910) 568-5654',
+    website: 'https://paddysirishpub.com',
+    venue_type: 'bar',
+    google_maps_url: "https://maps.google.com/?q=Paddy's+Irish+Public+House+Fayetteville+NC",
+    apple_maps_url: 'https://maps.apple.com/?address=2606%20Raeford%20Rd,%20Fayetteville,%20NC%2028303',
+    hours_of_operation: 'Wed-Sat 6pm-2am',
+    aliases: ["Paddys Irish Public House", "Paddys Irish Pub", "Paddy's"]
+  },
+  {
+    id: 'latitude_35',
+    name: 'Latitude 35 Bar and Grill',
+    short_name: 'Latitude 35',
+    description: 'Caribbean-inspired New American cuisine in Haymont Historic District.',
+    address: '1217 Hay St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28305',
+    phone: '(910) 485-4777',
+    website: 'https://latitude35.netwaiter.com',
+    venue_type: 'restaurant',
+    google_maps_url: 'https://maps.google.com/?q=Latitude+35+Bar+Grill+Fayetteville+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=1217%20Hay%20St,%20Fayetteville,%20NC%2028305',
+    hours_of_operation: 'Tue-Thu 11:30am-10pm, Fri-Sat 11:30am-12am, Sun 9am-9pm',
+    aliases: ['Latitude 35 Bar & Grill', 'Latitude 35']
+  },
+  {
+    id: 'taste_of_west_africa',
+    name: 'Taste of West Africa',
+    short_name: 'TOWA',
+    description: 'Authentic West African cuisine with lounge and bar in downtown.',
+    address: '116 Person St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    phone: '(910) 779-2375',
+    website: 'https://www.tasteofwestafrica.net',
+    venue_type: 'restaurant',
+    google_maps_url: 'https://maps.google.com/?q=Taste+of+West+Africa+Fayetteville+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=116%20Person%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Wed-Sat 11am-8pm, Sun 11am-5pm',
+    aliases: ['TOWA', 'A Taste of West Africa']
+  },
+
+  // Galleries & Retail
+  {
+    id: 'city_center_gallery',
+    name: 'City Center Gallery and Books',
+    short_name: 'City Center Gallery',
+    description: 'Art gallery and indie bookstore in historic downtown Fayetteville.',
+    address: '112 Hay St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    phone: '(910) 678-8899',
+    website: 'https://www.citycentergallery.com',
+    venue_type: 'gallery',
+    google_maps_url: 'https://maps.google.com/?q=City+Center+Gallery+Books+Fayetteville+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=112%20Hay%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Mon-Thu 10am-6pm, Fri-Sat 10am-8pm',
+    aliases: ['City Center Gallery & Books', 'City Center Gallery']
+  },
+  {
+    id: 'garnet_skull',
+    name: 'Garnet Skull',
+    short_name: 'Garnet Skull',
+    description: 'Metaphysical supply and oddities shop.',
+    address: '120 Hay St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    website: 'https://www.garnetskull.com',
+    venue_type: 'retail',
+    google_maps_url: 'https://maps.google.com/?q=Garnet+Skull+Fayetteville+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=120%20Hay%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: '11am-7pm daily',
+    aliases: ['The Garnet Skull']
+  },
+
+  // Event Venues
+  {
+    id: 'volta_space',
+    name: 'Volta Space',
+    short_name: 'Volta',
+    description: 'Rustic event space and wedding venue in Cool Spring Downtown District.',
+    address: '116 Person St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    phone: '(910) 978-3352',
+    website: 'https://www.voltaspace.com',
+    venue_type: 'event_venue',
+    google_maps_url: 'https://maps.google.com/?q=Volta+Space+Fayetteville+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=116%20Person%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Mon-Fri 9am-5pm, Sat 9am-3pm',
+    aliases: ['Volta']
+  },
+
+  // Sports & Recreation
+  {
+    id: 'tj_robinson_sportsplex',
+    name: 'T.J. Robinson Sportsplex',
+    short_name: 'TJ Robinson',
+    description: 'Largest sportsplex in Cumberland County with NBA hardwood courts.',
+    address: '4221 Black Bridge Rd',
+    city: 'Hope Mills',
+    state: 'NC',
+    zip: '28348',
+    phone: '(910) 860-8898',
+    website: 'https://robinsonsportsplex.com',
+    venue_type: 'sports_complex',
+    google_maps_url: 'https://maps.google.com/?q=TJ+Robinson+Sportsplex+Hope+Mills+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=4221%20Black%20Bridge%20Rd,%20Hope%20Mills,%20NC%2028348',
+    aliases: ['T.J. Robinson Life Center', 'TJ Robinson Sportsplex', 'Robinson Sportsplex']
+  },
+  {
+    id: 'pechmann_fishing_center',
+    name: 'John E. Pechmann Fishing Education Center',
+    short_name: 'Pechmann Center',
+    description: 'NC Wildlife fishing education facility.',
+    address: '7489 Raeford Rd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28304',
+    website: 'https://www.ncwildlife.gov/education/john-e-pechmann-fishing-education-center',
+    venue_type: 'education',
+    google_maps_url: 'https://maps.google.com/?q=Pechmann+Fishing+Education+Center+Fayetteville+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=7489%20Raeford%20Rd,%20Fayetteville,%20NC%2028304',
+    hours_of_operation: 'Mon-Fri 9am-4pm',
+    aliases: ['Pechmann Fishing Center', 'Pechmann Center']
+  },
+
+  // Universities
+  {
+    id: 'riddle_center',
+    name: 'March F. Riddle Center',
+    short_name: 'Riddle Center',
+    description: 'Multi-purpose arena at Methodist University.',
+    address: '5400 Ramsey St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28311',
+    phone: '(910) 630-7022',
+    website: 'https://mumonarchs.com',
+    capacity: 1300,
+    venue_type: 'arena',
+    google_maps_url: 'https://maps.google.com/?q=March+F+Riddle+Center+Methodist+University+Fayetteville+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=5400%20Ramsey%20St,%20Fayetteville,%20NC%2028311',
+    aliases: ['Methodist University - March F. Riddle Center', 'Riddle Center', 'Methodist University Riddle Center']
+  },
+
+  // Transportation
+  {
+    id: 'fayetteville_airport',
+    name: 'Fayetteville Regional Airport',
+    short_name: 'FAY Airport',
+    description: 'Public airport serving Fayetteville and Fort Liberty.',
+    address: '400 Airport Rd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28306',
+    phone: '(910) 433-1160',
+    website: 'https://www.fayettevillenc.gov/City-Departments/Airport',
+    venue_type: 'airport',
+    google_maps_url: 'https://maps.google.com/?q=Fayetteville+Regional+Airport+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=400%20Airport%20Rd,%20Fayetteville,%20NC%2028306',
+    aliases: ['FAY Airport', 'FAY', 'Grannis Field']
+  },
 ];
 
 async function seedVenues() {

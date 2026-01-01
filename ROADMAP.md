@@ -81,7 +81,7 @@ Create the go-to source for "What's happening in Fayetteville?" by aggregating e
 - [x] `GET /api/events/:id` - Single event details
 - [x] `GET /api/events/today` - Today's events
 - [x] `GET /api/events/upcoming` - Next 7 days
-- [ ] `GET /api/events/weekend` - Fri-Sun events
+- [x] `GET /api/events/weekend` - Fri-Sun events
 - [x] `GET /api/sources` - Source status & health
 - [x] `GET /api/health` - Health check
 

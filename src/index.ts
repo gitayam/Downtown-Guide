@@ -5,6 +5,7 @@
  *   GET /api/events          - List events with filters
  *   GET /api/events/today    - Today's events
  *   GET /api/events/upcoming - Next 7 days
+ *   GET /api/events/weekend  - This weekend (Fri-Sun)
  *   GET /api/events/:id      - Single event details
  *   GET /api/categories      - List available categories
  *   GET /api/sources         - Event sources with sync status
@@ -243,6 +244,60 @@ app.get('/api/events/upcoming', async (c) => {
     data: result.results,
     count: result.results?.length || 0,
     range: { from: now, to: weekFromNow },
+  });
+});
+
+// =============================================================================
+// GET /api/events/weekend - This weekend's events (Fri-Sun)
+// =============================================================================
+
+app.get('/api/events/weekend', async (c) => {
+  const { DB } = c.env;
+
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 5 = Friday, 6 = Saturday
+
+  // Calculate Friday start and Sunday end
+  let fridayStart: Date;
+  let sundayEnd: Date;
+
+  if (dayOfWeek === 0) {
+    // Sunday - show today only (end of current weekend)
+    fridayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    sundayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  } else if (dayOfWeek === 6) {
+    // Saturday - show Sat-Sun
+    fridayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    sundayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+  } else if (dayOfWeek === 5) {
+    // Friday - show Fri-Sun
+    fridayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    sundayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3);
+  } else {
+    // Mon-Thu - show upcoming Fri-Sun
+    const daysUntilFriday = 5 - dayOfWeek;
+    fridayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilFriday);
+    sundayEnd = new Date(fridayStart.getTime() + 3 * 24 * 60 * 60 * 1000);
+  }
+
+  const result = await DB.prepare(`
+    SELECT
+      e.*,
+      s.name as source_name
+    FROM events e
+    LEFT JOIN sources s ON e.source_id = s.id
+    WHERE e.end_datetime >= ? AND e.start_datetime < ?
+      AND e.status IN ('confirmed', 'active')
+    ORDER BY e.start_datetime ASC
+  `).bind(fridayStart.toISOString(), sundayEnd.toISOString()).all();
+
+  return c.json({
+    data: result.results,
+    count: result.results?.length || 0,
+    range: {
+      from: fridayStart.toISOString(),
+      to: sundayEnd.toISOString(),
+    },
   });
 });
 

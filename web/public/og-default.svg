@@ -1,0 +1,41 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A65D57"/>
+      <stop offset="50%" style="stop-color:#8B4D49"/>
+      <stop offset="100%" style="stop-color:#2D5A4A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Pattern overlay -->
+  <pattern id="dots" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+    <circle cx="15" cy="15" r="1.5" fill="white" opacity="0.1"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+
+  <!-- Logo/Emoji -->
+  <text x="600" y="250" font-size="120" text-anchor="middle" dominant-baseline="middle">🌸</text>
+
+  <!-- Title -->
+  <text x="600" y="380" font-family="Georgia, serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle">
+    Fayetteville Events
+  </text>
+
+  <!-- Subtitle -->
+  <text x="600" y="450" font-family="Arial, sans-serif" font-size="32" fill="white" opacity="0.9" text-anchor="middle">
+    Downtown &amp; Fort Bragg Calendar
+  </text>
+
+  <!-- Tagline -->
+  <text x="600" y="520" font-family="Arial, sans-serif" font-size="24" fill="white" opacity="0.7" text-anchor="middle">
+    Discover festivals, live music, art shows, and community gatherings
+  </text>
+
+  <!-- URL -->
+  <text x="600" y="590" font-family="Arial, sans-serif" font-size="20" fill="white" opacity="0.5" text-anchor="middle">
+    ncfayetteville.com
+  </text>
+</svg>

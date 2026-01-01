@@ -2,10 +2,9 @@ import {
   ListBulletIcon,
   CalendarIcon,
   MapIcon,
-  GlobeAmericasIcon,
 } from '@heroicons/react/24/outline'
 
-export type ViewMode = 'list' | 'calendar' | 'map' | 'maplibre'
+export type ViewMode = 'list' | 'calendar' | 'map'
 
 interface ViewToggleProps {
   value: ViewMode
@@ -44,20 +43,9 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
             ? 'bg-white text-brick shadow-sm'
             : 'text-stone hover:text-gray-900'
         }`}
-        title="Leaflet Map"
+        title="Map View"
       >
         <MapIcon className="w-5 h-5" />
-      </button>
-      <button
-        onClick={() => onChange('maplibre')}
-        className={`p-2 rounded-md transition-all ${
-          value === 'maplibre'
-            ? 'bg-white text-brick shadow-sm'
-            : 'text-stone hover:text-gray-900'
-        }`}
-        title="MapLibre (Beta)"
-      >
-        <GlobeAmericasIcon className="w-5 h-5" />
       </button>
     </div>
   )

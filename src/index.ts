@@ -325,7 +325,9 @@ app.get('/api/events/:id', async (c) => {
       v.hours_of_operation as venue_hours_of_operation,
       v.image_url as venue_image_url,
       v.parking_info as venue_parking_info,
-      v.accessibility_info as venue_accessibility_info
+      v.accessibility_info as venue_accessibility_info,
+      v.latitude as venue_latitude,
+      v.longitude as venue_longitude
     FROM events e
     LEFT JOIN sources s ON e.source_id = s.id
     LEFT JOIN venues v ON e.venue_id = v.id

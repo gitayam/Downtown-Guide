@@ -22,6 +22,7 @@ import {
 } from '../lib/utils'
 import DirectionsModal from '../components/DirectionsModal'
 import ShareModal from '../components/share/ShareModal'
+import EventMap from '../components/EventMap'
 
 export default function EventPage() {
   const { id } = useParams<{ id: string }>()
@@ -181,6 +182,29 @@ export default function EventPage() {
                     {event.description}
                   </p>
                 </div>
+              </section>
+            )}
+
+            {/* Map */}
+            {(event.venue_latitude && event.venue_longitude) && (
+              <section>
+                <h2 className="font-display text-xl font-semibold mb-4">Location</h2>
+                <EventMap
+                  latitude={event.venue_latitude}
+                  longitude={event.venue_longitude}
+                  venueName={event.venue_name || event.location_name || undefined}
+                  address={event.venue_address ? `${event.venue_address}, ${event.venue_city || 'Fayetteville'}, ${event.venue_state || 'NC'}` : undefined}
+                />
+                {event.venue_parking_info && (
+                  <p className="mt-3 text-sm text-stone">
+                    <span className="font-medium">Parking:</span> {event.venue_parking_info}
+                  </p>
+                )}
+                {event.venue_accessibility_info && (
+                  <p className="mt-2 text-sm text-stone">
+                    <span className="font-medium">Accessibility:</span> {event.venue_accessibility_info}
+                  </p>
+                )}
               </section>
             )}
 

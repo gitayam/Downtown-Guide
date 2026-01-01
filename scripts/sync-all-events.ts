@@ -655,6 +655,12 @@ async function fetchDistinctlyEvents(): Promise<UnifiedEvent[]> {
           endDateTime.setHours(23, 59, 0, 0);
         }
 
+        // Handle overnight events (end time before start time means next day)
+        // e.g., NYE event 7:30 PM - 12:30 AM should end on Jan 1
+        if (endDateTime <= startDateTime) {
+          endDateTime.setDate(endDateTime.getDate() + 1);
+        }
+
         // Get image - prefer og:image (high res), then media_raw
         let imageUrl = details.ogImage;
         if (!imageUrl && details.data?.media_raw?.[0]?.mediaurl) {
@@ -728,9 +734,10 @@ async function fetchDistinctlyEvents(): Promise<UnifiedEvent[]> {
     }
   }
 
-  // Filter out past/expired events
+  // Filter out past/expired events (keep events that ended within the last 12 hours for overnight sync)
   const now = new Date();
-  const futureEvents = results.filter(e => e.endDateTime > now);
+  const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+  const futureEvents = results.filter(e => e.endDateTime > twelveHoursAgo);
 
   console.error(`  Enriched ${futureEvents.length} future events with full details`);
   return futureEvents;

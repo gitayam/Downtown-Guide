@@ -152,7 +152,7 @@ export default function MapLibreView({ events }: MapLibreViewProps) {
           zoom: 13
         }}
         style={{ width: '100%', height: '100%' }}
-        mapStyle="https://demotiles.maplibre.org/style.json"
+        mapStyle="https://tiles.openfreemap.org/styles/liberty"
         onClick={onClick}
         interactiveLayerIds={['clusters', 'unclustered-point']}
       >

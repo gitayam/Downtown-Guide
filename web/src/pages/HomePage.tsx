@@ -17,7 +17,7 @@ import CalendarGrid from '../components/CalendarGrid'
 import MapView from '../components/MapView'
 import SearchBar from '../components/SearchBar'
 import CategoryFilter from '../components/CategoryFilter'
-import DateRangeFilter, { type DateRange } from '../components/DateRangeFilter'
+import DateRangeFilter, { type DateRange, type CustomDateRange } from '../components/DateRangeFilter'
 import { startOfDay, endOfDay, addDays, nextSunday, isFriday, isSaturday, isSunday } from 'date-fns'
 
 // Local storage key for persisting category selection
@@ -39,6 +39,7 @@ export default function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [search, setSearch] = useState('')
   const [dateRange, setDateRange] = useState<DateRange>('today')
+  const [customDateRange, setCustomDateRange] = useState<CustomDateRange | undefined>(undefined)
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[] | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
@@ -120,14 +121,14 @@ export default function HomePage() {
         // If today is Mon-Thu => show coming Fri-Sun
         let start = now
         let end = nextSunday(now)
-        
+
         if (isFriday(now) || isSaturday(now) || isSunday(now)) {
            start = startOfDay(now)
            end = endOfDay(isSunday(now) ? now : nextSunday(now))
         } else {
            // Find next Friday
            // date-fns doesn't have nextFriday, so simple calculation:
-           // Fri is day 5. 
+           // Fri is day 5.
            const day = now.getDay()
            const daysUntilFriday = (5 + 7 - day) % 7 || 7
            start = startOfDay(addDays(now, daysUntilFriday))
@@ -135,6 +136,9 @@ export default function HomePage() {
         }
         params.from = start.toISOString()
         params.to = end.toISOString()
+      } else if (dateRange === 'custom' && customDateRange) {
+        params.from = customDateRange.from.toISOString()
+        params.to = customDateRange.to.toISOString()
       }
       // 'all' doesn't need specific from/to (defaults to upcoming)
 
@@ -146,7 +150,7 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }, [section, search, dateRange])
+  }, [section, search, dateRange, customDateRange])
 
   // Load events when filters change
   useEffect(() => {
@@ -184,6 +188,10 @@ export default function HomePage() {
     } catch {
       // Ignore storage errors
     }
+  }, [])
+
+  const handleCustomDateRangeChange = useCallback((range: CustomDateRange) => {
+    setCustomDateRange(range)
   }, [])
 
   // Handle selected categories change and persist
@@ -256,7 +264,12 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <div className="flex-1 flex flex-col gap-3">
             <SearchBar value={search} onChange={handleSearchChange} />
-            <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
+            <DateRangeFilter
+              value={dateRange}
+              onChange={handleDateRangeChange}
+              customRange={customDateRange}
+              onCustomRangeChange={handleCustomDateRangeChange}
+            />
           </div>
           {categories.length > 0 && selectedCategories && (
             <CategoryFilter

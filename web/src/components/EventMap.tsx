@@ -22,8 +22,8 @@ export default function EventMap({
   const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
   const appleMapsUrl = `https://maps.apple.com/?daddr=${latitude},${longitude}&q=${encodeURIComponent(venueName || '')}`
 
-  // Offset center south so popup is visible above marker
-  const centerLatitude = latitude - 0.002
+  // Offset center north so marker/popup appear lower, making popup fully visible
+  const centerLatitude = latitude + 0.0015
 
   return (
     <div className={`w-full h-64 rounded-xl overflow-hidden border border-sand ${className}`}>

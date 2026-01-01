@@ -5,10 +5,25 @@
  *   GET /api/events          - List events with filters
  *   GET /api/events/today    - Today's events
  *   GET /api/events/upcoming - Next 7 days
- *   GET /api/events/:id      - Single event
- *   GET /api/sources         - Source status
- *   GET /cal/events.ics      - iCal feed
+ *   GET /api/events/:id      - Single event details
+ *   GET /api/categories      - List available categories
+ *   GET /api/sources         - Event sources with sync status
+ *   GET /cal/events.ics      - iCal calendar feed
  *   GET /api/health          - Health check
+ *
+ * Filter Parameters for /api/events:
+ *   section    - Filter by area: downtown, fort_bragg, crown, all
+ *   source     - Filter by source_id
+ *   from       - Start date (ISO 8601)
+ *   to         - End date (ISO 8601)
+ *   search     - Text search in title/description
+ *   category   - Single category filter
+ *   categories - Multi-category filter (comma-separated)
+ *   featured   - Filter featured events (true/false)
+ *   limit      - Results per page (max 500)
+ *   offset     - Pagination offset
+ *
+ * Full API docs: /docs/API.md
  */
 
 import { Hono } from 'hono';
@@ -211,13 +226,15 @@ app.get('/api/events', async (c) => {
   const { DB } = c.env;
 
   // Query parameters
-  const section = c.req.query('section'); // 'downtown' | 'fort_bragg' | 'crown'
-  const source = c.req.query('source');   // source_id
-  const from = c.req.query('from');       // ISO date
-  const to = c.req.query('to');           // ISO date
-  const search = c.req.query('search');   // text search (title, description)
-  const category = c.req.query('category'); // category filter
-  const limit = parseInt(c.req.query('limit') || '100');
+  const section = c.req.query('section');     // 'downtown' | 'fort_bragg' | 'crown' | 'all'
+  const source = c.req.query('source');       // source_id
+  const from = c.req.query('from');           // ISO date (start range)
+  const to = c.req.query('to');               // ISO date (end range)
+  const search = c.req.query('search');       // text search (title, description)
+  const category = c.req.query('category');   // single category filter
+  const categories = c.req.query('categories'); // multi-category filter (comma-separated)
+  const featured = c.req.query('featured');   // filter featured events ('true' or 'false')
+  const limit = Math.min(parseInt(c.req.query('limit') || '100'), 500); // max 500
   const offset = parseInt(c.req.query('offset') || '0');
 
   // Build query
@@ -258,10 +275,27 @@ app.get('/api/events', async (c) => {
     params.push(`%${search.trim()}%`, `%${search.trim()}%`);
   }
 
-  // Category filter (JSON array contains)
+  // Single category filter (JSON array contains)
   if (category && category !== 'all') {
     conditions.push('e.categories LIKE ?');
     params.push(`%"${category}"%`);
+  }
+
+  // Multi-category filter (comma-separated, event must match ANY of the categories)
+  if (categories && categories.trim()) {
+    const categoryList = categories.split(',').map(c => c.trim()).filter(c => c);
+    if (categoryList.length > 0) {
+      const categoryConditions = categoryList.map(() => 'e.categories LIKE ?');
+      conditions.push(`(${categoryConditions.join(' OR ')})`);
+      categoryList.forEach(cat => params.push(`%"${cat}"%`));
+    }
+  }
+
+  // Featured filter
+  if (featured === 'true') {
+    conditions.push('e.featured = 1');
+  } else if (featured === 'false') {
+    conditions.push('(e.featured = 0 OR e.featured IS NULL)');
   }
 
   const whereClause = conditions.length > 0

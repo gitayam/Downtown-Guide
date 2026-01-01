@@ -36,6 +36,16 @@ export default function Header() {
             Events
           </NavLink>
           <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              `text-sm font-medium transition-colors ${
+                isActive ? 'text-brick' : 'text-stone hover:text-brick'
+              }`
+            }
+          >
+            About
+          </NavLink>
+          <NavLink
             to="/calendar"
             className={({ isActive }) =>
               `text-sm font-medium transition-colors ${
@@ -92,6 +102,17 @@ export default function Header() {
               }
             >
               Events
+            </NavLink>
+            <NavLink
+              to="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `block px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isActive ? 'bg-brick text-white' : 'text-stone hover:bg-sand'
+                }`
+              }
+            >
+              About
             </NavLink>
             <NavLink
               to="/calendar"

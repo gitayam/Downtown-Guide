@@ -1,38 +1,51 @@
-import { ListBulletIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
+import {
+  ListBulletIcon,
+  CalendarIcon,
+  MapIcon,
+} from '@heroicons/react/24/outline'
 
-export type ViewMode = 'list' | 'calendar'
+export type ViewMode = 'list' | 'calendar' | 'map'
 
 interface ViewToggleProps {
   value: ViewMode
-  onChange: (value: ViewMode) => void
+  onChange: (mode: ViewMode) => void
 }
 
 export default function ViewToggle({ value, onChange }: ViewToggleProps) {
   return (
-    <div className="inline-flex items-center gap-1 p-1 bg-sand rounded-lg">
+    <div className="bg-sand p-1 rounded-lg flex items-center">
       <button
         onClick={() => onChange('list')}
-        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+        className={`p-2 rounded-md transition-all ${
           value === 'list'
             ? 'bg-white text-brick shadow-sm'
-            : 'text-stone hover:text-brick'
+            : 'text-stone hover:text-gray-900'
         }`}
-        aria-label="List view"
+        title="List View"
       >
-        <ListBulletIcon className="w-4 h-4" />
-        <span className="hidden sm:inline">List</span>
+        <ListBulletIcon className="w-5 h-5" />
       </button>
       <button
         onClick={() => onChange('calendar')}
-        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+        className={`p-2 rounded-md transition-all ${
           value === 'calendar'
             ? 'bg-white text-brick shadow-sm'
-            : 'text-stone hover:text-brick'
+            : 'text-stone hover:text-gray-900'
         }`}
-        aria-label="Calendar view"
+        title="Calendar View"
       >
-        <CalendarDaysIcon className="w-4 h-4" />
-        <span className="hidden sm:inline">Calendar</span>
+        <CalendarIcon className="w-5 h-5" />
+      </button>
+      <button
+        onClick={() => onChange('map')}
+        className={`p-2 rounded-md transition-all ${
+          value === 'map'
+            ? 'bg-white text-brick shadow-sm'
+            : 'text-stone hover:text-gray-900'
+        }`}
+        title="Map View"
+      >
+        <MapIcon className="w-5 h-5" />
       </button>
     </div>
   )

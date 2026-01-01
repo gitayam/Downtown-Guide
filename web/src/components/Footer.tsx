@@ -5,6 +5,7 @@ import {
   WEBCAL_FORTLIBERTY_URL,
   WEBCAL_HOLIDAYS_URL
 } from '../lib/api'
+import { Link } from 'react-router-dom'
 
 // Discord icon component
 const DiscordIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -33,11 +34,17 @@ export default function Footer() {
               href="https://discord.gg/drEyQW5G"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-4"
             >
               <DiscordIcon className="w-5 h-5" />
               Join Our Discord
             </a>
+            
+            <div>
+              <Link to="/about" className="text-white/70 hover:text-white text-sm border-b border-white/20 pb-0.5 hover:border-white transition-all">
+                Read our Mission & About Us
+              </Link>
+            </div>
           </div>
 
           {/* Calendar Feeds */}

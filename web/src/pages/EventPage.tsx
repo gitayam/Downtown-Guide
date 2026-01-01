@@ -21,6 +21,7 @@ import {
   getSourceBadge,
 } from '../lib/utils'
 import DirectionsModal from '../components/DirectionsModal'
+import ShareModal from '../components/share/ShareModal'
 
 export default function EventPage() {
   const { id } = useParams<{ id: string }>()
@@ -28,6 +29,7 @@ export default function EventPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [directionsOpen, setDirectionsOpen] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
 
   useEffect(() => {
     async function loadEvent() {
@@ -70,26 +72,6 @@ export default function EventPage() {
   const sectionBadge = getSectionBadge(event.section)
   const sourceBadge = getSourceBadge(event.source_id)
 
-  const handleShare = async () => {
-    const shareData = {
-      title: event.title,
-      text: `Check out this event: ${event.title}`,
-      url: window.location.href,
-    }
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData)
-      } catch {
-        // User cancelled or error
-      }
-    } else {
-      // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(window.location.href)
-      alert('Link copied to clipboard!')
-    }
-  }
-
   const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render')
   googleCalendarUrl.searchParams.set('action', 'TEMPLATE')
   googleCalendarUrl.searchParams.set('text', event.title)
@@ -104,6 +86,22 @@ export default function EventPage() {
         onClose={() => setDirectionsOpen(false)}
         event={event}
       />
+      
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        content={{
+          type: 'event',
+          id: event.id,
+          title: event.title,
+          description: event.description || '',
+          url: window.location.href,
+          image: event.image_url || undefined,
+          date: formatEventDateFull(event.start_datetime),
+          location: event.venue_name || event.location_name || undefined
+        }}
+      />
+
       {/* Header Image */}
       <header className="relative">
         {event.image_url ? (
@@ -325,7 +323,7 @@ export default function EventPage() {
                 </a>
 
                 <button
-                  onClick={handleShare}
+                  onClick={() => setShareModalOpen(true)}
                   className="btn-ghost w-full flex items-center justify-center gap-2 border border-sand"
                 >
                   <ShareIcon className="w-5 h-5" />

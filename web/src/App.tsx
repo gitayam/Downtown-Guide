@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
 import EventPage from './pages/EventPage'
 import CalendarPage from './pages/CalendarPage'
+import AboutPage from './pages/AboutPage'
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
         <Route index element={<HomePage />} />
         <Route path="events/:id" element={<EventPage />} />
         <Route path="calendar" element={<CalendarPage />} />
+        <Route path="about" element={<AboutPage />} />
       </Route>
     </Routes>
   )

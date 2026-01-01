@@ -30,6 +30,9 @@ export interface Event {
   venue_image_url?: string
   venue_parking_info?: string
   venue_accessibility_info?: string
+  venue_latitude?: number
+  venue_longitude?: number
+  venue_coordinates?: { lat: number; lng: number } // Legacy fallback
 }
 
 export interface Source {

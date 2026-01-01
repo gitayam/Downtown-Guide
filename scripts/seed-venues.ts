@@ -289,6 +289,24 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     aliases: ['Cumberland County Library', 'Main Library']
   },
 
+  // Museums
+  {
+    id: 'fascinate_u',
+    name: "Fascinate-U Children's Museum",
+    short_name: 'Fascinate-U',
+    description: 'Interactive children\'s museum with hands-on exhibits and displays where kids can explore their world through creative role-playing.',
+    address: '116 Green St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    phone: '(910) 829-9171',
+    website: 'http://www.fascinate-u.com',
+    venue_type: 'museum',
+    google_maps_url: 'https://www.google.com/maps/search/?api=1&query=116+Green+St+Fayetteville+NC+28301',
+    apple_maps_url: 'https://maps.apple.com/?address=116+Green+St,+Fayetteville,+NC+28301',
+    aliases: ["Fascinate-U Children's Museum", 'Fascinate-U', 'Fascinate U']
+  },
+
   // Fort Liberty
   {
     id: 'fort_liberty',

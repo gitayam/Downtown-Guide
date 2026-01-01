@@ -14,11 +14,15 @@ import SectionTabs from '../components/SectionTabs'
 import TimeGroupHeader from '../components/TimeGroupHeader'
 import ViewToggle, { type ViewMode } from '../components/ViewToggle'
 import CalendarGrid from '../components/CalendarGrid'
+import MapView from '../components/MapView'
 import SearchBar from '../components/SearchBar'
 import CategoryFilter from '../components/CategoryFilter'
+import DateRangeFilter, { type DateRange } from '../components/DateRangeFilter'
+import { startOfDay, endOfDay, addDays, nextSunday, isFriday, isSaturday, isSunday } from 'date-fns'
 
 // Local storage key for persisting category selection
 const SELECTED_CATEGORIES_KEY = 'fayetteville_events_selected_categories'
+const DATE_RANGE_KEY = 'fayetteville_events_date_range'
 
 // Categories to exclude by default (Movies = Cameo showtimes)
 const DEFAULT_EXCLUDED = ['Movies']
@@ -34,6 +38,7 @@ export default function HomePage() {
   const [section, setSection] = useState('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [search, setSearch] = useState('')
+  const [dateRange, setDateRange] = useState<DateRange>('today')
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[] | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
@@ -79,6 +84,16 @@ export default function HomePage() {
         setCategories([])
         setSelectedCategories([])
       })
+      
+      // Initialize date range from local storage
+      try {
+        const storedDateRange = localStorage.getItem(DATE_RANGE_KEY) as DateRange
+        if (storedDateRange) {
+          setDateRange(storedDateRange)
+        }
+      } catch {
+        // Ignore storage errors
+      }
   }, [])
 
   // Load events function (reusable for retries)
@@ -89,6 +104,40 @@ export default function HomePage() {
       const params: Record<string, string | number> = { limit: 200 }
       if (section !== 'all') params.section = section
       if (search) params.search = search
+      
+      const now = new Date()
+      
+      if (dateRange === 'today') {
+        params.from = startOfDay(now).toISOString()
+        params.to = endOfDay(now).toISOString()
+      } else if (dateRange === 'tomorrow') {
+        const tomorrow = addDays(now, 1)
+        params.from = startOfDay(tomorrow).toISOString()
+        params.to = endOfDay(tomorrow).toISOString()
+      } else if (dateRange === 'weekend') {
+        // Logic for "This Weekend"
+        // If today is Friday, Sat, or Sun => show through Sunday
+        // If today is Mon-Thu => show coming Fri-Sun
+        let start = now
+        let end = nextSunday(now)
+        
+        if (isFriday(now) || isSaturday(now) || isSunday(now)) {
+           start = startOfDay(now)
+           end = endOfDay(isSunday(now) ? now : nextSunday(now))
+        } else {
+           // Find next Friday
+           // date-fns doesn't have nextFriday, so simple calculation:
+           // Fri is day 5. 
+           const day = now.getDay()
+           const daysUntilFriday = (5 + 7 - day) % 7 || 7
+           start = startOfDay(addDays(now, daysUntilFriday))
+           end = endOfDay(addDays(start, 2)) // Sunday
+        }
+        params.from = start.toISOString()
+        params.to = end.toISOString()
+      }
+      // 'all' doesn't need specific from/to (defaults to upcoming)
+
       const response = await fetchEvents(params)
       setEvents(response.data)
       retryCountRef.current = 0 // Reset retry count on success
@@ -97,7 +146,7 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }, [section, search])
+  }, [section, search, dateRange])
 
   // Load events when filters change
   useEffect(() => {
@@ -126,6 +175,15 @@ export default function HomePage() {
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
+  }, [])
+  
+  const handleDateRangeChange = useCallback((range: DateRange) => {
+    setDateRange(range)
+    try {
+      localStorage.setItem(DATE_RANGE_KEY, range)
+    } catch {
+      // Ignore storage errors
+    }
   }, [])
 
   // Handle selected categories change and persist
@@ -178,25 +236,9 @@ export default function HomePage() {
             What's Happening in<br />
             <span className="text-dogwood">Fayetteville</span>
           </h1>
-          <p className="text-lg md:text-xl text-white/80 max-w-xl mb-8">
+          <p className="text-lg md:text-xl text-white/80 max-w-xl">
             Your central guide to Downtown and Fort Bragg events. Never miss a festival, show, or community gathering.
           </p>
-
-          {/* Section Quick Links */}
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setSection('downtown')}
-              className="px-5 py-2.5 bg-white text-brick font-medium rounded-lg hover:bg-dogwood-50 transition-colors flex items-center gap-2"
-            >
-              <span>🏙️</span> Downtown Events
-            </button>
-            <button
-              onClick={() => setSection('fort_bragg')}
-              className="px-5 py-2.5 bg-white/20 text-white font-medium rounded-lg hover:bg-white/30 transition-colors border border-white/30 flex items-center gap-2"
-            >
-              <span>🎖️</span> Fort Bragg Events
-            </button>
-          </div>
         </div>
       </section>
 
@@ -212,7 +254,10 @@ export default function HomePage() {
 
         {/* Filter Bar: Search + Categories */}
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
-          <SearchBar value={search} onChange={handleSearchChange} />
+          <div className="flex-1 flex flex-col gap-3">
+            <SearchBar value={search} onChange={handleSearchChange} />
+            <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
+          </div>
           {categories.length > 0 && selectedCategories && (
             <CategoryFilter
               categories={categories}
@@ -307,6 +352,11 @@ export default function HomePage() {
                 {/* Calendar View - Shows mobile or desktop version based on screen */}
                 {viewMode === 'calendar' && (
                   <CalendarGrid events={filteredEvents} />
+                )}
+
+                {/* Map View */}
+                {viewMode === 'map' && (
+                  <MapView events={filteredEvents} />
                 )}
 
                 {/* List View - Only when list mode selected */}

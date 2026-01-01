@@ -55,14 +55,16 @@ export default function Header() {
           >
             Subscribe
           </NavLink>
-          <a
-            href="https://downtown-guide.wemea-5ahhf.workers.dev/api/events"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-stone hover:text-brick transition-colors"
+          <NavLink
+            to="/api"
+            className={({ isActive }) =>
+              `text-sm font-medium transition-colors ${
+                isActive ? 'text-brick' : 'text-stone hover:text-brick'
+              }`
+            }
           >
             API
-          </a>
+          </NavLink>
           <a
             href="https://discord.gg/drEyQW5G"
             target="_blank"
@@ -125,14 +127,17 @@ export default function Header() {
             >
               Subscribe to Calendar
             </NavLink>
-            <a
-              href="https://downtown-guide.wemea-5ahhf.workers.dev/api/events"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block px-4 py-2 rounded-lg font-medium text-stone hover:bg-sand transition-colors"
+            <NavLink
+              to="/api"
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `block px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isActive ? 'bg-brick text-white' : 'text-stone hover:bg-sand'
+                }`
+              }
             >
               API Documentation
-            </a>
+            </NavLink>
             <a
               href="https://discord.gg/drEyQW5G"
               target="_blank"

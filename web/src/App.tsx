@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import EventPage from './pages/EventPage'
 import CalendarPage from './pages/CalendarPage'
 import AboutPage from './pages/AboutPage'
+import ApiDocsPage from './pages/ApiDocsPage'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="events/:id" element={<EventPage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="api" element={<ApiDocsPage />} />
       </Route>
     </Routes>
   )

@@ -76,10 +76,10 @@ app.get('/api/sources', async (c) => {
 app.get('/api/categories', async (c) => {
   const { DB } = c.env;
 
-  // Get all categories from future events
+  // Get all categories from current and future events (show until event ends)
   const result = await DB.prepare(`
     SELECT categories FROM events
-    WHERE start_datetime >= ? AND categories IS NOT NULL AND categories != '[]'
+    WHERE end_datetime >= ? AND categories IS NOT NULL AND categories != '[]'
   `).bind(new Date().toISOString()).all();
 
   // Extract unique categories from JSON arrays
@@ -112,18 +112,23 @@ app.get('/api/events/today', async (c) => {
   const { DB } = c.env;
 
   const today = new Date();
+  const now = today.toISOString();
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
   const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
 
+  // Show events that:
+  // 1. Start today (start_datetime >= startOfDay AND start_datetime < endOfDay), OR
+  // 2. Are still ongoing (started before but end_datetime >= now)
   const result = await DB.prepare(`
     SELECT
       e.*,
       s.name as source_name
     FROM events e
     LEFT JOIN sources s ON e.source_id = s.id
-    WHERE e.start_datetime >= ? AND e.start_datetime < ?
+    WHERE (e.start_datetime >= ? AND e.start_datetime < ?)
+       OR (e.start_datetime < ? AND e.end_datetime >= ?)
     ORDER BY e.start_datetime ASC
-  `).bind(startOfDay, endOfDay).all();
+  `).bind(startOfDay, endOfDay, startOfDay, now).all();
 
   return c.json({
     data: result.results,
@@ -142,13 +147,14 @@ app.get('/api/events/upcoming', async (c) => {
   const now = new Date().toISOString();
   const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
+  // Show events that are still ongoing (end_datetime >= now) or start within the week
   const result = await DB.prepare(`
     SELECT
       e.*,
       s.name as source_name
     FROM events e
     LEFT JOIN sources s ON e.source_id = s.id
-    WHERE e.start_datetime >= ? AND e.start_datetime < ?
+    WHERE e.end_datetime >= ? AND e.start_datetime < ?
     ORDER BY e.start_datetime ASC
   `).bind(now, weekFromNow).all();
 
@@ -221,11 +227,12 @@ app.get('/api/events', async (c) => {
   // Only show confirmed or active events (exclude cancelled, past)
   conditions.push("e.status IN ('confirmed', 'active')");
 
-  // Default: future events only
+  // Default: show events that haven't ended yet (end_datetime >= now)
   if (!from) {
-    conditions.push('datetime(e.start_datetime) >= datetime(?)');
+    conditions.push('datetime(e.end_datetime) >= datetime(?)');
     params.push(new Date().toISOString());
   } else {
+    // When 'from' is specified, use start_datetime for range queries
     conditions.push('datetime(e.start_datetime) >= datetime(?)');
     params.push(from);
   }
@@ -285,9 +292,13 @@ app.get('/api/events', async (c) => {
       e.section,
       e.status,
       e.featured,
-      s.name as source_name
+      s.name as source_name,
+      v.latitude as venue_latitude,
+      v.longitude as venue_longitude,
+      v.name as venue_name
     FROM events e
     LEFT JOIN sources s ON e.source_id = s.id
+    LEFT JOIN venues v ON e.venue_id = v.id
     ${whereClause}
     ORDER BY e.featured DESC, e.start_datetime ASC
     LIMIT ? OFFSET ?
@@ -322,9 +333,10 @@ app.get('/cal/events.ics', async (c) => {
   const source = c.req.query('source'); // Allow filtering by source (e.g., holidays)
   const now = new Date().toISOString();
 
+  // Show events until they end (not just until they start)
   let query = `
     SELECT * FROM events
-    WHERE datetime(start_datetime) >= datetime(?)
+    WHERE datetime(end_datetime) >= datetime(?)
       AND status IN ('confirmed', 'active')
   `;
   const params: any[] = [now];
@@ -563,16 +575,18 @@ async function sendDailyDigest(env: Bindings): Promise<{ success: boolean; event
   const startUTC = new Date(startOfDay.getTime() - (utcOffset + estOffset) * 60000).toISOString();
   const endUTC = new Date(endOfDay.getTime() - (utcOffset + estOffset) * 60000).toISOString();
 
+  // Show events that start today OR are still ongoing (end_datetime >= now)
+  const nowUTC = new Date().toISOString();
   const result = await env.DB.prepare(`
     SELECT e.*, s.name as source_name
     FROM events e
     LEFT JOIN sources s ON e.source_id = s.id
-    WHERE datetime(e.start_datetime) >= datetime(?)
-      AND datetime(e.start_datetime) < datetime(?)
+    WHERE ((datetime(e.start_datetime) >= datetime(?) AND datetime(e.start_datetime) < datetime(?))
+       OR (datetime(e.start_datetime) < datetime(?) AND datetime(e.end_datetime) >= datetime(?)))
       AND e.status IN ('confirmed', 'active')
     ORDER BY e.featured DESC, e.start_datetime ASC
     LIMIT 25
-  `).bind(startUTC, endUTC).all();
+  `).bind(startUTC, endUTC, startUTC, nowUTC).all();
 
   const events = result.results || [];
 

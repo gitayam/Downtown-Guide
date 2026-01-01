@@ -17,6 +17,19 @@ export interface Event {
   status: string
   source_name: string | null
   featured?: number | boolean
+  venue_name?: string
+  venue_address?: string
+  venue_city?: string
+  venue_state?: string
+  venue_zip?: string
+  venue_phone?: string
+  venue_website?: string
+  venue_google_maps_url?: string
+  venue_apple_maps_url?: string
+  venue_hours_of_operation?: string
+  venue_image_url?: string
+  venue_parking_info?: string
+  venue_accessibility_info?: string
 }
 
 export interface Source {

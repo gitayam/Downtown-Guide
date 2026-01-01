@@ -17,6 +17,15 @@ import CalendarGrid from '../components/CalendarGrid'
 import SearchBar from '../components/SearchBar'
 import CategoryFilter from '../components/CategoryFilter'
 
+// Local storage key for persisting category selection
+const SELECTED_CATEGORIES_KEY = 'fayetteville_events_selected_categories'
+
+// Categories to exclude by default (Movies = Cameo showtimes)
+const DEFAULT_EXCLUDED = ['Movies']
+
+// Number of events to show initially per time group
+const EVENTS_PER_GROUP = 6
+
 export default function HomePage() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,15 +34,51 @@ export default function HomePage() {
   const [section, setSection] = useState('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('')
   const [categories, setCategories] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[] | null>(null)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const retryCountRef = useRef(0)
 
-  // Load categories on mount
+  // Toggle expansion of a time group
+  const toggleGroupExpansion = useCallback((groupLabel: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(groupLabel)) {
+        next.delete(groupLabel)
+      } else {
+        next.add(groupLabel)
+      }
+      return next
+    })
+  }, [])
+
+  // Load categories on mount and initialize selection
   useEffect(() => {
     fetchCategories()
-      .then((res) => setCategories(res.data))
-      .catch(() => setCategories([]))
+      .then((res) => {
+        const allCats = res.data
+        setCategories(allCats)
+
+        // Initialize selected categories from localStorage or defaults
+        try {
+          const stored = localStorage.getItem(SELECTED_CATEGORIES_KEY)
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            // Filter to only include valid categories
+            const valid = parsed.filter((c: string) => allCats.includes(c))
+            setSelectedCategories(valid.length > 0 ? valid : allCats.filter(c => !DEFAULT_EXCLUDED.includes(c)))
+          } else {
+            // Default: all categories except the default excluded ones
+            setSelectedCategories(allCats.filter(c => !DEFAULT_EXCLUDED.includes(c)))
+          }
+        } catch {
+          setSelectedCategories(allCats.filter(c => !DEFAULT_EXCLUDED.includes(c)))
+        }
+      })
+      .catch(() => {
+        setCategories([])
+        setSelectedCategories([])
+      })
   }, [])
 
   // Load events function (reusable for retries)
@@ -41,10 +86,9 @@ export default function HomePage() {
     setLoading(true)
     setError(null)
     try {
-      const params: Record<string, string | number> = { limit: 100 }
+      const params: Record<string, string | number> = { limit: 200 }
       if (section !== 'all') params.section = section
       if (search) params.search = search
-      if (category) params.category = category
       const response = await fetchEvents(params)
       setEvents(response.data)
       retryCountRef.current = 0 // Reset retry count on success
@@ -53,7 +97,7 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
-  }, [section, search, category])
+  }, [section, search])
 
   // Load events when filters change
   useEffect(() => {
@@ -84,7 +128,39 @@ export default function HomePage() {
     setSearch(value)
   }, [])
 
-  const timeGroups = groupEventsByTime(events)
+  // Handle selected categories change and persist
+  const handleSelectionChange = useCallback((selected: string[]) => {
+    setSelectedCategories(selected)
+    try {
+      localStorage.setItem(SELECTED_CATEGORIES_KEY, JSON.stringify(selected))
+    } catch {
+      // Ignore storage errors
+    }
+  }, [])
+
+  // Filter events by selected categories (client-side filtering)
+  const filteredEvents = events.filter(event => {
+    // If no categories loaded yet, or all selected, show everything
+    if (!selectedCategories || selectedCategories.length === 0) return true
+    if (selectedCategories.length === categories.length) return true
+
+    try {
+      const eventCategories: string[] = typeof event.categories === 'string'
+        ? JSON.parse(event.categories)
+        : event.categories || []
+
+      // Show uncategorized events
+      if (eventCategories.length === 0) return true
+
+      // Hide event if ANY of its categories is excluded (not in selectedCategories)
+      // This ensures that a movie tagged as ["Arts", "Movies"] is hidden when Movies is unchecked
+      return eventCategories.every(cat => selectedCategories.includes(cat))
+    } catch {
+      return true // Keep event if categories can't be parsed
+    }
+  })
+
+  const timeGroups = groupEventsByTime(filteredEvents)
 
   return (
     <>
@@ -137,8 +213,12 @@ export default function HomePage() {
         {/* Filter Bar: Search + Categories */}
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <SearchBar value={search} onChange={handleSearchChange} />
-          {categories.length > 0 && (
-            <CategoryFilter categories={categories} value={category} onChange={setCategory} />
+          {categories.length > 0 && selectedCategories && (
+            <CategoryFilter
+              categories={categories}
+              selectedCategories={selectedCategories}
+              onSelectionChange={handleSelectionChange}
+            />
           )}
         </div>
 
@@ -199,20 +279,23 @@ export default function HomePage() {
         {/* Events Display */}
         {!loading && !error && (
           <>
-            {events.length === 0 ? (
+            {filteredEvents.length === 0 ? (
               <div className="text-center py-12">
                 <span className="text-4xl mb-4 block">📅</span>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No events found</h3>
                 <p className="text-stone">
-                  {search || category
+                  {search || (selectedCategories && selectedCategories.length < categories.length)
                     ? 'Try adjusting your search or category filters.'
                     : section !== 'all'
                       ? `No events found for this section. Try checking all events.`
                       : 'Check back soon for upcoming events!'}
                 </p>
-                {(search || category) && (
+                {(search || (selectedCategories && selectedCategories.length < categories.length)) && (
                   <button
-                    onClick={() => { setSearch(''); setCategory(''); }}
+                    onClick={() => {
+                      setSearch('')
+                      setSelectedCategories([...categories])
+                    }}
                     className="mt-4 text-brick hover:text-brick-600 font-medium"
                   >
                     Clear filters
@@ -223,33 +306,56 @@ export default function HomePage() {
               <>
                 {/* Calendar View - Shows mobile or desktop version based on screen */}
                 {viewMode === 'calendar' && (
-                  <CalendarGrid events={events} />
+                  <CalendarGrid events={filteredEvents} />
                 )}
 
                 {/* List View - Only when list mode selected */}
                 {viewMode === 'list' && (
                   <div className="space-y-2">
-                    {timeGroups.map((group) => (
-                      <div key={group.label}>
-                        <TimeGroupHeader
-                          label={group.label}
-                          emoji={group.emoji}
-                          color={group.color}
-                        />
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                          {group.events.slice(0, 6).map((event) => (
-                            <EventCard key={event.id} event={event} />
-                          ))}
-                        </div>
-                        {group.events.length > 6 && (
-                          <div className="text-center mt-4">
-                            <span className="text-sm text-stone">
-                              +{group.events.length - 6} more events
-                            </span>
+                    {timeGroups.map((group) => {
+                      const isExpanded = expandedGroups.has(group.label)
+                      const visibleEvents = isExpanded ? group.events : group.events.slice(0, EVENTS_PER_GROUP)
+                      const hiddenCount = group.events.length - EVENTS_PER_GROUP
+
+                      return (
+                        <div key={group.label}>
+                          <TimeGroupHeader
+                            label={group.label}
+                            emoji={group.emoji}
+                            color={group.color}
+                          />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                            {visibleEvents.map((event) => (
+                              <EventCard key={event.id} event={event} />
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          {hiddenCount > 0 && (
+                            <div className="text-center mt-6">
+                              <button
+                                onClick={() => toggleGroupExpansion(group.label)}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-sand hover:bg-dogwood/20 text-stone hover:text-forest font-medium rounded-lg transition-colors"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <span>Show Less</span>
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                    </svg>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>Show {hiddenCount} More</span>
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </>
@@ -258,7 +364,10 @@ export default function HomePage() {
             {/* Stats */}
             <div className="mt-12 text-center">
               <p className="text-stone text-sm">
-                Showing {events.length} upcoming events from 6 local sources
+                Showing {filteredEvents.length} upcoming events
+                {filteredEvents.length < events.length && (
+                  <span className="text-stone/60"> ({events.length - filteredEvents.length} filtered)</span>
+                )}
               </p>
             </div>
           </>

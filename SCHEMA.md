@@ -121,6 +121,8 @@ CREATE TABLE venues (
   latitude REAL,
   longitude REAL,
   google_maps_url TEXT,
+  apple_maps_url TEXT,
+  hours_of_operation TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```

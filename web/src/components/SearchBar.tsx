@@ -7,7 +7,7 @@ interface SearchBarProps {
   placeholder?: string
 }
 
-export default function SearchBar({ value, onChange, placeholder = 'Search events...' }: SearchBarProps) {
+export default function SearchBar({ value, onChange, placeholder = 'Search concerts, festivals, movies...' }: SearchBarProps) {
   const [localValue, setLocalValue] = useState(value)
 
   // Sync local value with external value

@@ -8,6 +8,9 @@ import {
   ArrowTopRightOnSquareIcon,
   ArrowLeftIcon,
   ShareIcon,
+  PhoneIcon,
+  InformationCircleIcon,
+  MapIcon,
 } from '@heroicons/react/24/outline'
 import type { Event } from '../lib/types'
 import { fetchEvent } from '../lib/api'
@@ -17,12 +20,14 @@ import {
   getSectionBadge,
   getSourceBadge,
 } from '../lib/utils'
+import DirectionsModal from '../components/DirectionsModal'
 
 export default function EventPage() {
   const { id } = useParams<{ id: string }>()
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [directionsOpen, setDirectionsOpen] = useState(false)
 
   useEffect(() => {
     async function loadEvent() {
@@ -94,6 +99,11 @@ export default function EventPage() {
 
   return (
     <>
+      <DirectionsModal
+        isOpen={directionsOpen}
+        onClose={() => setDirectionsOpen(false)}
+        event={event}
+      />
       {/* Header Image */}
       <header className="relative">
         {event.image_url ? (
@@ -148,10 +158,10 @@ export default function EventPage() {
                 <CalendarIcon className="w-5 h-5" />
                 {formatEventDateFull(event.start_datetime)}
               </span>
-              {event.location_name && (
+              {(event.venue_name || event.location_name) && (
                 <span className="flex items-center gap-2">
                   <MapPinIcon className="w-5 h-5" />
-                  {event.location_name}
+                  {event.venue_name || event.location_name}
                 </span>
               )}
             </div>
@@ -188,7 +198,18 @@ export default function EventPage() {
           {/* Sidebar */}
           <aside className="space-y-6">
             {/* Event Details Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-sand p-6 space-y-4">
+            <div className="bg-white rounded-xl shadow-sm border border-sand p-6 space-y-6">
+              {/* Venue Image */}
+              {event.venue_image_url && (
+                <div className="-mx-6 -mt-6 mb-4">
+                  <img 
+                    src={event.venue_image_url} 
+                    alt={event.venue_name || 'Venue'} 
+                    className="w-full h-48 object-cover rounded-t-xl"
+                  />
+                </div>
+              )}
+
               {/* Date & Time */}
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-brick/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -205,14 +226,61 @@ export default function EventPage() {
               </div>
 
               {/* Location */}
-              {event.location_name && (
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-capefear/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MapPinIcon className="w-5 h-5 text-capefear" />
+              {(event.venue_name || event.location_name) && (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-capefear/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <MapPinIcon className="w-5 h-5 text-capefear" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {event.venue_name || event.location_name}
+                      </p>
+                      {event.venue_address && (
+                        <p className="text-sm text-stone">{event.venue_address}</p>
+                      )}
+                      <p className="text-sm text-stone">
+                        {event.venue_city || 'Fayetteville'}, {event.venue_state || 'NC'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{event.location_name}</p>
-                    <p className="text-sm text-stone">Fayetteville, NC</p>
+                  
+                  <button
+                    onClick={() => setDirectionsOpen(true)}
+                    className="w-full py-2 px-3 text-sm font-medium text-capefear bg-capefear/5 hover:bg-capefear/10 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <MapIcon className="w-4 h-4" />
+                    Get Directions
+                  </button>
+                </div>
+              )}
+
+              {/* Phone */}
+              {event.venue_phone && (
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-sand/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <PhoneIcon className="w-5 h-5 text-stone" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-stone mb-0.5">Contact</p>
+                    <a href={`tel:${event.venue_phone}`} className="font-medium text-gray-900 hover:text-brick">
+                      {event.venue_phone}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Hours */}
+              {event.venue_hours_of_operation && (
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-sand/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <InformationCircleIcon className="w-5 h-5 text-stone" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-stone mb-0.5">Venue Hours</p>
+                    <p className="font-medium text-gray-900 text-sm whitespace-pre-wrap">
+                      {event.venue_hours_of_operation}
+                    </p>
                   </div>
                 </div>
               )}

@@ -12,6 +12,9 @@
  * 8. MLK Committee (Signature Annual Events)
  * 9. Headquarters Library (Web Scraping - filtered by location)
  * 10. Fort Liberty Training Holidays (Static FY26 Schedule)
+ * 11. Arts Council of Fayetteville (Wix Events Scraping)
+ * 12. Fayetteville Symphony Orchestra (Season Schedule)
+ * 13. Cameo Art House Theatre (Dynamic Scraping - Movies & Special Events)
  *
  * Enhanced with researchtoolspy API for additional metadata extraction.
  *
@@ -64,6 +67,111 @@ interface UnifiedEvent {
   contactPhone?: string;
   lastModified: Date;
   section: EventSection;
+}
+
+// =============================================================================
+// Category Normalization - User-Friendly Categories for Fayetteville Residents
+// =============================================================================
+
+// Map raw/messy categories to clean, user-friendly categories
+const CATEGORY_MAP: Record<string, string> = {
+  // Art categories → "Arts"
+  'art': 'Arts',
+  'arts & culture': 'Arts',
+  'arts &amp; culture': 'Arts',
+  'arts &amp; crafts': 'Arts',
+  'gallery': 'Arts',
+  'performing arts': 'Arts',
+  'cultural': 'Arts',
+
+  // Music categories → "Live Music"
+  'classical music': 'Live Music',
+  'chamber music': 'Live Music',
+  'orchestra': 'Live Music',
+  'gospel': 'Live Music',
+  'film music': 'Live Music',
+  'americana': 'Live Music',
+
+  // Film/Movies → "Movies"
+  'film': 'Movies',
+  'classic film': 'Movies',
+  'movies': 'Movies',
+  'special screening': 'Movies',
+
+  // Military → "Military"
+  'military': 'Military',
+  'mwr': 'Military',
+  'training holiday': 'Military',
+  '3-day weekend': 'Long Weekend',
+  '4-day weekend': 'Long Weekend',
+
+  // Family/Youth → "Family"
+  'family': 'Family',
+  'youth': 'Family',
+  'story time': 'Family',
+  'educational': 'Family',
+  'library programs': 'Family',
+
+  // Community events
+  'community': 'Community',
+  'parades': 'Community',
+  'signature events': 'Community',
+
+  // Festivals
+  'festivals & fairs': 'Festivals',
+  'holiday': 'Festivals',
+
+  // Sports
+  'sports': 'Sports',
+
+  // Nightlife
+  'nightlife': 'Nightlife',
+
+  // Expos
+  'expos & trade shows': 'Expos',
+};
+
+// Categories to display (in order) - these are the normalized categories
+const DISPLAY_CATEGORIES = [
+  'Community',
+  'Arts',
+  'Live Music',
+  'Movies',
+  'Family',
+  'Festivals',
+  'Sports',
+  'Military',
+  'Long Weekend',
+  'Nightlife',
+  'Expos',
+];
+
+function normalizeCategories(categories: string[]): string[] {
+  const normalized = new Set<string>();
+
+  for (const cat of categories) {
+    const lower = cat.toLowerCase().trim();
+    const mapped = CATEGORY_MAP[lower];
+
+    if (mapped) {
+      normalized.add(mapped);
+    } else {
+      // Keep original if not in map (capitalized)
+      normalized.add(cat.charAt(0).toUpperCase() + cat.slice(1));
+    }
+  }
+
+  // Sort by display order
+  const result = Array.from(normalized).sort((a, b) => {
+    const aIdx = DISPLAY_CATEGORIES.indexOf(a);
+    const bIdx = DISPLAY_CATEGORIES.indexOf(b);
+    if (aIdx === -1 && bIdx === -1) return a.localeCompare(b);
+    if (aIdx === -1) return 1;
+    if (bIdx === -1) return -1;
+    return aIdx - bIdx;
+  });
+
+  return result;
 }
 
 // =============================================================================
@@ -265,90 +373,367 @@ async function fetchSegraEvents(): Promise<UnifiedEvent[]> {
 }
 
 // =============================================================================
-// Source 3: Distinctly Fayetteville (RSS)
+// Source 2b: Fayetteville Woodpeckers (MLB Stats API)
+// =============================================================================
+
+const WOODPECKERS_TEAM_ID = 3712;
+const MLB_STATS_API = 'https://statsapi.mlb.com/api/v1';
+
+const SEGRA_STADIUM_VENUE: UnifiedEvent['venue'] = {
+  name: 'Segra Stadium',
+  address: '460 Hay St',
+  city: 'Fayetteville',
+  state: 'NC',
+  zip: '28301',
+};
+
+async function fetchWoodpeckersGames(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Fayetteville Woodpeckers (MiLB)...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  // Fetch current and next year schedules to cover offseason
+  const years = [currentYear, currentYear + 1];
+
+  for (const year of years) {
+    try {
+      const url = `${MLB_STATS_API}/schedule?teamId=${WOODPECKERS_TEAM_ID}&season=${year}&sportId=14&gameType=R&startDate=${year}-03-01&endDate=${year}-09-30`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.error(`  Failed to fetch ${year} schedule: ${response.status}`);
+        continue;
+      }
+
+      const data = await response.json();
+
+      // Process each date in the schedule
+      for (const dateEntry of data.dates || []) {
+        for (const game of dateEntry.games || []) {
+          // Only include HOME games (played at Segra Stadium)
+          const isHome = game.teams?.home?.team?.id === WOODPECKERS_TEAM_ID;
+          if (!isHome) continue;
+
+          const gameDate = new Date(game.gameDate);
+          // Skip past games
+          if (gameDate < now) continue;
+
+          const awayTeam = game.teams?.away?.team?.name || 'TBD';
+          const homeTeam = game.teams?.home?.team?.name || 'Fayetteville Woodpeckers';
+
+          // Game duration is typically 3 hours for minor league
+          const endDate = new Date(gameDate);
+          endDate.setHours(endDate.getHours() + 3);
+
+          const gameId = game.gamePk || `${year}-${dateEntry.date}-${awayTeam.replace(/\s+/g, '')}`;
+
+          results.push({
+            id: `woodpeckers_${gameId}`,
+            source: 'woodpeckers',
+            sourceId: String(gameId),
+            title: `Woodpeckers vs ${awayTeam}`,
+            description: `Fayetteville Woodpeckers (Houston Astros Single-A affiliate) take on the ${awayTeam} at Segra Stadium in downtown Fayetteville. Gates typically open 1 hour before first pitch. Family-friendly fun with promotions, concessions, and entertainment between innings!`,
+            startDateTime: gameDate,
+            endDateTime: endDate,
+            venue: SEGRA_STADIUM_VENUE,
+            categories: ['Sports', 'Family'],
+            url: `https://www.milb.com/fayetteville/schedule/${year}-${String(gameDate.getMonth() + 1).padStart(2, '0')}`,
+            ticketUrl: 'https://www.milb.com/fayetteville/tickets',
+            imageUrl: 'https://www.milb.com/images/logos/t3712.png',
+            lastModified: new Date(),
+            section: 'downtown',
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`  Error fetching ${year} schedule:`, error);
+    }
+  }
+
+  console.error(`  Found ${results.length} home games`);
+  return results;
+}
+
+// =============================================================================
+// Source 3: Distinctly Fayetteville (Enhanced Scraping)
 // =============================================================================
 
 const DISTINCTLY_RSS = 'https://www.distinctlyfayettevillenc.com/event/rss/';
 
+interface DistinctlyEventData {
+  recid: string;
+  title: string;
+  description: string;
+  latitude?: number;
+  longitude?: number;
+  location?: string;  // Venue name
+  hostname?: string;
+  categories?: Array<{ catName: string; catId: string }>;
+  media_raw?: Array<{ mediaurl: string; mediatype: string }>;
+  phone?: string;
+  email?: string;
+  linkUrl?: string;
+  admission?: string;
+  expired?: boolean;
+  past?: boolean;
+  host?: {
+    address1?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    company?: string;
+  };
+}
+
+/**
+ * Parse date string like "Wednesday, December 31, 2025 9:00 PM"
+ */
+function parseDistinctlyDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+
+  // Try parsing with built-in Date parser first
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    return parsed;
+  }
+
+  // Manual parsing for format: "Weekday, Month DD, YYYY H:MM AM/PM"
+  const match = dateStr.match(/(\w+),\s+(\w+)\s+(\d{1,2}),\s+(\d{4})\s+(\d{1,2}):(\d{2})\s+(AM|PM)/i);
+  if (match) {
+    const [, , monthName, day, year, hour, minute, ampm] = match;
+    const months: Record<string, number> = {
+      'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
+      'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
+    };
+    const month = months[monthName.toLowerCase()];
+    if (month !== undefined) {
+      let h = parseInt(hour);
+      if (ampm.toUpperCase() === 'PM' && h !== 12) h += 12;
+      if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+      return new Date(parseInt(year), month, parseInt(day), h, parseInt(minute));
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Fetch detailed event data from Distinctly Fayetteville event page
+ */
+async function fetchDistinctlyEventDetails(eventUrl: string): Promise<{
+  data: DistinctlyEventData | null;
+  startDate: string | null;
+  endDate: string | null;
+  ogImage: string | null;
+  streetAddress: string | null;
+}> {
+  try {
+    const response = await fetch(eventUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EventBot/1.0)' }
+    });
+
+    if (!response.ok) {
+      return { data: null, startDate: null, endDate: null, ogImage: null, streetAddress: null };
+    }
+
+    const html = await response.text();
+
+    // Extract og:image for high-res image
+    const ogImageMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/);
+    const ogImage = ogImageMatch?.[1] || null;
+
+    // Extract embedded JSON data: var data = {...}
+    // The JSON is on one line ending with }; then other vars follow
+    const dataMatch = html.match(/var\s+data\s*=\s*(\{[^\n]+\});/);
+    let data: DistinctlyEventData | null = null;
+
+    if (dataMatch) {
+      try {
+        // Clean up the JSON - handle HTML entities in strings
+        let jsonStr = dataMatch[1]
+          .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code)))
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"');
+        data = JSON.parse(jsonStr);
+      } catch (e) {
+        // Try field-by-field extraction as fallback
+        const recidMatch = html.match(/"recid"\s*:\s*"(\d+)"/);
+        const locationMatch = html.match(/"location"\s*:\s*"([^"]*)"/);
+        const titleMatch = html.match(/var\s+data\s*=\s*\{[^}]*"title"\s*:\s*"([^"]*)"/);
+        const descMatch = html.match(/"description"\s*:\s*"([^"]*(?:\\.[^"]*)*)"/);
+        const latMatch = html.match(/"latitude"\s*:\s*([\d.-]+)/);
+        const lngMatch = html.match(/"longitude"\s*:\s*([\d.-]+)/);
+
+        if (recidMatch && titleMatch) {
+          data = {
+            recid: recidMatch[1],
+            location: locationMatch?.[1] || '',
+            title: titleMatch[1],
+            description: descMatch?.[1]?.replace(/\\r\\n/g, '\n').replace(/\\"/g, '"') || '',
+            latitude: latMatch ? parseFloat(latMatch[1]) : undefined,
+            longitude: lngMatch ? parseFloat(lngMatch[1]) : undefined,
+          };
+        }
+      }
+    }
+
+    // Extract startDate and endDate
+    const startDateMatch = html.match(/var\s+startDate\s*=\s*"([^"]+)"/);
+    const endDateMatch = html.match(/var\s+endDate\s*=\s*"([^"]+)"/);
+    const streetAddressMatch = html.match(/var\s+streetAddress\s*=\s*"([^"]*)"/);
+
+    return {
+      data,
+      startDate: startDateMatch?.[1] || null,
+      endDate: endDateMatch?.[1] || null,
+      ogImage,
+      streetAddress: streetAddressMatch?.[1] || null
+    };
+  } catch (error) {
+    return { data: null, startDate: null, endDate: null, ogImage: null, streetAddress: null };
+  }
+}
+
 async function fetchDistinctlyEvents(): Promise<UnifiedEvent[]> {
   console.error('Fetching: Distinctly Fayetteville...');
 
+  // Step 1: Get event URLs from RSS feed
   const response = await fetch(DISTINCTLY_RSS);
   const xml = await response.text();
 
-  const results: UnifiedEvent[] = [];
-
-  // Simple XML parsing without dependencies
   const items = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+  const eventUrls: Array<{ url: string; pubDate: string; rssCategories: string[] }> = [];
 
   for (const item of items) {
-    const title = extractXmlTag(item, 'title');
     const link = extractXmlTag(item, 'link');
-    const guid = extractXmlTag(item, 'guid');
-    const pubDate = extractXmlTag(item, 'pubDate');
-    const description = extractXmlTag(item, 'description');
-    const lat = extractXmlTag(item, 'geo:lat');
-    const lon = extractXmlTag(item, 'geo:long');
+    const pubDate = extractXmlTag(item, 'pubDate') || '';
 
-    // Extract categories
-    const categoryMatches = item.match(/<category>([^<]+)<\/category>/g) || [];
-    const categories = categoryMatches.map(c =>
-      c.replace(/<\/?category>/g, '').replace(/&amp;/g, '&')
+    // Extract categories from RSS as fallback
+    const categoryMatches = item.match(/<category><!\[CDATA\[\s*([^\]]+)\s*\]\]><\/category>/g) || [];
+    const rssCategories = categoryMatches.map(c =>
+      c.replace(/<category><!\[CDATA\[\s*/, '').replace(/\s*\]\]><\/category>/, '').replace(/&amp;/g, '&').trim()
     );
 
-    // Parse dates from description - format: "MM/DD/YYYY to ... MM/DD/YYYY"
-    // or just single dates scattered in the text
-    const dateMatches = description?.match(/(\d{2})\/(\d{2})\/(\d{4})/g) || [];
-
-    let startDate = new Date();
-    let endDate = new Date();
-
-    if (dateMatches.length >= 2) {
-      // First date is start, last date is end
-      const [sm, sd, sy] = dateMatches[0].split('/');
-      const [em, ed, ey] = dateMatches[dateMatches.length - 1].split('/');
-      startDate = new Date(parseInt(sy), parseInt(sm) - 1, parseInt(sd));
-      endDate = new Date(parseInt(ey), parseInt(em) - 1, parseInt(ed));
-    } else if (dateMatches.length === 1) {
-      const [m, d, y] = dateMatches[0].split('/');
-      startDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-      endDate = startDate;
+    if (link) {
+      eventUrls.push({ url: link, pubDate, rssCategories });
     }
-
-    // Extract image
-    const imgMatch = description?.match(/<img[^>]+src="([^"]+)"/);
-    const imageUrl = imgMatch?.[1];
-
-    // Extract ID from URL
-    const idMatch = link?.match(/\/(\d+)\/?$/);
-    const sourceId = idMatch?.[1] || guid || String(Date.now());
-
-    const cleanTitle = decodeHtmlEntities(title || '');
-    results.push({
-      id: `distinctly_${sourceId}`,
-      source: 'distinctly_fayetteville',
-      sourceId,
-      title: cleanTitle,
-      description: cleanDescription(description || '', cleanTitle),
-      startDateTime: startDate,
-      endDateTime: endDate,
-      venue: lat && lon ? {
-        name: 'Fayetteville',
-        city: 'Fayetteville',
-        state: 'NC',
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lon),
-      } : null,
-      categories,
-      url: link || '',
-      imageUrl,
-      lastModified: pubDate ? new Date(pubDate) : new Date(),
-      section: 'downtown',
-    });
   }
 
-  console.error(`  Found ${results.length} events`);
-  return results;
+  console.error(`  Found ${eventUrls.length} events in RSS, fetching details...`);
+
+  // Step 2: Fetch detailed data for each event (with rate limiting)
+  const results: UnifiedEvent[] = [];
+  const BATCH_SIZE = 5;
+  const DELAY_MS = 200;
+
+  for (let i = 0; i < eventUrls.length; i += BATCH_SIZE) {
+    const batch = eventUrls.slice(i, i + BATCH_SIZE);
+
+    const batchResults = await Promise.all(
+      batch.map(async ({ url, pubDate, rssCategories }) => {
+        const details = await fetchDistinctlyEventDetails(url);
+
+        // Extract ID from URL
+        const idMatch = url.match(/\/(\d+)\/?$/);
+        const sourceId = details.data?.recid || idMatch?.[1] || String(Date.now());
+
+        // Parse dates
+        let startDateTime = parseDistinctlyDate(details.startDate || '');
+        let endDateTime = parseDistinctlyDate(details.endDate || '');
+
+        // Fallback to noon if no time info
+        if (!startDateTime) {
+          startDateTime = new Date();
+          startDateTime.setHours(12, 0, 0, 0);
+        }
+        if (!endDateTime) {
+          endDateTime = new Date(startDateTime);
+          endDateTime.setHours(23, 59, 0, 0);
+        }
+
+        // Get image - prefer og:image (high res), then media_raw
+        let imageUrl = details.ogImage;
+        if (!imageUrl && details.data?.media_raw?.[0]?.mediaurl) {
+          imageUrl = details.data.media_raw[0].mediaurl;
+        }
+
+        // Get categories - prefer API data, fallback to RSS
+        let categories = rssCategories;
+        if (details.data?.categories?.length) {
+          categories = details.data.categories.map(c => c.catName);
+        }
+
+        // Get venue info
+        const venueName = details.data?.location || details.data?.hostname || 'Fayetteville';
+        const host = details.data?.host;
+
+        // Build description
+        let description = '';
+        if (details.data?.description) {
+          // Strip HTML tags and decode entities
+          description = details.data.description
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code)))
+            .replace(/\s+/g, ' ')
+            .trim();
+        }
+
+        // Add venue and admission info to description
+        if (details.data?.admission && details.data.admission !== 'Free') {
+          description = `Admission: ${details.data.admission}. ${description}`;
+        }
+
+        const title = decodeHtmlEntities(details.data?.title || '');
+
+        return {
+          id: `distinctly_${sourceId}`,
+          source: 'distinctly_fayetteville',
+          sourceId,
+          title,
+          description: description || `Event at ${venueName} in Fayetteville`,
+          startDateTime,
+          endDateTime,
+          venue: {
+            name: venueName,
+            address: details.streetAddress || host?.address1,
+            city: host?.city || 'Fayetteville',
+            state: host?.state || 'NC',
+            zip: host?.zip,
+            latitude: details.data?.latitude,
+            longitude: details.data?.longitude,
+          },
+          categories,
+          url,
+          ticketUrl: details.data?.linkUrl || undefined,
+          imageUrl,
+          lastModified: pubDate ? new Date(pubDate) : new Date(),
+          section: 'downtown',
+        } as UnifiedEvent;
+      })
+    );
+
+    results.push(...batchResults.filter(e => e.title));
+
+    // Rate limiting delay between batches
+    if (i + BATCH_SIZE < eventUrls.length) {
+      await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+    }
+  }
+
+  // Filter out past/expired events
+  const now = new Date();
+  const futureEvents = results.filter(e => e.endDateTime > now);
+
+  console.error(`  Enriched ${futureEvents.length} future events with full details`);
+  return futureEvents;
 }
 
 // =============================================================================
@@ -536,28 +921,15 @@ async function fetchFortLibertyEvents(useEnhanced = false): Promise<UnifiedEvent
         if (results.some(e => e.id === uniqueId)) continue;
 
         const eventUrl = `https://bragg.armymwr.com${fullPath}`;
-        let description = '';
-        let imageUrl: string | undefined;
-
-        // Use ResearchTools API to fetch event images
-        // Note: MWR site doesn't have good meta descriptions, so we only extract images
-        if (useEnhanced) {
-          console.error(`    Fetching image for: ${title.slice(0, 40)}...`);
-          const scraped = await fetchWithResearchTools(eventUrl);
-          if (scraped) {
-            // Only use the og:image - descriptions on MWR site contain menu/sidebar content
-            imageUrl = scraped.metadata?.og_image;
-          }
-          // Rate limit for API calls
-          await new Promise(r => setTimeout(r, 300));
-        }
+        // Note: MWR event pages redirect to /calendar, so we can't fetch individual pages
+        // Description and images would need to be extracted from API or calendar scrape
 
         results.push({
           id: uniqueId,
           source: 'fort_liberty_mwr',
           sourceId: `${eventId}_${occurrenceId}`,
           title,
-          description,
+          description: '', // MWR pages redirect, can't fetch descriptions
           startDateTime: eventDate,
           endDateTime: new Date(eventDate.getTime() + 2 * 60 * 60 * 1000), // Default 2hr duration
           venue: venueMatch ? {
@@ -571,7 +943,7 @@ async function fetchFortLibertyEvents(useEnhanced = false): Promise<UnifiedEvent
           },
           categories: ['Military', 'MWR'],
           url: eventUrl,
-          imageUrl,
+          imageUrl: undefined, // MWR pages redirect, can't fetch images
           lastModified: new Date(),
           section: 'fort_bragg',
         });
@@ -746,6 +1118,56 @@ const DICKENS_HOLIDAY_URL = 'http://adickensholiday.com/';
 const MLK_URL = 'https://mlkmemorialpark.org/upcoming-events/';
 
 const LIBRARY_URL = 'https://cumberland.librarycalendar.com/events/upcoming';
+
+const ARTS_COUNCIL_URL = 'https://www.wearethearts.com';
+
+const SYMPHONY_URL = 'https://www.fayettevillesymphony.org/2025-2026-season/';
+
+// Cameo Art House Theatre URLs
+const CAMEO_NOW_SHOWING_URL = 'https://www.cameoarthouse.com/now-showing/';
+const CAMEO_SPECIAL_EVENTS_URL = 'https://www.cameoarthouse.com/special-events/';
+
+// Cameo Art House venue
+const CAMEO_VENUE: UnifiedEvent['venue'] = {
+  name: 'Cameo Art House Theatre',
+  address: '225 Hay Street',
+  city: 'Fayetteville',
+  state: 'NC',
+  zip: '28301',
+  phone: '910-486-6633',
+};
+
+// Fayetteville Symphony Orchestra venues with full location data
+const SYMPHONY_VENUES: Record<string, UnifiedEvent['venue']> = {
+  'arts_xl': {
+    name: 'Arts XL',
+    address: '214 Burgess St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+  },
+  'st_johns': {
+    name: "St. John's Episcopal Church",
+    address: '302 Green Street',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+  },
+  'seabrook': {
+    name: 'Seabrook Auditorium (Fayetteville State University)',
+    address: '1200 Murchison Rd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+  },
+  'huff': {
+    name: 'Huff Concert Hall (Methodist University)',
+    address: '5400 Ramsey Street',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28311',
+  },
+};
 
 // FY26 Training Holiday Schedule (Oct 2025 - Sep 2026)
 // Source: XVIII Airborne Corps Compensatory Schedule
@@ -1053,12 +1475,61 @@ async function fetchLibraryEvents(): Promise<UnifiedEvent[]> {
       const locationDetail = block.match(/([^>]+)\s+at Headquarters Library/);
       const room = locationDetail ? locationDetail[1].trim() : '';
 
+      // Build base description
+      let description = ageGroup ? `${category} program for ${ageGroup}. ${room ? `Location: ${room}` : ''}`.trim() : `${category} program at Headquarters Library.`;
+      let imageUrl: string | undefined;
+
+      // Fetch individual event page for better description and image
+      const fullEventUrl = `https://cumberland.librarycalendar.com${eventUrl}`;
+      try {
+        const eventResponse = await fetch(fullEventUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EventBot/1.0)' }
+        });
+        if (eventResponse.ok) {
+          const eventHtml = await eventResponse.text();
+
+          // Extract description from JSON or meta
+          const jsonDescMatch = eventHtml.match(/"description"\s*:\s*"([^"]+)"/);
+          if (jsonDescMatch) {
+            const fullDesc = jsonDescMatch[1]
+              .replace(/\\u[\dA-Fa-f]{4}/g, '')
+              .replace(/<[^>]*>/g, ' ')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/\\r\\n/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+            if (fullDesc.length > description.length) {
+              description = fullDesc.slice(0, 500);
+            }
+          }
+
+          // Fallback to meta description
+          if (description.length < 50) {
+            const metaDescMatch = eventHtml.match(/<meta\s+name="description"\s+content="([^"]+)"/i);
+            if (metaDescMatch && metaDescMatch[1].length > description.length) {
+              description = metaDescMatch[1].replace(/&amp;/g, '&').trim();
+            }
+          }
+
+          // Extract event image
+          const imgMatch = eventHtml.match(/field--name-field-lc-image[^>]*>.*?<img[^>]+src="([^"]+)"/s);
+          if (imgMatch) {
+            imageUrl = imgMatch[1];
+          }
+        }
+        // Rate limit
+        await new Promise(r => setTimeout(r, 100));
+      } catch (e) {
+        // Continue with basic data
+      }
+
       results.push({
         id: `library_hq_${eventId}`,
         source: 'library_hq',
         sourceId: eventId,
         title: title,
-        description: ageGroup ? `${category} program for ${ageGroup}. ${room ? `Location: ${room}` : ''}`.trim() : `${category} program at Headquarters Library.`,
+        description,
         startDateTime: startDate,
         endDateTime: endDate,
         venue: {
@@ -1069,7 +1540,8 @@ async function fetchLibraryEvents(): Promise<UnifiedEvent[]> {
           zip: '28301',
         },
         categories: [category, 'Library Programs'].filter(Boolean),
-        url: `https://cumberland.librarycalendar.com${eventUrl}`,
+        url: fullEventUrl,
+        imageUrl,
         lastModified: new Date(),
         section: 'downtown',
       });
@@ -1125,7 +1597,7 @@ async function fetchFortLibertyHolidays(): Promise<UnifiedEvent[]> {
         city: 'Fort Liberty',
         state: 'NC',
       },
-      categories: ['Military', 'Training Holiday', `${holiday.days}-Day Weekend`],
+      categories: ['Military', 'Long Weekend'],
       url: 'https://home.army.mil/liberty',
       lastModified: new Date(),
       section: 'fort_bragg',
@@ -1148,6 +1620,480 @@ function parseTimeString(timeStr: string): { hours: number; minutes: number } | 
   if (period === 'am' && hours === 12) hours = 0;
 
   return { hours, minutes };
+}
+
+// =============================================================================
+// Source 11: Arts Council of Fayetteville (Wix Events)
+// =============================================================================
+
+async function fetchArtsCouncilEvents(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Arts Council of Fayetteville...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+
+  try {
+    const response = await fetch(ARTS_COUNCIL_URL, {
+      headers: {
+        'User-Agent': 'FayettevilleCentralCalendar/1.0',
+        'Accept': 'text/html',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`  HTTP error: ${response.status}`);
+      return results;
+    }
+
+    const html = await response.text();
+
+    // Extract event data from embedded Wix JSON
+    // Pattern: "title":"Event Name","description":"...","mainImage":{...},"slug":"event-slug"
+    const eventJsonPattern = /"title":"([^"]+)","description":"([^"]+)","about":"[^"]*","mainImage":\{[^}]+\},"slug":"([^"]+)"/g;
+
+    // Also extract scheduling data
+    // Pattern: "startDate":"2026-01-23T23:00:00.000Z","endDate":"2026-01-24T02:00:00.000Z"
+    const schedulePattern = /"startDate":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)","endDate":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)"/g;
+
+    // Collect all events with their data
+    const eventData: { title: string; description: string; slug: string }[] = [];
+    let match;
+
+    while ((match = eventJsonPattern.exec(html)) !== null) {
+      const [, title, description, slug] = match;
+
+      // Skip navigation/system items
+      if (title.includes('My ') || title === 'Events' || title === 'Profile') continue;
+
+      eventData.push({
+        title: decodeHtmlEntities(title),
+        description: decodeHtmlEntities(description),
+        slug,
+      });
+    }
+
+    // Collect scheduling data (ISO dates)
+    const schedules: { startDate: Date; endDate: Date }[] = [];
+    while ((match = schedulePattern.exec(html)) !== null) {
+      const [, startDate, endDate] = match;
+      schedules.push({
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+      });
+    }
+
+    // Match events with schedules (they appear in same order on the page)
+    // Filter to only unique events (some may appear duplicated)
+    const seenSlugs = new Set<string>();
+
+    for (let i = 0; i < Math.min(eventData.length, schedules.length); i++) {
+      const event = eventData[i];
+      const schedule = schedules[i];
+
+      // Skip duplicates and past events
+      if (seenSlugs.has(event.slug)) continue;
+      if (schedule.endDate < now) continue;
+
+      seenSlugs.add(event.slug);
+
+      // Extract image URL
+      const imgPattern = new RegExp(`"slug":"${event.slug.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}"[^}]*"mainImage":\\{[^}]*"url":"([^"]+)"`, 'i');
+      const imgMatch = html.match(imgPattern);
+      let imageUrl: string | undefined;
+      if (imgMatch) {
+        imageUrl = imgMatch[1].replace(/\\\//g, '/');
+      }
+
+      results.push({
+        id: `arts_council_${event.slug}`,
+        source: 'arts_council',
+        sourceId: event.slug,
+        title: event.title,
+        description: event.description,
+        startDateTime: schedule.startDate,
+        endDateTime: schedule.endDate,
+        venue: {
+          name: 'The Arts Center',
+          address: '301 Hay St',
+          city: 'Fayetteville',
+          state: 'NC',
+          zip: '28301',
+        },
+        categories: ['Arts & Culture', 'Gallery'],
+        url: `${ARTS_COUNCIL_URL}/event-details-registration/${event.slug}`,
+        imageUrl,
+        lastModified: new Date(),
+        section: 'downtown',
+      });
+    }
+  } catch (error) {
+    console.error('  Error fetching Arts Council events:', error);
+  }
+
+  console.error(`  Found ${results.length} events`);
+  return results;
+}
+
+// =============================================================================
+// Source 12: Fayetteville Symphony Orchestra (Season Schedule)
+// =============================================================================
+
+// 2025-2026 Season concerts with researched venue data
+// Source: https://www.fayettevillesymphony.org/concert-calendar/ (authoritative for dates/venues)
+const SYMPHONY_2025_2026_SEASON = [
+  {
+    id: 'coffee-cantata-2025',
+    title: 'Coffee Cantata',
+    description: "Chamber concert featuring Bach's Coffee Cantata with voice and strings, telling a comedic story of a girl and her father arguing over love, life, and caffeine. Coffee and pastries available.",
+    date: '2025-11-22',
+    time: '14:00', // 2:00pm (also 7:30pm show)
+    endTime: '16:00',
+    venue: 'arts_xl',
+    categories: ['Classical Music', 'Chamber Music'],
+  },
+  {
+    id: 'coffee-cantata-evening-2025',
+    title: 'Coffee Cantata (Evening Performance)',
+    description: "Chamber concert featuring Bach's Coffee Cantata with voice and strings, telling a comedic story of a girl and her father arguing over love, life, and caffeine. Coffee and pastries available.",
+    date: '2025-11-22',
+    time: '19:30', // 7:30pm
+    endTime: '21:30',
+    venue: 'arts_xl',
+    categories: ['Classical Music', 'Chamber Music'],
+  },
+  {
+    id: 'road-to-america-250-2026',
+    title: 'The Road to America 250',
+    description: "Chamber concert celebrating American musical history with music by American composers, ahead of the country's 250th anniversary.",
+    date: '2026-01-17',
+    time: '19:30',
+    endTime: '21:30',
+    venue: 'huff', // Per concert calendar (not season page which said St. John's)
+    categories: ['Classical Music', 'Chamber Music', 'Americana'],
+  },
+  {
+    id: 'night-on-the-town-2026',
+    title: 'A Night on the Town',
+    description: 'Features award-winning bassist Kebra-Seyoun Charles performing their original bass concerto "Night Life," plus a gospel choir performing gospel settings.',
+    date: '2026-02-28',
+    time: '19:30',
+    endTime: '21:30',
+    venue: 'seabrook',
+    categories: ['Classical Music', 'Orchestra', 'Gospel'],
+  },
+  {
+    id: 'side-by-side-2026',
+    title: 'Side by Side',
+    description: 'Annual concert where the Fayetteville Symphony Youth Orchestra performs alongside professional symphony musicians. A celebration of music education and mentorship. Free admission, tickets required.',
+    date: '2026-03-15',
+    time: '16:00', // 4:00pm
+    endTime: '18:00',
+    venue: 'huff',
+    categories: ['Classical Music', 'Orchestra', 'Family', 'Youth'],
+  },
+  {
+    id: 'john-williams-2026',
+    title: 'John Williams and His Influences',
+    description: 'Features iconic John Williams film scores paired with some of the classical greats that inspired them. A celebration of cinematic music.',
+    date: '2026-04-21', // Per concert calendar (not Apr 18 from season page)
+    time: '19:30',
+    endTime: '21:30',
+    venue: 'huff',
+    categories: ['Classical Music', 'Orchestra', 'Film Music'],
+  },
+];
+
+async function fetchSymphonyEvents(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Fayetteville Symphony Orchestra...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+
+  for (const concert of SYMPHONY_2025_2026_SEASON) {
+    const [year, month, day] = concert.date.split('-').map(Number);
+    const [hours, minutes] = concert.time.split(':').map(Number);
+    const [endHours, endMinutes] = concert.endTime.split(':').map(Number);
+
+    const startDateTime = new Date(year, month - 1, day, hours, minutes);
+    const endDateTime = new Date(year, month - 1, day, endHours, endMinutes);
+
+    // Skip past events
+    if (endDateTime < now) continue;
+
+    const venue = SYMPHONY_VENUES[concert.venue];
+
+    results.push({
+      id: `symphony_${concert.id}`,
+      source: 'fayetteville_symphony',
+      sourceId: concert.id,
+      title: `Fayetteville Symphony: ${concert.title}`,
+      description: concert.description,
+      startDateTime,
+      endDateTime,
+      venue,
+      categories: concert.categories,
+      url: SYMPHONY_URL,
+      lastModified: new Date(),
+      section: 'downtown',
+    });
+  }
+
+  console.error(`  Found ${results.length} events`);
+  return results;
+}
+
+// =============================================================================
+// Source 13: Cameo Art House Theatre (Dynamic Scraping)
+// =============================================================================
+
+/**
+ * Parse a showtime string like "Tuesday, December 30: 4:15 & 7:30"
+ * Returns array of Date objects for each showtime
+ */
+function parseCameoShowtimes(showtimeText: string, currentYear: number): Date[] {
+  const results: Date[] = [];
+
+  // Match pattern: "Day, Month Date: Time(s)"
+  const dayMatch = showtimeText.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s+(\w+)\s+(\d{1,2}):\s*(.+)$/i);
+  if (!dayMatch) return results;
+
+  const [, , month, day, timesStr] = dayMatch;
+
+  // Parse month
+  const monthNames: Record<string, number> = {
+    january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+    july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+  };
+  const monthIndex = monthNames[month.toLowerCase()];
+  if (monthIndex === undefined) return results;
+
+  // Determine year - showtimes are typically for current or next few months
+  // If the month is significantly before current month (more than 1 month ago), assume next year
+  const now = new Date();
+  let year = currentYear;
+  const monthDiff = monthIndex - now.getMonth();
+
+  // If month is more than 1 month in the past, it's probably next year
+  // (allows for late-month scheduling of early-month events)
+  if (monthDiff < -1) {
+    year = currentYear + 1;
+  }
+
+  // Parse times (can be "4:15 & 7:30" or "1:00, 4:15 & 7:30" or "1:00PM")
+  const timePattern = /(\d{1,2}):?(\d{2})?\s*(AM|PM)?/gi;
+  let timeMatch;
+
+  while ((timeMatch = timePattern.exec(timesStr)) !== null) {
+    let hours = parseInt(timeMatch[1]);
+    const minutes = parseInt(timeMatch[2] || '0');
+    const period = timeMatch[3]?.toUpperCase();
+
+    // If no AM/PM specified, infer from hour (movie theaters rarely show before noon)
+    if (!period) {
+      // Times like 1:00, 1:30 are likely PM (1 PM), times like 4:00+ are definitely PM
+      if (hours < 12) {
+        hours += 12; // Assume PM for movie showtimes
+      }
+    } else if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    const showDate = new Date(year, monthIndex, parseInt(day), hours, minutes);
+    if (showDate > now) {
+      results.push(showDate);
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Parse movie block from Cameo HTML
+ */
+function parseCameoMovieBlock(block: string, currentYear: number): {
+  title: string;
+  description: string;
+  rating: string;
+  runtime: string;
+  director: string;
+  showtimes: Date[];
+  imageUrl?: string;
+  ticketUrl?: string;
+} | null {
+  // Extract title from <strong>TITLE</strong>
+  const titleMatch = block.match(/<p><strong>([^<]+)<\/strong><\/p>/);
+  if (!titleMatch) return null;
+
+  let title = titleMatch[1].trim();
+  // Clean up title (remove date suffixes like "- JANUARY 11TH")
+  title = title.replace(/\s*[-–]\s*(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+\d{1,2}(ST|ND|RD|TH)?/i, '');
+
+  // Extract showtimes
+  const showtimeSection = block.match(/UPCOMING SHOWTIMES:<\/div>\s*<div>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/i);
+  const showtimes: Date[] = [];
+
+  if (showtimeSection) {
+    const showtimeLines = showtimeSection[1].split(/<br\s*\/?>/i);
+    for (const line of showtimeLines) {
+      // Remove HTML tags and decode HTML entities
+      let cleanLine = line.replace(/<[^>]*>/g, '').trim();
+      cleanLine = cleanLine.replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
+      if (cleanLine) {
+        showtimes.push(...parseCameoShowtimes(cleanLine, currentYear));
+      }
+    }
+  }
+
+  // Extract description (paragraph after showtimes, before director)
+  const descMatch = block.match(/<\/div>\s*<p>([^<]+(?:(?!Directed By:).)*?)<\/p>\s*<p>Directed By:/i);
+  const description = descMatch ? descMatch[1].trim() : '';
+
+  // Extract rating and runtime
+  const ratingMatch = block.match(/Rated\s+(\w+);\s*Runtime\s+([\dhr\s]+min)/i);
+  const rating = ratingMatch ? ratingMatch[1] : 'NR';
+  const runtime = ratingMatch ? ratingMatch[2] : '';
+
+  // Extract director
+  const directorMatch = block.match(/Directed By:\s*([^<]+)/i);
+  const director = directorMatch ? directorMatch[1].trim() : '';
+
+  // Extract image URL
+  const imageMatch = block.match(/src="(https:\/\/www\.cameoarthouse\.com\/wordpress\/wp-content\/uploads\/[^"]+)"/);
+  const imageUrl = imageMatch ? imageMatch[1] : undefined;
+
+  // Extract ticket URL
+  const ticketMatch = block.match(/href="(https:\/\/ticketmesandhills\.com\/events\/[^"]+)"/);
+  const ticketUrl = ticketMatch ? ticketMatch[1] : undefined;
+
+  if (showtimes.length === 0) return null;
+
+  return { title, description, rating, runtime, director, showtimes, imageUrl, ticketUrl };
+}
+
+async function fetchCameoEvents(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Cameo Art House Theatre...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  // Fetch both pages in parallel
+  const [nowShowingRes, specialEventsRes] = await Promise.all([
+    fetch(CAMEO_NOW_SHOWING_URL, {
+      headers: { 'User-Agent': 'FayettevilleCentralCalendar/1.0', 'Accept': 'text/html' },
+    }),
+    fetch(CAMEO_SPECIAL_EVENTS_URL, {
+      headers: { 'User-Agent': 'FayettevilleCentralCalendar/1.0', 'Accept': 'text/html' },
+    }),
+  ]);
+
+  // Process Now Showing page
+  if (nowShowingRes.ok) {
+    const html = await nowShowingRes.text();
+
+    // Split by movie blocks (each movie is in a panel-grid-cell)
+    const movieBlocks = html.split(/class="panel-grid-cell"/);
+
+    for (const block of movieBlocks) {
+      const movie = parseCameoMovieBlock(block, currentYear);
+      if (!movie) continue;
+
+      // Create an event for each showtime
+      for (const showtime of movie.showtimes) {
+        // Calculate end time based on runtime
+        const runtimeMatch = movie.runtime.match(/(\d+)hr\s*(\d+)?min/i);
+        let durationMinutes = 120; // Default 2 hours
+        if (runtimeMatch) {
+          durationMinutes = parseInt(runtimeMatch[1]) * 60 + (parseInt(runtimeMatch[2] || '0'));
+        }
+        const endTime = new Date(showtime.getTime() + durationMinutes * 60 * 1000);
+
+        const dateStr = showtime.toISOString().split('T')[0];
+        const timeStr = showtime.toTimeString().slice(0, 5).replace(':', '');
+
+        results.push({
+          id: `cameo_${slugify(movie.title)}_${dateStr}_${timeStr}`,
+          source: 'cameo_art_house',
+          sourceId: `${slugify(movie.title)}_${dateStr}_${timeStr}`,
+          title: movie.title,
+          description: `${movie.description} Directed by ${movie.director}. Rated ${movie.rating}, ${movie.runtime}.`,
+          startDateTime: showtime,
+          endDateTime: endTime,
+          venue: CAMEO_VENUE,
+          categories: ['Film', 'Movies', 'Arts & Culture'],
+          url: CAMEO_NOW_SHOWING_URL,
+          ticketUrl: movie.ticketUrl,
+          imageUrl: movie.imageUrl,
+          lastModified: new Date(),
+          section: 'downtown',
+        });
+      }
+    }
+  }
+
+  // Process Special Events page
+  if (specialEventsRes.ok) {
+    const html = await specialEventsRes.text();
+
+    // Split by event blocks
+    const eventBlocks = html.split(/class="panel-grid-cell"/);
+
+    for (const block of eventBlocks) {
+      const event = parseCameoMovieBlock(block, currentYear);
+      if (!event) continue;
+
+      // Special events typically have single showtimes
+      for (const showtime of event.showtimes) {
+        const runtimeMatch = event.runtime.match(/(\d+)hr\s*(\d+)?min/i);
+        let durationMinutes = 120;
+        if (runtimeMatch) {
+          durationMinutes = parseInt(runtimeMatch[1]) * 60 + (parseInt(runtimeMatch[2] || '0'));
+        }
+        const endTime = new Date(showtime.getTime() + durationMinutes * 60 * 1000);
+
+        const dateStr = showtime.toISOString().split('T')[0];
+        const timeStr = showtime.toTimeString().slice(0, 5).replace(':', '');
+
+        // Determine category based on title/content
+        let categories = ['Film', 'Special Screening'];
+        if (event.title.match(/\(\d{4}\)/)) {
+          categories.push('Classic Film');
+        }
+        if (event.description.toLowerCase().includes('documentary')) {
+          categories = ['Documentary', 'Special Screening'];
+        }
+        if (event.title.toLowerCase().includes('holocaust') || event.description.toLowerCase().includes('holocaust')) {
+          categories.push('Educational');
+        }
+
+        results.push({
+          id: `cameo_special_${slugify(event.title)}_${dateStr}_${timeStr}`,
+          source: 'cameo_art_house',
+          sourceId: `special_${slugify(event.title)}_${dateStr}_${timeStr}`,
+          title: `Cameo Special: ${event.title}`,
+          description: `${event.description} ${event.director ? `Directed by ${event.director}.` : ''} Rated ${event.rating}, ${event.runtime}.`,
+          startDateTime: showtime,
+          endDateTime: endTime,
+          venue: CAMEO_VENUE,
+          categories,
+          url: CAMEO_SPECIAL_EVENTS_URL,
+          ticketUrl: event.ticketUrl,
+          imageUrl: event.imageUrl,
+          lastModified: new Date(),
+          section: 'downtown',
+        });
+      }
+    }
+  }
+
+  // Deduplicate by ID
+  const unique = Array.from(new Map(results.map(e => [e.id, e])).values());
+  unique.sort((a, b) => a.startDateTime.getTime() - b.startDateTime.getTime());
+
+  console.error(`  Found ${unique.length} events (showtimes)`);
+  return unique;
 }
 
 // =============================================================================
@@ -1256,15 +2202,334 @@ function slugify(text: string): string {
 }
 
 // =============================================================================
+// Source 14: Fayetteville Motor Speedway (MyRacePass)
+// Dirt track racing - Season runs March to October
+// =============================================================================
+
+const FAYETTEVILLE_SPEEDWAY_URL = 'https://www.myracepass.com/tracks/2933/schedule';
+const FAYETTEVILLE_SPEEDWAY_TRACK_ID = 2933;
+
+async function fetchFayettevilleSpeedwayEvents(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Fayetteville Motor Speedway (MyRacePass)...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+
+  // Fetch 2 months of events by checking daily pages
+  // MyRacePass track schedule pages show upcoming events
+  try {
+    const response = await fetch(FAYETTEVILLE_SPEEDWAY_URL, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; FayettevilleEventsBot/1.0)',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`  Failed to fetch: ${response.status}`);
+      return [];
+    }
+
+    const html = await response.text();
+
+    // Parse events from MyRacePass HTML structure
+    // Events are in mrp-rowCardWrap divs with structure:
+    // <div class="mrp-rowCardWrap">...<p class="text-muted text-uppercase">DATE</p>...<h3><a href="/events/ID">TITLE</a></h3>...<p class="text-muted">SERIES</p>...btn-outline-danger for upcoming, btn-danger for past results
+    // We want events with "Details" button (btn-outline-danger), not "Results" (btn-danger) or "Canceled"/"Dropped"
+
+    // Split into individual event blocks
+    const eventBlocks = html.split('<div class="mrp-rowCardWrap">').slice(1);
+
+    const seenIds = new Set<string>();
+
+    for (const block of eventBlocks) {
+      // Skip cancelled, dropped, rain out, postponed events
+      if (/btn-outline-default.*(?:Canceled|Dropped|Rain Out|Postponed)/i.test(block)) {
+        continue;
+      }
+
+      // Skip events with Results (past events)
+      if (/btn-danger.*>Results<\/a>/i.test(block)) {
+        continue;
+      }
+
+      // Extract date
+      const dateMatch = block.match(/<p class="text-muted text-uppercase">([^<]+)<\/p>/);
+      if (!dateMatch) continue;
+      const dateStr = dateMatch[1].trim();
+
+      // Extract event ID and title
+      const titleMatch = block.match(/<h3><a href="\/events\/(\d+)[^"]*">([^<]+)<\/a><\/h3>/);
+      if (!titleMatch) continue;
+      const eventId = titleMatch[1];
+      const title = titleMatch[2].trim();
+
+      // Extract series (optional)
+      const seriesMatch = block.match(/<\/h3>[\s\S]*?<p class="text-muted">([^<]+)<\/p>/);
+      const series = seriesMatch ? seriesMatch[1].trim() : '';
+
+      // Parse date - format: "Saturday, March 15, 2025" or "March 15, 2025"
+      const parsedDate = dateStr.match(/(?:\w+,\s+)?(\w+)\s+(\d{1,2}),?\s+(\d{4})/);
+      if (!parsedDate) continue;
+
+      const monthNames: Record<string, number> = {
+        january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+        july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+      };
+
+      const month = monthNames[parsedDate[1].toLowerCase()];
+      if (month === undefined) continue;
+
+      const day = parseInt(parsedDate[2]);
+      const year = parseInt(parsedDate[3]);
+
+      const startDate = new Date(year, month, day, 19, 0, 0); // Racing typically starts at 7 PM
+      const endDate = new Date(year, month, day, 23, 0, 0); // Ends around 11 PM
+
+      // Skip past events
+      if (endDate < now) continue;
+
+      // Create unique ID
+      const uniqueId = `speedway_${eventId}`;
+      if (seenIds.has(uniqueId)) continue;
+      seenIds.add(uniqueId);
+
+      // Build event title - include series if different from title
+      let fullTitle = title;
+      if (series && !title.toLowerCase().includes(series.toLowerCase().split(' ')[0])) {
+        fullTitle = `${title} - ${series}`;
+      }
+
+      results.push({
+        id: uniqueId,
+        source: 'fayetteville_speedway',
+        sourceId: eventId,
+        title: fullTitle,
+        description: series ? `Racing series: ${series}` : 'Dirt track racing at Fayetteville Motor Speedway',
+        startDateTime: startDate,
+        endDateTime: endDate,
+        venue: {
+          name: 'Fayetteville Motor Speedway',
+          address: '3407 Doc Bennett Rd',
+          city: 'Fayetteville',
+          state: 'NC',
+          zip: '28312',
+        },
+        categories: ['Sports', 'Family'],
+        url: `https://www.myracepass.com/events/${eventId}`,
+        ticketUrl: `https://www.myracepass.com/tracks/${FAYETTEVILLE_SPEEDWAY_TRACK_ID}/tickets`,
+        lastModified: new Date(),
+        section: 'downtown',
+      });
+    }
+
+    // If no events found from HTML parsing, the season might be over
+    // or the page structure changed - that's okay
+    if (results.length === 0) {
+      console.error('  No upcoming events found (racing season is March-October)');
+    } else {
+      console.error(`  Found ${results.length} events`);
+    }
+
+  } catch (error) {
+    console.error(`  Error fetching Fayetteville Speedway: ${error}`);
+  }
+
+  return results;
+}
+
+// =============================================================================
+// Source 15: FSU Broncos Sports (Fayetteville State University)
+// College athletics - home games at FSU campus venues
+// =============================================================================
+
+const FSU_SPORTS = [
+  { slug: 'mens-basketball', name: 'Men\'s Basketball', emoji: '🏀' },
+  { slug: 'womens-basketball', name: 'Women\'s Basketball', emoji: '🏀' },
+  { slug: 'football', name: 'Football', emoji: '🏈' },
+  { slug: 'volleyball', name: 'Volleyball', emoji: '🏐' },
+  { slug: 'softball', name: 'Softball', emoji: '🥎' },
+  { slug: 'track-and-field', name: 'Track & Field', emoji: '🏃' },
+  { slug: 'cheerleading', name: 'Cheerleading', emoji: '📣' },
+];
+
+interface FSUJsonLdEvent {
+  '@type': string;
+  name: string;
+  startDate: string;
+  endDate?: string;
+  description?: string;
+  location?: {
+    name?: string;
+    address?: {
+      streetAddress?: string;
+    };
+  };
+  homeTeam?: { name?: string };
+  awayTeam?: { name?: string };
+  image?: {
+    url?: string;
+  };
+}
+
+async function fetchFSUSportsEvents(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: FSU Broncos Sports...');
+
+  const results: UnifiedEvent[] = [];
+  const now = new Date();
+  const seenIds = new Set<string>();
+
+  for (const sport of FSU_SPORTS) {
+    try {
+      const url = `https://fsubroncos.com/sports/${sport.slug}/schedule`;
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; FayettevilleEventsBot/1.0)',
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`  ${sport.name}: Failed (${response.status})`);
+        continue;
+      }
+
+      const html = await response.text();
+
+      // Extract JSON-LD data
+      const jsonLdMatch = html.match(/<script type="application\/ld\+json">(\[[\s\S]*?\])<\/script>/);
+      if (!jsonLdMatch) {
+        console.error(`  ${sport.name}: No JSON-LD found`);
+        continue;
+      }
+
+      let events: FSUJsonLdEvent[];
+      try {
+        events = JSON.parse(jsonLdMatch[1]);
+      } catch {
+        console.error(`  ${sport.name}: Invalid JSON`);
+        continue;
+      }
+
+      let homeGameCount = 0;
+
+      for (const event of events) {
+        if (event['@type'] !== 'SportsEvent') continue;
+
+        const locationName = event.location?.name || '';
+
+        // Only include home games (location in Fayetteville)
+        if (!locationName.toLowerCase().includes('fayetteville')) {
+          continue;
+        }
+
+        // Parse date
+        const startDate = new Date(event.startDate);
+        if (isNaN(startDate.getTime())) continue;
+
+        // Skip past events
+        if (startDate < now) continue;
+
+        // Extract opponent from event name
+        // Format: "Fayetteville State University Vs/At Opponent"
+        let opponent = 'TBA';
+        const vsMatch = event.name?.match(/(?:Vs|At)\s+(.+)$/i);
+        if (vsMatch) {
+          opponent = vsMatch[1].trim();
+        } else if (event.awayTeam?.name) {
+          opponent = event.awayTeam.name;
+        }
+
+        // Create title
+        const title = `FSU ${sport.name} vs ${opponent}`;
+
+        // Create unique ID
+        const dateStr = startDate.toISOString().split('T')[0];
+        const eventId = slugify(`fsu-${sport.slug}-${opponent}-${dateStr}`);
+
+        if (seenIds.has(eventId)) continue;
+        seenIds.add(eventId);
+
+        // Determine end time (assume 2-3 hours depending on sport)
+        const durationHours = sport.slug === 'football' ? 3.5 : 2;
+        const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
+
+        // Get venue name based on sport
+        const venueName = sport.slug === 'football' ? 'Luther "Nick" Jeralds Stadium' :
+              sport.slug.includes('basketball') ? 'Capel Arena' :
+              sport.slug === 'volleyball' ? 'Capel Arena' :
+              sport.slug === 'softball' ? 'FSU Softball Field' :
+              'FSU Campus';
+
+        // Format game time for description
+        const gameTime = startDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        // Create rich description
+        const description = `${sport.emoji} FSU Broncos ${sport.name} takes on ${opponent} at ${venueName}. ` +
+          `Game time: ${gameTime}. Support Fayetteville State University athletics - Go Broncos! 🐴`;
+
+        // Get image URL from JSON-LD or use default FSU logo
+        const imageUrl = event.image?.url || 'https://fsubroncos.com/images/logos/site/site.png';
+
+        // Ticket URL - use sport-specific ticket page
+        const ticketUrl = sport.slug.includes('basketball')
+          ? 'https://fsubroncos.com/sports/2019/12/4/basketball-ticket-information.aspx?path=mbball'
+          : sport.slug === 'football'
+            ? 'https://fsubroncos.com/sports/2025/2/10/2025-football-season-tickets.aspx'
+            : `https://fsubroncos.com/sports/${sport.slug}/schedule`;
+
+        results.push({
+          id: `fsu_${eventId}`,
+          source: 'fsu_sports',
+          sourceId: eventId,
+          title,
+          description,
+          startDateTime: startDate,
+          endDateTime: endDate,
+          venue: {
+            name: venueName,
+            address: '1200 Murchison Rd',
+            city: 'Fayetteville',
+            state: 'NC',
+            zip: '28301',
+          },
+          categories: ['Sports', 'FSU Sports'],
+          url: `https://fsubroncos.com/sports/${sport.slug}/schedule`,
+          ticketUrl,
+          imageUrl,
+          lastModified: new Date(),
+          section: 'downtown',
+        });
+
+        homeGameCount++;
+      }
+
+      if (homeGameCount > 0) {
+        console.error(`  ${sport.name}: ${homeGameCount} home games`);
+      }
+
+    } catch (error) {
+      console.error(`  ${sport.name}: Error - ${error}`);
+    }
+  }
+
+  console.error(`  Total: ${results.length} FSU home games`);
+  return results;
+}
+
+// =============================================================================
 // Main
 // =============================================================================
 
-type SourceName = 'downtown' | 'segra' | 'distinctly' | 'dogwood' | 'fortliberty' | 'crown' | 'faydta' | 'mlk' | 'library' | 'holidays' | 'all';
+type SourceName = 'downtown' | 'segra' | 'woodpeckers' | 'distinctly' | 'dogwood' | 'fortliberty' | 'crown' | 'faydta' | 'mlk' | 'library' | 'holidays' | 'artscouncil' | 'symphony' | 'cameo' | 'speedway' | 'fsu' | 'all';
 
 async function syncEvents(source: SourceName = 'all', useEnhanced = false): Promise<UnifiedEvent[]> {
   const fetchers: Record<string, () => Promise<UnifiedEvent[]>> = {
     downtown: fetchDowntownEvents,
     segra: fetchSegraEvents,
+    woodpeckers: fetchWoodpeckersGames,
     distinctly: fetchDistinctlyEvents,
     dogwood: fetchDogwoodEvents,
     fortliberty: () => fetchFortLibertyEvents(useEnhanced),
@@ -1273,6 +2538,11 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
     mlk: fetchMLKEvents,
     library: fetchLibraryEvents,
     holidays: fetchFortLibertyHolidays,
+    artscouncil: fetchArtsCouncilEvents,
+    symphony: fetchSymphonyEvents,
+    cameo: fetchCameoEvents,
+    speedway: fetchFayettevilleSpeedwayEvents,
+    fsu: fetchFSUSportsEvents,
   };
 
   let allEvents: UnifiedEvent[] = [];
@@ -1282,6 +2552,7 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
     const results = await Promise.allSettled([
       fetchDowntownEvents(),
       fetchSegraEvents(),
+      fetchWoodpeckersGames(),
       fetchDistinctlyEvents(),
       fetchDogwoodEvents(),
       fetchFortLibertyEvents(useEnhanced),
@@ -1290,6 +2561,11 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
       fetchMLKEvents(),
       fetchLibraryEvents(),
       fetchFortLibertyHolidays(),
+      fetchArtsCouncilEvents(),
+      fetchSymphonyEvents(),
+      fetchCameoEvents(),
+      fetchFayettevilleSpeedwayEvents(),
+      fetchFSUSportsEvents(),
     ]);
 
     for (const result of results) {
@@ -1336,6 +2612,120 @@ interface SyncStats {
   errors: number;
 }
 
+// =============================================================================
+// Venue Lookup System
+// =============================================================================
+
+interface D1VenueLookup {
+  id: string;
+  name: string;
+  aliases: string[];
+}
+
+let d1VenueList: D1VenueLookup[] = [];
+let d1VenueLookupMap: Map<string, string> = new Map(); // lowercased name/alias -> venue_id
+
+/**
+ * Load venues and aliases from D1 database for location matching
+ */
+async function loadD1VenueCache(): Promise<void> {
+  const { spawnSync } = await import('child_process');
+
+  try {
+    // Load venues
+    const venueResult = spawnSync('npx', [
+      'wrangler', 'd1', 'execute', 'downtown-events',
+      '--remote', '--json',
+      '--command=SELECT id, name FROM venues'
+    ], { stdio: 'pipe', encoding: 'utf-8' });
+
+    if (venueResult.stdout) {
+      const output = JSON.parse(venueResult.stdout);
+      const venues = output?.[0]?.results || [];
+      d1VenueList = venues.map((v: { id: string; name: string }) => ({
+        id: v.id,
+        name: v.name,
+        aliases: []
+      }));
+
+      // Add venue names to lookup map
+      for (const venue of d1VenueList) {
+        d1VenueLookupMap.set(venue.name.toLowerCase(), venue.id);
+      }
+    }
+
+    // Load aliases
+    const aliasResult = spawnSync('npx', [
+      'wrangler', 'd1', 'execute', 'downtown-events',
+      '--remote', '--json',
+      '--command=SELECT venue_id, alias FROM venue_aliases'
+    ], { stdio: 'pipe', encoding: 'utf-8' });
+
+    if (aliasResult.stdout) {
+      const output = JSON.parse(aliasResult.stdout);
+      const aliases = output?.[0]?.results || [];
+      for (const alias of aliases) {
+        d1VenueLookupMap.set(alias.alias.toLowerCase(), alias.venue_id);
+        // Add to venue list
+        const venue = d1VenueList.find(v => v.id === alias.venue_id);
+        if (venue) {
+          venue.aliases.push(alias.alias);
+        }
+      }
+    }
+
+    console.error(`  Loaded ${d1VenueList.length} venues with ${d1VenueLookupMap.size} name variations`);
+  } catch (error) {
+    console.error('  Warning: Could not load venue cache');
+  }
+}
+
+/**
+ * Look up venue_id from a location name
+ * Tries exact match, then aliases, then fuzzy matching
+ */
+function lookupVenueId(locationName: string | undefined): string | null {
+  if (!locationName) return null;
+
+  const normalized = locationName.toLowerCase().trim();
+
+  // 1. Exact match (case-insensitive)
+  if (d1VenueLookupMap.has(normalized)) {
+    return d1VenueLookupMap.get(normalized) || null;
+  }
+
+  // 2. Check if location contains a known venue name
+  for (const [key, venueId] of d1VenueLookupMap.entries()) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return venueId;
+    }
+  }
+
+  // 3. Fuzzy matching for common variations
+  // Remove common suffixes/prefixes
+  const cleaned = normalized
+    .replace(/\s+(theater|theatre|arena|stadium|center|complex|hall|park)$/i, '')
+    .replace(/^the\s+/i, '')
+    .trim();
+
+  if (d1VenueLookupMap.has(cleaned)) {
+    return d1VenueLookupMap.get(cleaned) || null;
+  }
+
+  // Check for partial matches with cleaned name
+  for (const [key, venueId] of d1VenueLookupMap.entries()) {
+    const cleanedKey = key
+      .replace(/\s+(theater|theatre|arena|stadium|center|complex|hall|park)$/i, '')
+      .replace(/^the\s+/i, '')
+      .trim();
+    if (cleaned === cleanedKey || cleaned.includes(cleanedKey) || cleanedKey.includes(cleaned)) {
+      return venueId;
+    }
+  }
+
+  return null;
+}
+
 /**
  * Create a simple hash of event content for change detection.
  * Uses a fast string hash (djb2) instead of crypto for portability.
@@ -1350,7 +2740,7 @@ function hashContent(event: UnifiedEvent): string {
     event.url,
     event.ticketUrl || '',
     event.imageUrl || '',
-    JSON.stringify(event.categories),
+    JSON.stringify(normalizeCategories(event.categories)),
   ].join('|');
 
   // djb2 hash algorithm - fast and good distribution
@@ -1368,6 +2758,10 @@ async function writeToD1(events: UnifiedEvent[], dryRun = false): Promise<SyncSt
 
   const stats: SyncStats = { inserted: 0, updated: 0, unchanged: 0, deleted: 0, errors: 0 };
   const now = new Date().toISOString();
+
+  // Step 0: Load venue cache for location enrichment
+  console.error('  Loading venue cache for location matching...');
+  await loadD1VenueCache();
 
   // Step 1: Get existing events with their hashes for comparison
   console.error('  Fetching existing events for comparison...');
@@ -1415,6 +2809,9 @@ async function writeToD1(events: UnifiedEvent[], dryRun = false): Promise<SyncSt
       stats.inserted++;
     }
 
+    // Look up venue_id from location name
+    const venueId = lookupVenueId(event.venue?.name);
+
     const sql = `INSERT INTO events (
       id, source_id, external_id, title, description,
       start_datetime, end_datetime, venue_id, location_name,
@@ -1429,12 +2826,12 @@ async function writeToD1(events: UnifiedEvent[], dryRun = false): Promise<SyncSt
       '${escapeSQL(event.description.slice(0, 5000))}',
       '${event.startDateTime.toISOString()}',
       '${event.endDateTime.toISOString()}',
-      NULL,
+      ${venueId ? `'${escapeSQL(venueId)}'` : 'NULL'},
       '${escapeSQL(event.venue?.name || '')}',
       '${escapeSQL(event.url)}',
       ${event.ticketUrl ? `'${escapeSQL(event.ticketUrl)}'` : 'NULL'},
       ${event.imageUrl ? `'${escapeSQL(event.imageUrl)}'` : 'NULL'},
-      '${escapeSQL(JSON.stringify(event.categories))}',
+      '${escapeSQL(JSON.stringify(normalizeCategories(event.categories)))}',
       '[]',
       'confirmed',
       '${event.section}',
@@ -1449,6 +2846,7 @@ async function writeToD1(events: UnifiedEvent[], dryRun = false): Promise<SyncSt
       description = excluded.description,
       start_datetime = excluded.start_datetime,
       end_datetime = excluded.end_datetime,
+      venue_id = excluded.venue_id,
       location_name = excluded.location_name,
       url = excluded.url,
       ticket_url = excluded.ticket_url,
@@ -1634,6 +3032,7 @@ function mapSourceId(source: string): string {
   const mapping: Record<string, string> = {
     'visit_downtown_fayetteville': 'visit_downtown',
     'segra_stadium': 'segra_stadium',
+    'woodpeckers': 'woodpeckers',
     'distinctly_fayetteville': 'distinctly_fayetteville',
     'dogwood_festival': 'dogwood_festival',
     'fort_liberty_mwr': 'fort_liberty_mwr',
@@ -1642,6 +3041,11 @@ function mapSourceId(source: string): string {
     'mlk_committee': 'mlk_committee',
     'library_hq': 'library_hq',
     'fort_liberty_holidays': 'fort_liberty_holidays',
+    'arts_council': 'arts_council',
+    'fayetteville_symphony': 'fayetteville_symphony',
+    'cameo_art_house': 'cameo_art_house',
+    'fayetteville_speedway': 'fayetteville_speedway',
+    'fsu_sports': 'fsu_sports',
   };
   return mapping[source] || source;
 }
@@ -1762,6 +3166,7 @@ async function main() {
       const sourceNames: Record<string, string> = {
         visit_downtown_fayetteville: 'Visit Downtown',
         segra_stadium: 'Segra Stadium',
+        woodpeckers: 'Woodpeckers',
         distinctly_fayetteville: 'CVB',
         dogwood_festival: 'Dogwood Festival',
         fort_liberty_mwr: 'MWR',
@@ -1770,6 +3175,11 @@ async function main() {
         mlk_committee: 'MLK Committee',
         library_hq: 'Headquarters Library',
         fort_liberty_holidays: 'Training Holidays',
+        arts_council: 'Arts Council',
+        fayetteville_symphony: 'Symphony',
+        cameo_art_house: 'Cameo Art House',
+        fayetteville_speedway: 'Motor Speedway',
+        fsu_sports: 'FSU Broncos',
       };
 
       for (const [section, sectionEvents] of bySection) {

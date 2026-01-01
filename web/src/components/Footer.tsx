@@ -144,6 +144,26 @@ export default function Footer() {
               </li>
               <li>
                 <a
+                  href="https://www.milb.com/fayetteville/schedule"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  Fayetteville Woodpeckers
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.myracepass.com/tracks/2933"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  Fayetteville Motor Speedway
+                </a>
+              </li>
+              <li>
+                <a
                   href="https://www.crowncomplexnc.com/events/all"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -180,6 +200,46 @@ export default function Footer() {
                   className="text-white/70 hover:text-dogwood transition-colors"
                 >
                   Headquarters Library
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.wearethearts.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  Arts Council of Fayetteville
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.fayettevillesymphony.org/2025-2026-season/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  Fayetteville Symphony Orchestra
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.cameoarthouse.com/now-showing/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  Cameo Art House Theatre
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://fsubroncos.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/70 hover:text-dogwood transition-colors"
+                >
+                  FSU Broncos Sports
                 </a>
               </li>
             </ul>

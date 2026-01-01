@@ -170,9 +170,23 @@ app.get('/api/events/:id', async (c) => {
   const result = await DB.prepare(`
     SELECT
       e.*,
-      s.name as source_name
+      s.name as source_name,
+      v.name as venue_name,
+      v.address as venue_address,
+      v.city as venue_city,
+      v.state as venue_state,
+      v.zip as venue_zip,
+      v.phone as venue_phone,
+      v.website as venue_website,
+      v.google_maps_url as venue_google_maps_url,
+      v.apple_maps_url as venue_apple_maps_url,
+      v.hours_of_operation as venue_hours_of_operation,
+      v.image_url as venue_image_url,
+      v.parking_info as venue_parking_info,
+      v.accessibility_info as venue_accessibility_info
     FROM events e
     LEFT JOIN sources s ON e.source_id = s.id
+    LEFT JOIN venues v ON e.venue_id = v.id
     WHERE e.id = ?
   `).bind(id).first();
 

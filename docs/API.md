@@ -1,6 +1,8 @@
 # Fayetteville Events API Documentation
 
-**Base URL:** `https://downtown-guide.wemea-5ahhf.workers.dev`
+**Base URL:** `https://ncfayetteville.com`
+
+**Alternative:** `https://downtown-guide.wemea-5ahhf.workers.dev`
 
 The Fayetteville Events API provides programmatic access to community events in the Fayetteville, NC area. The API is built on Cloudflare Workers with a D1 database backend.
 
@@ -59,27 +61,27 @@ GET /api/events
 
 **Get all upcoming events:**
 ```bash
-curl "https://downtown-guide.wemea-5ahhf.workers.dev/api/events"
+curl "https://ncfayetteville.com/api/events"
 ```
 
 **Get downtown events for a specific date range:**
 ```bash
-curl "https://downtown-guide.wemea-5ahhf.workers.dev/api/events?section=downtown&from=2025-01-01&to=2025-01-07"
+curl "https://ncfayetteville.com/api/events?section=downtown&from=2025-01-01&to=2025-01-07"
 ```
 
 **Search for music events:**
 ```bash
-curl "https://downtown-guide.wemea-5ahhf.workers.dev/api/events?search=music&category=Live%20Music"
+curl "https://ncfayetteville.com/api/events?search=music&category=Live%20Music"
 ```
 
 **Get events in multiple categories:**
 ```bash
-curl "https://downtown-guide.wemea-5ahhf.workers.dev/api/events?categories=Arts,Live%20Music,Festivals"
+curl "https://ncfayetteville.com/api/events?categories=Arts,Live%20Music,Festivals"
 ```
 
 **Paginate through results:**
 ```bash
-curl "https://downtown-guide.wemea-5ahhf.workers.dev/api/events?limit=20&offset=40"
+curl "https://ncfayetteville.com/api/events?limit=20&offset=40"
 ```
 
 #### Response
@@ -297,17 +299,17 @@ GET /cal/events.ics
 
 **All events:**
 ```
-https://downtown-guide.wemea-5ahhf.workers.dev/cal/events.ics
+https://ncfayetteville.com/cal/events.ics
 ```
 
 **Downtown events only:**
 ```
-https://downtown-guide.wemea-5ahhf.workers.dev/cal/events.ics?section=downtown
+https://ncfayetteville.com/cal/events.ics?section=downtown
 ```
 
 **Fort Liberty training holidays:**
 ```
-https://downtown-guide.wemea-5ahhf.workers.dev/cal/events.ics?section=holidays
+https://ncfayetteville.com/cal/events.ics?section=holidays
 ```
 
 ---
@@ -412,7 +414,7 @@ GET /api/health
 
 ```typescript
 // Fetch today's events
-const response = await fetch('https://downtown-guide.wemea-5ahhf.workers.dev/api/events/today');
+const response = await fetch('https://ncfayetteville.com/api/events/today');
 const { data: events } = await response.json();
 
 // Search with filters
@@ -423,7 +425,7 @@ const params = new URLSearchParams({
   to: '2025-01-31',
   limit: '50'
 });
-const filtered = await fetch(`https://downtown-guide.wemea-5ahhf.workers.dev/api/events?${params}`);
+const filtered = await fetch(`https://ncfayetteville.com/api/events?${params}`);
 ```
 
 ### Python
@@ -432,7 +434,7 @@ const filtered = await fetch(`https://downtown-guide.wemea-5ahhf.workers.dev/api
 import requests
 
 # Get upcoming events
-response = requests.get('https://downtown-guide.wemea-5ahhf.workers.dev/api/events/upcoming')
+response = requests.get('https://ncfayetteville.com/api/events/upcoming')
 events = response.json()['data']
 
 # Filter by category
@@ -441,20 +443,20 @@ params = {
     'section': 'downtown',
     'limit': 20
 }
-response = requests.get('https://downtown-guide.wemea-5ahhf.workers.dev/api/events', params=params)
+response = requests.get('https://ncfayetteville.com/api/events', params=params)
 ```
 
 ### cURL
 
 ```bash
 # Get all categories
-curl https://downtown-guide.wemea-5ahhf.workers.dev/api/categories
+curl https://ncfayetteville.com/api/categories
 
 # Search events
-curl "https://downtown-guide.wemea-5ahhf.workers.dev/api/events?search=art&section=downtown"
+curl "https://ncfayetteville.com/api/events?search=art&section=downtown"
 
 # Subscribe to calendar (copy URL to calendar app)
-# https://downtown-guide.wemea-5ahhf.workers.dev/cal/events.ics?section=downtown
+# https://ncfayetteville.com/cal/events.ics?section=downtown
 ```
 
 ---

@@ -15,6 +15,7 @@ import TimeGroupHeader from '../components/TimeGroupHeader'
 import ViewToggle, { type ViewMode } from '../components/ViewToggle'
 import CalendarGrid from '../components/CalendarGrid'
 import MapView from '../components/MapView'
+import MapLibreView from '../components/MapLibreView'
 import SearchBar from '../components/SearchBar'
 import CategoryFilter from '../components/CategoryFilter'
 import DateRangeFilter, { type DateRange, type CustomDateRange } from '../components/DateRangeFilter'
@@ -367,9 +368,14 @@ export default function HomePage() {
                   <CalendarGrid events={filteredEvents} />
                 )}
 
-                {/* Map View */}
+                {/* Map View (Leaflet) */}
                 {viewMode === 'map' && (
                   <MapView events={filteredEvents} />
+                )}
+
+                {/* MapLibre View (Beta) */}
+                {viewMode === 'maplibre' && (
+                  <MapLibreView events={filteredEvents} />
                 )}
 
                 {/* List View - Only when list mode selected */}

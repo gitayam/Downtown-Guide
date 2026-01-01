@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "include": [
+    "/events/*"
+  ],
+  "exclude": [
+    "/assets/*",
+    "/images/*",
+    "/*.ico",
+    "/*.svg",
+    "/*.png",
+    "/*.jpg"
+  ]
+}

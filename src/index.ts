@@ -29,6 +29,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { cache } from 'hono/cache';
+import { secureHeaders } from 'hono/secure-headers';
 
 type Bindings = {
   DB: D1Database;
@@ -38,8 +39,73 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// CORS for all routes
-app.use('*', cors());
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://ncfayetteville.com',
+  'https://fayetteville-events.pages.dev',
+  /^https:\/\/[a-z0-9-]+\.fayetteville-events\.pages\.dev$/,  // Preview deployments
+  'http://localhost:5173',  // Local dev
+  'http://localhost:3000',
+];
+
+// CORS with origin whitelist
+app.use('*', cors({
+  origin: (origin) => {
+    if (!origin) return '*';  // Allow requests with no origin (curl, etc.)
+    for (const allowed of ALLOWED_ORIGINS) {
+      if (typeof allowed === 'string' && allowed === origin) return origin;
+      if (allowed instanceof RegExp && allowed.test(origin)) return origin;
+    }
+    return null;  // Reject other origins
+  },
+  allowMethods: ['GET', 'OPTIONS'],
+  allowHeaders: ['Content-Type'],
+  maxAge: 86400,  // 24 hours
+}));
+
+// Security headers
+app.use('*', secureHeaders({
+  contentSecurityPolicy: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", 'data:', 'https:'],
+    connectSrc: ["'self'", 'https://downtown-guide.wemea-5ahhf.workers.dev', 'https://ncfayetteville.com'],
+  },
+  xContentTypeOptions: 'nosniff',
+  xFrameOptions: 'DENY',
+  referrerPolicy: 'strict-origin-when-cross-origin',
+}));
+
+// Simple rate limiting using request counting per IP
+// Note: For production, consider using Cloudflare's built-in rate limiting
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 100;  // requests per window
+const RATE_WINDOW = 60 * 1000;  // 1 minute
+
+app.use('/api/*', async (c, next) => {
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
+  const now = Date.now();
+
+  let record = rateLimitMap.get(ip);
+  if (!record || now > record.resetTime) {
+    record = { count: 0, resetTime: now + RATE_WINDOW };
+    rateLimitMap.set(ip, record);
+  }
+
+  record.count++;
+
+  // Add rate limit headers
+  c.header('X-RateLimit-Limit', RATE_LIMIT.toString());
+  c.header('X-RateLimit-Remaining', Math.max(0, RATE_LIMIT - record.count).toString());
+  c.header('X-RateLimit-Reset', Math.ceil(record.resetTime / 1000).toString());
+
+  if (record.count > RATE_LIMIT) {
+    return c.json({ error: 'Too many requests. Please try again later.' }, 429);
+  }
+
+  await next();
+});
 
 // Cache API responses for 5 minutes
 app.use('/api/*', cache({
@@ -365,6 +431,8 @@ app.get('/cal/events.ics', async (c) => {
 
   const section = c.req.query('section');
   const source = c.req.query('source'); // Allow filtering by source (e.g., holidays)
+  const category = c.req.query('category'); // Single category filter
+  const categories = c.req.query('categories'); // Multi-category filter (comma-separated)
   const now = new Date().toISOString();
 
   // Show events until they end (not just until they start)
@@ -385,6 +453,22 @@ app.get('/cal/events.ics', async (c) => {
     params.push(source);
   }
 
+  // Single category filter
+  if (category && category !== 'all') {
+    query += ' AND categories LIKE ?';
+    params.push(`%"${category}"%`);
+  }
+
+  // Multi-category filter (comma-separated, matches ANY)
+  if (categories && categories.trim()) {
+    const categoryList = categories.split(',').map(c => c.trim()).filter(c => c);
+    if (categoryList.length > 0) {
+      const categoryConditions = categoryList.map(() => 'categories LIKE ?');
+      query += ` AND (${categoryConditions.join(' OR ')})`;
+      categoryList.forEach(cat => params.push(`%"${cat}"%`));
+    }
+  }
+
   query += ' ORDER BY featured DESC, start_datetime ASC LIMIT 500';
 
   const result = await DB.prepare(query).bind(...params).all();
@@ -394,16 +478,26 @@ app.get('/cal/events.ics', async (c) => {
   let calendarName = CALENDAR_NAMES.all;
   if (source === 'fort_liberty_holidays') {
     calendarName = CALENDAR_NAMES.holidays;
+  } else if (category) {
+    calendarName = `Fayetteville ${category} Events`;
+  } else if (categories) {
+    const catList = categories.split(',').map(c => c.trim()).slice(0, 3);
+    calendarName = `Fayetteville ${catList.join(', ')} Events`;
   } else if (section && CALENDAR_NAMES[section]) {
     calendarName = CALENDAR_NAMES[section];
   }
 
   // Determine filename
-  const filename = source === 'fort_liberty_holidays'
-    ? 'fort-liberty-holidays.ics'
-    : section && section !== 'all'
-      ? `fayetteville-${section.replace('_', '-')}-events.ics`
-      : 'fayetteville-events.ics';
+  let filename = 'fayetteville-events.ics';
+  if (source === 'fort_liberty_holidays') {
+    filename = 'fort-liberty-holidays.ics';
+  } else if (category) {
+    filename = `fayetteville-${category.toLowerCase().replace(/\s+/g, '-')}-events.ics`;
+  } else if (categories) {
+    filename = `fayetteville-custom-events.ics`;
+  } else if (section && section !== 'all') {
+    filename = `fayetteville-${section.replace('_', '-')}-events.ics`;
+  }
 
   // Generate iCal
   const ical = generateICalFeed(events, calendarName);

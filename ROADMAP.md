@@ -87,13 +87,17 @@ Create the go-to source for "What's happening in Fayetteville?" by aggregating e
 
 ### Calendar Feeds
 - [x] `GET /cal/events.ics` - iCal feed (supports `?section=` filter)
+- [x] Category-based subscriptions (`?category=Live%20Music` or `?categories=Arts,Music`)
 - [ ] Separate feeds per section (downtown.ics, fortbragg.ics)
 
 ### RSS Feeds
 - [ ] `GET /feed/events.rss` - RSS 2.0 feed
 - [ ] `GET /feed/events.atom` - Atom feed
 
-### Caching Strategy
+### Security & Performance
+- [x] CORS whitelist (ncfayetteville.com, pages.dev, localhost)
+- [x] Rate limiting (100 requests/minute per IP)
+- [x] Security headers (CSP, X-Content-Type-Options, X-Frame-Options)
 - [x] 5-minute edge cache (Hono cache middleware)
 - [ ] Version-based invalidation on sync
 - [ ] Stale-while-revalidate for resilience
@@ -130,6 +134,8 @@ Create the go-to source for "What's happening in Fayetteville?" by aggregating e
 - [ ] "Get Directions" link
 - [x] Source attribution
 - [x] Share functionality
+- [x] Dynamic Open Graph meta tags for social sharing
+- [x] Schema.org JSON-LD structured data for SEO
 
 ### Calendar Subscribe Page
 - [x] iCal subscription instructions
@@ -138,16 +144,16 @@ Create the go-to source for "What's happening in Fayetteville?" by aggregating e
 
 ### Filtering & Search
 - [x] Section filtering (Downtown / Fort Liberty / All)
-- [ ] Category pills (horizontal scroll)
+- [x] Date range picker (Today, Tomorrow, Weekend, All, Custom Range)
+- [x] Search bar with text search
+- [x] Category filter dropdown
 - [ ] Venue filter dropdown
 - [ ] Free events toggle
-- [ ] Date range picker
-- [ ] Full-text search
 
 ### Views
 - [x] List view (default, mobile-optimized)
-- [ ] Calendar grid (desktop)
-- [ ] Map view with clustered markers
+- [x] Calendar grid view
+- [x] Map view with clustered markers (Leaflet + MarkerCluster)
 
 ---
 
@@ -180,14 +186,30 @@ Create the go-to source for "What's happening in Fayetteville?" by aggregating e
 
 **Goal:** Enable community event submissions with moderation.
 
-### Public Submission
-- [ ] "Submit Your Event" form
+### Discord Bot Event Submission (Priority)
+- [ ] `/submit-event` slash command in Discord
+- [ ] Interactive modal form:
+  - Title (required)
+  - Date/time picker (required)
+  - Location/venue (required)
+  - Description (required)
+  - Ticket URL (optional)
+  - Image URL (optional)
+- [ ] Submit to moderation queue (`pending_events` table)
+- [ ] Admin notification in `#event-submissions` channel
+- [ ] Approve/Reject buttons for moderators
+- [ ] Confirmation DM to submitter on approval
+- [ ] Auto-publish approved events to main calendar
+
+### Web Form Submission (Later)
+- [ ] "Submit Your Event" form on website
 - [ ] Required: Title, date, time, venue, description
 - [ ] Optional: Image upload (R2 presigned URLs), ticket link
 - [ ] Captcha/rate limiting
+- [ ] Integration with same moderation queue
 
 ### Moderation Queue
-- [ ] Admin-only review interface
+- [ ] Admin-only review interface (web)
 - [ ] Approve / Reject / Edit workflow
 - [ ] Discord notification for new submissions
 - [ ] Email confirmation to submitter
@@ -279,4 +301,4 @@ Create the go-to source for "What's happening in Fayetteville?" by aggregating e
 
 ---
 
-*Last updated: December 30, 2025*
+*Last updated: January 1, 2026*

@@ -30,6 +30,7 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
       <Link
         to={`/events/${event.id}`}
         className="flex gap-4 p-3 bg-white rounded-lg hover:bg-sand/50 transition-colors border border-transparent hover:border-dogwood/30 group"
+        aria-label={`${event.title} on ${formatEventDate(event.start_datetime)}${event.location_name ? ` at ${event.location_name}` : ''}`}
       >
         {/* Date Block */}
         <div className="flex-shrink-0 w-14 h-14 bg-brick/10 rounded-lg flex flex-col items-center justify-center">
@@ -62,10 +63,12 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
   }
 
   return (
-    <Link
-      to={`/events/${event.id}`}
-      className={`card group block ${isFeatured ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-100' : ''}`}
-    >
+    <article>
+      <Link
+        to={`/events/${event.id}`}
+        className={`card group block ${isFeatured ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-100' : ''}`}
+        aria-label={`${isFeatured ? 'Featured: ' : ''}${event.title} on ${formatEventDate(event.start_datetime)}${event.location_name ? ` at ${event.location_name}` : ''}`}
+      >
       {/* Image */}
       {event.image_url ? (
         <div className="aspect-video relative overflow-hidden bg-sand">
@@ -124,9 +127,9 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
       <div className="p-4 space-y-2">
         {/* Date & Time */}
         <div className="flex items-center gap-2 text-sm text-stone">
-          <ClockIcon className="w-4 h-4 flex-shrink-0" />
-          <span>{formatEventDate(event.start_datetime)}</span>
-          <span className="text-dogwood">•</span>
+          <ClockIcon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          <time dateTime={event.start_datetime}>{formatEventDate(event.start_datetime)}</time>
+          <span className="text-dogwood" aria-hidden="true">•</span>
           <span>{formatEventTime(event.start_datetime)}</span>
         </div>
 
@@ -152,7 +155,7 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
         {/* Location */}
         {event.location_name && (
           <p className="text-sm text-stone flex items-center gap-1">
-            <MapPinIcon className="w-4 h-4 flex-shrink-0" />
+            <MapPinIcon className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             <span className="truncate">{event.location_name}</span>
           </p>
         )}
@@ -167,11 +170,12 @@ export default function EventCard({ event, variant = 'default' }: EventCardProps
         {/* Ticket indicator */}
         {event.ticket_url && (
           <div className="flex items-center gap-1 text-xs text-capefear font-medium pt-1">
-            <TicketIcon className="w-4 h-4" />
+            <TicketIcon className="w-4 h-4" aria-hidden="true" />
             <span>Tickets Available</span>
           </div>
         )}
       </div>
-    </Link>
+      </Link>
+    </article>
   )
 }

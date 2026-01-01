@@ -129,9 +129,9 @@ Create the go-to source for "What's happening in Fayetteville?" by aggregating e
 ### Event Pages
 - [x] Event detail pages (`/events/:id`)
 - [x] Full description, images, venue info
-- [ ] Map with venue marker
+- [x] Map with venue marker (Leaflet, shows when coordinates available)
 - [x] "Add to Calendar" button (Google Calendar)
-- [ ] "Get Directions" link
+- [x] "Get Directions" modal (Google Maps, Apple Maps)
 - [x] Source attribution
 - [x] Share functionality
 - [x] Dynamic Open Graph meta tags for social sharing

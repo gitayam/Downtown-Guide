@@ -114,36 +114,52 @@ export default function SectionShareModal({
       ctx.fillText(getSubtitle(), 40, 95)
 
       // Events list
-      ctx.font = '16px system-ui, -apple-system, sans-serif'
+      const eventsToShow = events.slice(0, 10)
       let y = 140
 
-      events.slice(0, 10).forEach((event) => {
-        const time = format(new Date(event.start_datetime), 'h:mm a')
-        const location = event.location_name || event.venue_name || ''
+      if (eventsToShow.length === 0) {
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'
+        ctx.font = '18px system-ui, -apple-system, sans-serif'
+        ctx.fillText('No events scheduled', 40, y + 20)
+      } else {
+        eventsToShow.forEach((event) => {
+          try {
+            const eventDate = new Date(event.start_datetime)
+            const time = format(eventDate, 'h:mm a')
+            const dateStr = format(eventDate, 'MMM d')
+            const location = event.location_name || event.venue_name || ''
 
-        // Event row background
-        ctx.fillStyle = 'rgba(255,255,255,0.1)'
-        ctx.fillRect(30, y - 20, width - 60, 45)
+            // Event row background
+            ctx.fillStyle = 'rgba(255,255,255,0.1)'
+            ctx.fillRect(30, y - 20, width - 60, 45)
 
-        // Time
-        ctx.fillStyle = 'rgba(255,255,255,0.9)'
-        ctx.font = 'bold 14px system-ui, -apple-system, sans-serif'
-        ctx.fillText(time, 45, y)
+            // Date + Time
+            ctx.fillStyle = 'rgba(255,255,255,0.9)'
+            ctx.font = 'bold 13px system-ui, -apple-system, sans-serif'
+            ctx.fillText(`${dateStr}`, 45, y - 2)
+            ctx.font = '12px system-ui, -apple-system, sans-serif'
+            ctx.fillText(time, 45, y + 14)
 
-        // Title
-        ctx.fillStyle = 'white'
-        ctx.font = '15px system-ui, -apple-system, sans-serif'
-        const truncatedTitle = event.title.length > 45 ? event.title.slice(0, 42) + '...' : event.title
-        ctx.fillText(truncatedTitle, 140, y)
+            // Title
+            ctx.fillStyle = 'white'
+            ctx.font = '15px system-ui, -apple-system, sans-serif'
+            const truncatedTitle = event.title.length > 40 ? event.title.slice(0, 37) + '...' : event.title
+            ctx.fillText(truncatedTitle, 120, y)
 
-        // Location
-        ctx.fillStyle = 'rgba(255,255,255,0.6)'
-        ctx.font = '12px system-ui, -apple-system, sans-serif'
-        const truncatedLocation = location.length > 40 ? location.slice(0, 37) + '...' : location
-        ctx.fillText(truncatedLocation, 140, y + 18)
+            // Location
+            if (location) {
+              ctx.fillStyle = 'rgba(255,255,255,0.6)'
+              ctx.font = '12px system-ui, -apple-system, sans-serif'
+              const truncatedLocation = location.length > 35 ? location.slice(0, 32) + '...' : location
+              ctx.fillText(truncatedLocation, 120, y + 16)
+            }
 
-        y += 50
-      })
+            y += 48
+          } catch (e) {
+            console.error('Error rendering event:', event, e)
+          }
+        })
+      }
 
       // Footer
       ctx.fillStyle = 'rgba(255,255,255,0.6)'

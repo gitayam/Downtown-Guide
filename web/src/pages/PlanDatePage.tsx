@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeftIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { fetchDateSuggestions, generateDatePlan, type DatePlan } from '../lib/api'
+import DatePlanMap from '../components/date-planner/DatePlanMap'
 
 export default function PlanDatePage() {
   const [loading, setLoading] = useState(true)
@@ -188,6 +189,9 @@ export default function PlanDatePage() {
             </button>
           </div>
 
+          {/* Map Visualization */}
+          <DatePlanMap stops={result.stops} className="h-[400px]" />
+
           {/* Itinerary Timeline */}
           <div className="relative border-l-2 border-dashed border-sand ml-4 md:ml-8 space-y-8 py-2">
             {result.stops.map((stop, i) => (
@@ -228,12 +232,6 @@ export default function PlanDatePage() {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Map (Placeholder for now, using existing MapView logic roughly) */}
-          {/* Note: MapView expects Event[], we need to adapt it or create DatePlanMap */}
-          <div className="h-64 bg-sand/20 rounded-xl flex items-center justify-center text-stone">
-            Map Visualization Coming Soon
           </div>
         </div>
       )}

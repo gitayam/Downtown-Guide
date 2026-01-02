@@ -5,12 +5,15 @@ import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, Ticke
 import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, type DatePlan } from '../lib/api'
 import DatePlanMap from '../components/date-planner/DatePlanMap'
 import ShareModal from '../components/share/ShareModal'
+import DirectionsModal from '../components/DirectionsModal'
 
 export default function PlanDatePage() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [directionsModalOpen, setDirectionsModalOpen] = useState(false)
+  const [selectedVenue, setSelectedVenue] = useState<any>(null)
   const [shareUrl, setShareUrl] = useState('')
   
   // Check if we are viewing a shared plan
@@ -83,6 +86,20 @@ export default function PlanDatePage() {
     }
   }
 
+  const handleDirections = (venue: any) => {
+    setSelectedVenue({
+      venue_name: venue.name,
+      venue_address: venue.address,
+      venue_city: venue.city,
+      venue_state: venue.state,
+      venue_zip: venue.zip,
+      venue_google_maps_url: venue.google_maps_url,
+      latitude: venue.latitude,
+      longitude: venue.longitude
+    })
+    setDirectionsModalOpen(true)
+  }
+
   const toggleVibe = (vibe: string) => {
     setPrefs(p => ({
       ...p,
@@ -90,17 +107,6 @@ export default function PlanDatePage() {
         ? p.vibes.filter(v => v !== vibe)
         : [...p.vibes, vibe]
     }))
-  }
-
-  const getGoogleMapsUrl = (venue: any) => {
-    if (venue?.google_maps_url) return venue.google_maps_url;
-    if (venue?.latitude && venue?.longitude) {
-      return `https://www.google.com/maps/search/?api=1&query=${venue.latitude},${venue.longitude}`;
-    }
-    if (venue?.address) {
-      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address + ', Fayetteville, NC')}`;
-    }
-    return null;
   }
 
   if (loading) return <div className="p-8 text-center">Loading...</div>
@@ -119,6 +125,15 @@ export default function PlanDatePage() {
           url: shareUrl,
         }}
       />
+
+      {/* Directions Modal */}
+      {selectedVenue && (
+        <DirectionsModal
+          isOpen={directionsModalOpen}
+          onClose={() => setDirectionsModalOpen(false)}
+          event={selectedVenue}
+        />
+      )}
 
       <Link to="/" className="inline-flex items-center text-stone hover:text-brick mb-6">
         <ArrowLeftIcon className="w-4 h-4 mr-1" />
@@ -332,16 +347,14 @@ export default function PlanDatePage() {
 
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2 pt-2">
-                    {getGoogleMapsUrl(stop.venue) && (
-                      <a
-                        href={getGoogleMapsUrl(stop.venue)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    {stop.venue && (
+                      <button
+                        onClick={() => handleDirections(stop.venue)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"
                       >
                         <MapPinIcon className="w-3.5 h-3.5" />
                         Directions
-                      </a>
+                      </button>
                     )}
                     {stop.venue?.website && (
                       <a

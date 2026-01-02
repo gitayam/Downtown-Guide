@@ -861,20 +861,20 @@ const [dateData, setDateData] = useState({
 ### Phase 0: Data Collection (Week 1-2)
 - [ ] Set up Google Places API scraper script
 - [ ] Set up Yelp Fusion API scraper script
-- [ ] Scrape restaurants (60-80 venues)
-- [ ] Scrape bars, coffee shops, parks (40-50 venues)
-- [ ] **Scrape unstructured data (hikes, blogs, reddit threads)**
-- [ ] Deduplicate against existing 37 venues
-- [ ] Manual curation of top 50 date spots
-- [ ] Create D1 migration for new venue fields
-- [ ] Import enriched data to production D1
+- [x] Scrape restaurants (60-80 venues)
+- [x] Scrape bars, coffee shops, parks (40-50 venues)
+- [x] **Scrape unstructured data (hikes, blogs, reddit threads)**
+- [x] Deduplicate against existing 37 venues
+- [x] Manual curation of top 50 date spots
+- [x] Create D1 migration for new venue fields
+- [x] Import enriched data to production D1
 
 ### Phase 1: MVP (Week 3-4)
-- [ ] Refactor `src/index.ts` to support router/controller pattern
-- [ ] Database schema for date plans
-- [ ] Basic API endpoints (`/api/date-planner/*`)
-- [ ] Simple UI with form inputs (PlanDatePage.tsx)
-- [ ] Rule-based recommendation engine
+- [x] Refactor `src/index.ts` to support router/controller pattern
+- [x] Database schema for date plans
+- [x] Basic API endpoints (`/api/date-planner/*`)
+- [x] Simple UI with form inputs (PlanDatePage.tsx)
+- [x] Rule-based recommendation engine
 - [ ] DatePlanMap component with route visualization
 - [ ] Basic save/share functionality
 

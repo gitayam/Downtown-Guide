@@ -20,6 +20,8 @@ import CategoryFilter from '../components/CategoryFilter'
 import DateRangeFilter, { type DateRange, type CustomDateRange } from '../components/DateRangeFilter'
 import { startOfDay, endOfDay, addDays, nextSunday, isFriday, isSaturday, isSunday } from 'date-fns'
 
+import SectionShareButton from '../components/share/SectionShareButton'
+
 // Local storage key for persisting category selection
 const SELECTED_CATEGORIES_KEY = 'fayetteville_events_selected_categories'
 const DATE_RANGE_KEY = 'fayetteville_events_date_range'
@@ -264,12 +266,19 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <div className="flex-1 flex flex-col gap-3">
             <SearchBar value={search} onChange={handleSearchChange} />
-            <DateRangeFilter
-              value={dateRange}
-              onChange={handleDateRangeChange}
-              customRange={customDateRange}
-              onCustomRangeChange={handleCustomDateRangeChange}
-            />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <DateRangeFilter
+                value={dateRange}
+                onChange={handleDateRangeChange}
+                customRange={customDateRange}
+                onCustomRangeChange={handleCustomDateRangeChange}
+              />
+              <SectionShareButton 
+                events={filteredEvents} 
+                dateRange={dateRange} 
+                sectionName={section} 
+              />
+            </div>
           </div>
           {categories.length > 0 && selectedCategories && (
             <CategoryFilter

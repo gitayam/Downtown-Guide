@@ -18,7 +18,7 @@ import MapView from '../components/MapView'
 import SearchBar from '../components/SearchBar'
 import CategoryFilter from '../components/CategoryFilter'
 import DateRangeFilter, { type DateRange, type CustomDateRange } from '../components/DateRangeFilter'
-import { startOfDay, endOfDay, addDays, startOfMonth, endOfMonth } from 'date-fns'
+import { startOfDay, endOfDay, addDays, endOfMonth } from 'date-fns'
 
 import SectionShareButton from '../components/share/SectionShareButton'
 
@@ -118,10 +118,13 @@ export default function HomePage() {
         params.from = startOfDay(tomorrow).toISOString()
         params.to = endOfDay(tomorrow).toISOString()
       } else if (dateRange === 'week') {
+        // Next 7 days: today through 6 days from now (7 total days)
         params.from = startOfDay(now).toISOString()
         params.to = endOfDay(addDays(now, 6)).toISOString()
       } else if (dateRange === 'month') {
-        params.from = startOfMonth(now).toISOString()
+        // This month: from today (not start of month) to end of month
+        // This ensures we don't show past events from earlier in the month
+        params.from = startOfDay(now).toISOString()
         params.to = endOfMonth(now).toISOString()
       } else if (dateRange === 'custom' && customDateRange) {
         params.from = customDateRange.from.toISOString()

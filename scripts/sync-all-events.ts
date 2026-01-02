@@ -831,6 +831,134 @@ async function fetchDogwoodEvents(): Promise<UnifiedEvent[]> {
 
 const FORT_LIBERTY_URL = 'https://bragg.armymwr.com/calendar';
 
+// Helper to fetch and parse individual MWR event pages for rich data
+interface MwrEventDetails {
+  description: string;
+  imageUrl?: string;
+  cost?: string;
+  venue?: {
+    name: string;
+    address?: string;
+    city: string;
+    state: string;
+  };
+  endDateTime?: Date;
+  registrationRequired?: boolean;
+  ageRequirement?: string;
+}
+
+async function fetchMwrEventDetails(eventUrl: string): Promise<MwrEventDetails | null> {
+  try {
+    const response = await fetch(eventUrl, {
+      headers: {
+        'User-Agent': 'FayettevilleCentralCalendar/1.0',
+        'Accept': 'text/html',
+      },
+      redirect: 'follow',
+    });
+
+    if (!response.ok) {
+      console.error(`  Failed to fetch MWR event page: ${response.status}`);
+      return null;
+    }
+
+    const html = await response.text();
+    const details: MwrEventDetails = { description: '' };
+
+    // Extract og:image
+    const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i);
+    if (ogImageMatch) {
+      details.imageUrl = ogImageMatch[1];
+    }
+
+    // Extract og:description or meta description
+    const ogDescMatch = html.match(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i);
+    const metaDescMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
+    if (ogDescMatch) {
+      details.description = decodeHtmlEntities(ogDescMatch[1]);
+    } else if (metaDescMatch) {
+      details.description = decodeHtmlEntities(metaDescMatch[1]);
+    }
+
+    // Extract description from event-main-details section
+    const mainDetailsMatch = html.match(/<section[^>]*class=["'][^"']*event-main-details[^"']*["'][^>]*>([\s\S]*?)<\/section>/i);
+    if (mainDetailsMatch) {
+      // Get text content, strip HTML tags
+      let detailsText = mainDetailsMatch[1]
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (detailsText.length > details.description.length) {
+        details.description = decodeHtmlEntities(detailsText);
+      }
+    }
+
+    // Extract cost/price information - look in main content only (not JS bundles)
+    // Match patterns like "Free program", "$5.00", "Cost: $10 per person"
+    const mainContent = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i)?.[1] ||
+                        html.match(/<article[^>]*>([\s\S]*?)<\/article>/i)?.[1] ||
+                        html.match(/<section[^>]*class="[^"]*event[^"]*"[^>]*>([\s\S]*?)<\/section>/i)?.[1] ||
+                        html;
+
+    // Strip out script and style tags from content before searching
+    const cleanContent = mainContent
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+    // Look for "Free" first (common for MWR events)
+    if (/\bfree\s+(?:program|event|admission|entry|to\s+attend)/i.test(cleanContent)) {
+      details.cost = 'Free';
+    } else {
+      // Look for price mentions like "$5.00" or "Cost: $10"
+      const priceMatch = cleanContent.match(/\$(\d+(?:\.\d{2})?)\s*(?:per\s+person|each)?/i);
+      if (priceMatch) {
+        details.cost = `$${priceMatch[1]}`;
+      }
+    }
+
+    // Check for registration requirement
+    if (/registration\s+(?:is\s+)?required/i.test(html) || /must\s+register/i.test(html) || /sign\s+up\s+required/i.test(html)) {
+      details.registrationRequired = true;
+    }
+
+    // Extract age requirement
+    const ageMatch = html.match(/(?:ages?|open\s+to)[:\s]*([\d]+(?:\s*[-–]\s*\d+)?(?:\s*(?:years?|yrs?|and\s+(?:up|over|under)))?[^<\n]{0,30})/i);
+    if (ageMatch) {
+      details.ageRequirement = ageMatch[1].trim();
+    }
+
+    // Extract venue/location details from program links
+    const locationMatch = html.match(/<a[^>]*href=["']\/programs\/[^"']+["'][^>]*>([^<]+)<\/a>/i);
+    if (locationMatch) {
+      details.venue = {
+        name: decodeHtmlEntities(locationMatch[1].trim()),
+        city: 'Fort Liberty',
+        state: 'NC',
+      };
+    }
+
+    // Extract end time if available
+    const timeRangeMatch = html.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*[-–]\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i);
+    if (timeRangeMatch) {
+      const endTime = parseTimeString(timeRangeMatch[2]);
+      if (endTime) {
+        // We'll use this in the main function to set proper end time
+        const tempDate = new Date();
+        tempDate.setHours(endTime.hours, endTime.minutes, 0, 0);
+        details.endDateTime = tempDate;
+      }
+    }
+
+    return details;
+  } catch (error) {
+    console.error(`  Error fetching MWR event details:`, error);
+    return null;
+  }
+}
+
 async function fetchFortLibertyEvents(useEnhanced = false): Promise<UnifiedEvent[]> {
   console.error('Fetching: Fort Liberty MWR...');
 
@@ -928,29 +1056,75 @@ async function fetchFortLibertyEvents(useEnhanced = false): Promise<UnifiedEvent
         if (results.some(e => e.id === uniqueId)) continue;
 
         const eventUrl = `https://bragg.armymwr.com${fullPath}`;
-        // Note: MWR event pages redirect to /calendar, so we can't fetch individual pages
-        // Description and images would need to be extracted from API or calendar scrape
+
+        // Fetch individual event page for rich details
+        console.error(`  Fetching details for: ${title.substring(0, 40)}...`);
+        const eventDetails = await fetchMwrEventDetails(eventUrl);
+
+        // Rate limit individual page fetches (300ms between requests)
+        await new Promise(r => setTimeout(r, 300));
+
+        // Build description with cost/registration info if available
+        let description = eventDetails?.description || '';
+        if (eventDetails?.cost) {
+          description = description ? `${description}\n\nCost: ${eventDetails.cost}` : `Cost: ${eventDetails.cost}`;
+        }
+        if (eventDetails?.registrationRequired) {
+          description = description ? `${description}\nRegistration required.` : 'Registration required.';
+        }
+        if (eventDetails?.ageRequirement) {
+          description = description ? `${description}\nAges: ${eventDetails.ageRequirement}` : `Ages: ${eventDetails.ageRequirement}`;
+        }
+
+        // Calculate proper end time
+        let endDateTime: Date;
+        if (eventDetails?.endDateTime) {
+          // Use end time from event page, but with the correct date
+          endDateTime = new Date(eventDate);
+          endDateTime.setHours(eventDetails.endDateTime.getHours(), eventDetails.endDateTime.getMinutes(), 0, 0);
+          // Handle overnight events
+          if (endDateTime <= eventDate) {
+            endDateTime.setDate(endDateTime.getDate() + 1);
+          }
+        } else if (timeMatch) {
+          // Use end time from calendar context
+          const endTime = parseTimeString(timeMatch[2]);
+          if (endTime) {
+            endDateTime = new Date(eventDate);
+            endDateTime.setHours(endTime.hours, endTime.minutes, 0, 0);
+            if (endDateTime <= eventDate) {
+              endDateTime.setDate(endDateTime.getDate() + 1);
+            }
+          } else {
+            endDateTime = new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
+          }
+        } else {
+          endDateTime = new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
+        }
+
+        // Use venue from event details if available, otherwise from calendar
+        const venue = eventDetails?.venue || (venueMatch ? {
+          name: venueMatch[1].trim(),
+          city: 'Fort Liberty',
+          state: 'NC',
+        } : {
+          name: 'Fort Liberty',
+          city: 'Fort Liberty',
+          state: 'NC',
+        });
 
         results.push({
           id: uniqueId,
           source: 'fort_liberty_mwr',
           sourceId: `${eventId}_${occurrenceId}`,
           title,
-          description: '', // MWR pages redirect, can't fetch descriptions
+          description,
           startDateTime: eventDate,
-          endDateTime: new Date(eventDate.getTime() + 2 * 60 * 60 * 1000), // Default 2hr duration
-          venue: venueMatch ? {
-            name: venueMatch[1].trim(),
-            city: 'Fort Liberty',
-            state: 'NC',
-          } : {
-            name: 'Fort Liberty',
-            city: 'Fort Liberty',
-            state: 'NC',
-          },
+          endDateTime,
+          venue,
           categories: ['Military', 'MWR'],
           url: eventUrl,
-          imageUrl: undefined, // MWR pages redirect, can't fetch images
+          imageUrl: eventDetails?.imageUrl,
           lastModified: new Date(),
           section: 'fort_bragg',
         });

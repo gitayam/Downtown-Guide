@@ -95,160 +95,39 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Sources */}
+          {/* Sources - split into two columns for space */}
           <div>
             <h3 className="font-semibold mb-4">Event Sources</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a
-                  href="https://www.distinctlyfayettevillenc.com/events/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Distinctly Fayetteville (CVB)
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://visitdowntownfayetteville.com/events/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Visit Downtown Fayetteville
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.faydta.com/our-events/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Downtown Alliance (FayDTA)
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.thedogwoodfestival.com/2025-2026-events"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Dogwood Festival
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.segrastadium.com/events-calendar"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Segra Stadium
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.milb.com/fayetteville/schedule"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Fayetteville Woodpeckers
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.myracepass.com/tracks/2933"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Fayetteville Motor Speedway
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.crowncomplexnc.com/events/all"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Crown Complex
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://bragg.armymwr.com/calendar"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Fort Liberty MWR
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://mlkmemorialpark.org/upcoming-events/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  MLK Committee
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://cumberland.librarycalendar.com/events/upcoming"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Headquarters Library
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.wearethearts.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Arts Council of Fayetteville
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.fayettevillesymphony.org/2025-2026-season/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Fayetteville Symphony Orchestra
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.cameoarthouse.com/now-showing/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  Cameo Art House Theatre
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://fsubroncos.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-dogwood transition-colors"
-                >
-                  FSU Broncos Sports
-                </a>
-              </li>
+
+            {/* Downtown Fayetteville */}
+            <p className="text-white/50 text-xs mb-2 mt-3">🏙️ Downtown</p>
+            <ul className="space-y-1.5 text-sm mb-4">
+              <li><a href="https://www.wearethearts.com" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Arts Council</a></li>
+              <li><a href="https://www.cameoarthouse.com/now-showing/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Cameo Art House</a></li>
+              <li><a href="https://www.distinctlyfayettevillenc.com/events/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Distinctly Fayetteville</a></li>
+              <li><a href="https://www.thedogwoodfestival.com/2025-2026-events" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Dogwood Festival</a></li>
+              <li><a href="https://www.faydta.com/our-events/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Downtown Alliance</a></li>
+              <li><a href="https://www.fayettevillenc.gov/Parks-and-Recreation/Facilities/Fayetteville-History-Museum" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Fayetteville History Museum</a></li>
+              <li><a href="https://www.fayettevillesymphony.org/2025-2026-season/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Fayetteville Symphony</a></li>
+              <li><a href="https://cumberland.librarycalendar.com/events/upcoming" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Headquarters Library</a></li>
+              <li><a href="https://mlkmemorialpark.org/upcoming-events/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">MLK Committee</a></li>
+              <li><a href="https://visitdowntownfayetteville.com/events/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Visit Downtown</a></li>
+            </ul>
+
+            {/* Greater Fayetteville */}
+            <p className="text-white/50 text-xs mb-2">🏟️ Greater Fayetteville</p>
+            <ul className="space-y-1.5 text-sm mb-4">
+              <li><a href="https://www.crowncomplexnc.com/events/all" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Crown Complex</a></li>
+              <li><a href="https://www.myracepass.com/tracks/2933" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Fayetteville Motor Speedway</a></li>
+              <li><a href="https://www.milb.com/fayetteville/schedule" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Fayetteville Woodpeckers</a></li>
+              <li><a href="https://fsubroncos.com" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">FSU Broncos Sports</a></li>
+              <li><a href="https://www.segrastadium.com/events-calendar" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Segra Stadium</a></li>
+            </ul>
+
+            {/* Fort Liberty */}
+            <p className="text-white/50 text-xs mb-2">🎖️ Fort Liberty</p>
+            <ul className="space-y-1.5 text-sm">
+              <li><a href="https://bragg.armymwr.com/calendar" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Fort Liberty MWR</a></li>
             </ul>
           </div>
         </div>

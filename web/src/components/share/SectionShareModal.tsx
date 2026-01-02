@@ -5,7 +5,8 @@ import {
   ClipboardIcon,
   CheckIcon,
   ArrowDownTrayIcon,
-  ShareIcon
+  ShareIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline'
 import { format } from 'date-fns'
 import { toPng } from 'html-to-image'
@@ -30,6 +31,7 @@ export default function SectionShareModal({
 }: SectionShareModalProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [copiedText, setCopiedText] = useState(false)
+  const [copiedImage, setCopiedImage] = useState(false)
   const [shareError, setShareError] = useState<string | null>(null)
   const exportRef = useRef<HTMLDivElement>(null)
 
@@ -95,7 +97,7 @@ export default function SectionShareModal({
       const dataUrl = await toPng(element, {
         cacheBust: true,
         backgroundColor: '#ffffff',
-        width: 600,
+        width: 800,
         height: element.offsetHeight,
         pixelRatio: 2, // Retina quality
       })
@@ -108,6 +110,31 @@ export default function SectionShareModal({
       console.error('Image generation failed', err)
       return null
     }
+  }
+
+  const handleCopyImage = async () => {
+    setIsGenerating(true)
+    setShareError(null)
+
+    setTimeout(async () => {
+      try {
+        const blob = await generateImage()
+        if (blob) {
+            await navigator.clipboard.write([
+                new ClipboardItem({ 'image/png': blob })
+            ])
+            setCopiedImage(true)
+            setTimeout(() => setCopiedImage(false), 2000)
+        } else {
+            setShareError("Failed to generate image.")
+        }
+      } catch (err) {
+        console.error('Copy image failed', err)
+        setShareError("Failed to copy image. Your browser might not support this.")
+      } finally {
+        setIsGenerating(false)
+      }
+    }, 100)
   }
 
   const handleDownloadImage = async () => {
@@ -207,14 +234,35 @@ export default function SectionShareModal({
               </div>
             </button>
 
-            {/* 2. Download Image */}
+            {/* 2. Copy Image to Clipboard */}
+             <button
+              onClick={handleCopyImage}
+              disabled={isGenerating}
+              className="flex items-center gap-3 p-3 rounded-xl border border-sand hover:border-brick hover:bg-sand/30 transition-all group text-left disabled:opacity-50"
+            >
+              <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                {isGenerating && !copiedImage ? (
+                     <div className="animate-spin w-5 h-5 border-2 border-teal-600 border-t-transparent rounded-full"/>
+                ) : copiedImage ? (
+                    <CheckIcon className="w-5 h-5" />
+                ) : (
+                    <PhotoIcon className="w-5 h-5" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="font-medium text-gray-900">Copy Image</div>
+                <div className="text-xs text-gray-500">Paste directly into apps</div>
+              </div>
+            </button>
+
+            {/* 3. Download Image */}
             <button
               onClick={handleDownloadImage}
               disabled={isGenerating}
               className="flex items-center gap-3 p-3 rounded-xl border border-sand hover:border-brick hover:bg-sand/30 transition-all group text-left disabled:opacity-50"
             >
               <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                {isGenerating ? <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"/> : <ArrowDownTrayIcon className="w-5 h-5" />}
+                {isGenerating && !copiedImage ? <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"/> : <ArrowDownTrayIcon className="w-5 h-5" />}
               </div>
               <div className="flex-1">
                 <div className="font-medium text-gray-900">Download Image</div>
@@ -222,7 +270,7 @@ export default function SectionShareModal({
               </div>
             </button>
 
-             {/* 3. Share Image (Mobile) */}
+             {/* 4. Share Image (Mobile) */}
              {canShareFiles && (
                 <button
                   onClick={handleShareImage}
@@ -255,7 +303,7 @@ export default function SectionShareModal({
             top: 0,
             left: 0,
             zIndex: -9999,
-            opacity: 1, 
+            opacity: 1,
             pointerEvents: 'none',
             backgroundColor: 'white'
         }}

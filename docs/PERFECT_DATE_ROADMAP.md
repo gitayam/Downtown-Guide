@@ -962,9 +962,9 @@ const [dateData, setDateData] = useState({
 
 ### Immediate (This Session)
 1. [x] Approve this roadmap
-2. [ ] Create `scripts/scrape-date-venues.ts` skeleton
+2. [x] Create `scripts/scrape-date-venues.ts` skeleton
 3. [ ] Set up Google Places API key in `.env`
-4. [ ] Create D1 migration for venue enrichment fields
+4. [x] Create D1 migration for venue enrichment fields
 
 ### Phase 0: Data Collection Sprint
 1. [ ] Scrape downtown restaurants via Google Places

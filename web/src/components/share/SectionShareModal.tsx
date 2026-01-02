@@ -85,90 +85,114 @@ export default function SectionShareModal({
     }
   }
 
-  // Generate image client-side using canvas
+  // Generate image client-side using canvas (2x resolution for quality)
   const generateImage = async (): Promise<Blob | null> => {
     try {
+      const scale = 2 // 2x resolution for crisp images
+      const eventsToShow = events.slice(0, 8)
+      const baseWidth = 800
+      const headerHeight = 120
+      const eventRowHeight = 56
+      const footerHeight = 70
+      const baseHeight = headerHeight + (eventsToShow.length * eventRowHeight) + footerHeight + 40
+
       const canvas = document.createElement('canvas')
-      const width = 800
-      const height = 600
-      canvas.width = width
-      canvas.height = height
+      canvas.width = baseWidth * scale
+      canvas.height = baseHeight * scale
       const ctx = canvas.getContext('2d')
       if (!ctx) return null
 
+      // Scale for 2x resolution
+      ctx.scale(scale, scale)
+
       // Background gradient
-      const gradient = ctx.createLinearGradient(0, 0, width, height)
+      const gradient = ctx.createLinearGradient(0, 0, baseWidth, baseHeight)
       gradient.addColorStop(0, '#A65D57') // Brick
       gradient.addColorStop(1, '#2D6A4F') // Forest
       ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, width, height)
+      ctx.fillRect(0, 0, baseWidth, baseHeight)
+
+      // Header background
+      ctx.fillStyle = 'rgba(0,0,0,0.2)'
+      ctx.fillRect(0, 0, baseWidth, headerHeight)
 
       // Title
       ctx.fillStyle = 'white'
-      ctx.font = 'bold 36px system-ui, -apple-system, sans-serif'
-      ctx.fillText(getTitle(), 40, 60)
+      ctx.font = 'bold 32px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+      ctx.fillText(getTitle(), 30, 50)
 
       // Subtitle
-      ctx.font = '20px system-ui, -apple-system, sans-serif'
-      ctx.fillStyle = 'rgba(255,255,255,0.8)'
-      ctx.fillText(getSubtitle(), 40, 95)
+      ctx.font = '18px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+      ctx.fillStyle = 'rgba(255,255,255,0.85)'
+      ctx.fillText(getSubtitle(), 30, 85)
 
       // Events list
-      const eventsToShow = events.slice(0, 10)
-      let y = 140
+      let y = headerHeight + 30
 
       if (eventsToShow.length === 0) {
-        ctx.fillStyle = 'rgba(255,255,255,0.7)'
-        ctx.font = '18px system-ui, -apple-system, sans-serif'
-        ctx.fillText('No events scheduled', 40, y + 20)
+        ctx.fillStyle = 'rgba(255,255,255,0.8)'
+        ctx.font = '20px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+        ctx.fillText('No events scheduled for this period', 30, y + 30)
       } else {
-        eventsToShow.forEach((event) => {
+        eventsToShow.forEach((event, index) => {
           try {
             const eventDate = new Date(event.start_datetime)
             const time = format(eventDate, 'h:mm a')
-            const dateStr = format(eventDate, 'MMM d')
+            const dateStr = format(eventDate, 'EEE, MMM d')
             const location = event.location_name || event.venue_name || ''
 
-            // Event row background
-            ctx.fillStyle = 'rgba(255,255,255,0.1)'
-            ctx.fillRect(30, y - 20, width - 60, 45)
+            // Alternating row background
+            if (index % 2 === 0) {
+              ctx.fillStyle = 'rgba(255,255,255,0.08)'
+              ctx.fillRect(20, y - 12, baseWidth - 40, eventRowHeight - 4)
+            }
 
-            // Date + Time
-            ctx.fillStyle = 'rgba(255,255,255,0.9)'
-            ctx.font = 'bold 13px system-ui, -apple-system, sans-serif'
-            ctx.fillText(`${dateStr}`, 45, y - 2)
-            ctx.font = '12px system-ui, -apple-system, sans-serif'
-            ctx.fillText(time, 45, y + 14)
+            // Date column
+            ctx.fillStyle = 'rgba(255,255,255,0.95)'
+            ctx.font = 'bold 14px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+            ctx.fillText(dateStr, 30, y + 8)
+            ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+            ctx.fillStyle = 'rgba(255,255,255,0.7)'
+            ctx.fillText(time, 30, y + 26)
 
             // Title
             ctx.fillStyle = 'white'
-            ctx.font = '15px system-ui, -apple-system, sans-serif'
-            const truncatedTitle = event.title.length > 40 ? event.title.slice(0, 37) + '...' : event.title
-            ctx.fillText(truncatedTitle, 120, y)
+            ctx.font = '16px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+            const truncatedTitle = event.title.length > 45 ? event.title.slice(0, 42) + '...' : event.title
+            ctx.fillText(truncatedTitle, 160, y + 10)
 
             // Location
             if (location) {
               ctx.fillStyle = 'rgba(255,255,255,0.6)'
-              ctx.font = '12px system-ui, -apple-system, sans-serif'
-              const truncatedLocation = location.length > 35 ? location.slice(0, 32) + '...' : location
-              ctx.fillText(truncatedLocation, 120, y + 16)
+              ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+              const truncatedLocation = location.length > 45 ? location.slice(0, 42) + '...' : location
+              ctx.fillText(`📍 ${truncatedLocation}`, 160, y + 30)
             }
 
-            y += 48
+            y += eventRowHeight
           } catch (e) {
             console.error('Error rendering event:', event, e)
           }
         })
       }
 
-      // Footer
-      ctx.fillStyle = 'rgba(255,255,255,0.6)'
-      ctx.font = '14px system-ui, -apple-system, sans-serif'
-      ctx.fillText('ncfayetteville.com', 40, height - 30)
+      // Footer bar
+      const footerY = baseHeight - footerHeight
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'
+      ctx.fillRect(0, footerY, baseWidth, footerHeight)
 
-      // Convert to blob
+      // Footer text
+      ctx.fillStyle = 'white'
+      ctx.font = 'bold 18px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+      ctx.fillText('🌐 ncfayetteville.com', 30, footerY + 30)
+
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'
+      ctx.font = '14px system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
+      ctx.fillText('Your guide to Fayetteville, NC events', 30, footerY + 52)
+
+      // Convert to blob with high quality
       return new Promise((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), 'image/png')
+        canvas.toBlob((blob) => resolve(blob), 'image/png', 1.0)
       })
     } catch (err) {
       console.error('Image generation failed', err)

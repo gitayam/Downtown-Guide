@@ -116,33 +116,30 @@ export default function SectionShareModal({
     setIsGenerating(true)
     setShareError(null)
 
-    setTimeout(async () => {
-      try {
-        const blob = await generateImage()
-        if (blob) {
-            await navigator.clipboard.write([
-                new ClipboardItem({ 'image/png': blob })
-            ])
-            setCopiedImage(true)
-            setTimeout(() => setCopiedImage(false), 2000)
-        } else {
-            setShareError("Failed to generate image.")
-        }
-      } catch (err) {
-        console.error('Copy image failed', err)
-        setShareError("Failed to copy image. Your browser might not support this.")
-      } finally {
-        setIsGenerating(false)
+    try {
+      const blob = await generateImage()
+      if (blob) {
+          await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+          ])
+          setCopiedImage(true)
+          setTimeout(() => setCopiedImage(false), 2000)
+      } else {
+          setShareError("Failed to generate image.")
       }
-    }, 100)
+    } catch (err) {
+      console.error('Copy image failed', err)
+      setShareError("Failed to copy image. Your browser might not support this.")
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleDownloadImage = async () => {
     setIsGenerating(true)
     setShareError(null)
     
-    // Give the DOM a moment to ensure EventExportList is rendered
-    setTimeout(async () => {
+    try {
       const blob = await generateImage()
       if (blob) {
         const url = URL.createObjectURL(blob)
@@ -156,15 +153,19 @@ export default function SectionShareModal({
       } else {
         setShareError("Failed to generate image. Try 'Copy Text Summary' instead.")
       }
+    } catch (err) {
+      console.error('Download failed', err)
+      setShareError("Failed to download image.")
+    } finally {
       setIsGenerating(false)
-    }, 100)
+    }
   }
 
   const handleShareImage = async () => {
     setIsGenerating(true)
     setShareError(null)
 
-    setTimeout(async () => {
+    try {
       const blob = await generateImage()
       
       if (blob && navigator.share) {
@@ -188,8 +189,12 @@ export default function SectionShareModal({
       } else {
           setShareError("Sharing not supported on this device.")
       }
+    } catch (err) {
+      console.error('Share failed', err)
+      setShareError("Failed to generate image.")
+    } finally {
       setIsGenerating(false)
-    }, 100)
+    }
   }
 
   const canShareFiles = typeof navigator !== 'undefined' && 

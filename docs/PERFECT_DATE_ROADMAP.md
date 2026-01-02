@@ -875,8 +875,8 @@ const [dateData, setDateData] = useState({
 - [x] Basic API endpoints (`/api/date-planner/*`)
 - [x] Simple UI with form inputs (PlanDatePage.tsx)
 - [x] Rule-based recommendation engine
-- [ ] DatePlanMap component with route visualization
-- [ ] Basic save/share functionality
+- [x] DatePlanMap component with route visualization
+- [x] Basic save/share functionality
 
 ### Phase 2: AI Enhancement (Week 5-6)
 - [ ] OpenAI integration (gpt-4o-mini)

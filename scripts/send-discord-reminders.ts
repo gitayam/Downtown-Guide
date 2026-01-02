@@ -70,7 +70,7 @@ const SOURCE_BADGES: Record<string, string> = {
   'segra_stadium': '⚾ Segra Stadium',
   'distinctly_fayetteville': '🎭 CVB',
   'dogwood_festival': '🌸 Dogwood Festival',
-  'fort_liberty_mwr': '🎖️ Fort Liberty',
+  'fort_liberty_mwr': '🎖️ Fort Bragg',
 };
 
 // =============================================================================
@@ -424,7 +424,7 @@ async function fetchFortLibertyEvents(): Promise<UnifiedEvent[]> {
           description: '',
           startDateTime: targetDate,
           endDateTime: new Date(targetDate.getTime() + 2 * 60 * 60 * 1000),
-          venue: { name: 'Fort Liberty', city: 'Fort Liberty', state: 'NC' },
+          venue: { name: 'Fort Bragg', city: 'Fort Bragg', state: 'NC' },
           categories: ['Military', 'MWR'],
           url: `https://bragg.armymwr.com${fullPath}`,
           section: 'fort_bragg',
@@ -435,7 +435,7 @@ async function fetchFortLibertyEvents(): Promise<UnifiedEvent[]> {
 
     return Array.from(new Map(results.map(e => [e.id, e])).values());
   } catch (error) {
-    console.error('Error fetching Fort Liberty events:', error);
+    console.error('Error fetching Fort Bragg events:', error);
     return [];
   }
 }
@@ -563,7 +563,7 @@ function formatTime(date: Date): string {
 function buildReminderEmbed(event: UnifiedEvent, type: ReminderType): DiscordEmbed {
   const emoji = getCategoryEmoji(event.categories);
   const sourceBadge = SOURCE_BADGES[event.source] || event.source;
-  const sectionLabel = event.section === 'downtown' ? '🏙️ Downtown' : '🎖️ Fort Liberty';
+  const sectionLabel = event.section === 'downtown' ? '🏙️ Downtown' : '🎖️ Fort Bragg';
 
   const isOneDay = type === '1_day';
   const title = isOneDay ? `⏰ Tomorrow! ${sectionLabel}` : `🗓️ Coming Up Next Week - ${sectionLabel}`;

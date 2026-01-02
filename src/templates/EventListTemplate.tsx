@@ -212,7 +212,7 @@ export const EventListTemplate = ({ events, title, subtitle }: Props) => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontWeight: 700, color: '#1c1917' }}>Fayetteville Events</div>
-            <div style={{ fontSize: '14px', color: '#78716c' }}>Downtown & Fort Liberty Guide</div>
+            <div style={{ fontSize: '14px', color: '#78716c' }}>Downtown & Fort Bragg Guide</div>
           </div>
         </div>
         

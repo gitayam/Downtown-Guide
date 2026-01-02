@@ -129,7 +129,7 @@ export function getSourceBadge(sourceId: string): { label: string; emoji: string
     segra_stadium: { label: 'Segra', emoji: '⚾' },
     distinctly_fayetteville: { label: 'CVB', emoji: '🎭' },
     dogwood_festival: { label: 'Dogwood', emoji: '🌸' },
-    fort_liberty_mwr: { label: 'Fort Liberty', emoji: '🎖️' },
+    fort_bragg_mwr: { label: 'Fort Bragg', emoji: '🎖️' },
     crown_complex: { label: 'Crown', emoji: '🏟️' },
   }
   return badges[sourceId] || { label: 'Event', emoji: '📅' }

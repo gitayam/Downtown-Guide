@@ -255,6 +255,62 @@ export async function fetchCategories(): Promise<{
   )
 }
 
+// Date Planner API
+export interface DatePlan {
+  id: string
+  title: string
+  totalDuration: number
+  estimatedCost: number
+  stops: {
+    order: number
+    activity: string
+    duration: number
+    cost: number
+    notes: string
+    transitionTip?: string
+    venue?: {
+      name: string
+      address?: string
+      latitude?: number
+      longitude?: number
+    }
+  }[]
+  tips: string[]
+}
+
+export async function fetchDateSuggestions(): Promise<{
+  event_types: string[]
+  vibes: string[]
+  budget_ranges: string[]
+}> {
+  return resilientFetch<{
+    event_types: string[]
+    vibes: string[]
+    budget_ranges: string[]
+  }>('/api/date-planner/suggestions', 'date_planner_suggestions')
+}
+
+export async function generateDatePlan(preferences: {
+  event_type: string
+  budget_range: string
+  vibes: string[]
+  duration_hours: number
+  date?: string
+}): Promise<{ status: string; plan: DatePlan }> {
+  // Don't cache generated plans by default as they should be fresh
+  const response = await fetch('/api/date-planner/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(preferences),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to generate plan')
+  }
+
+  return response.json()
+}
+
 // Export for checking network status
 export function isOnline(): boolean {
   return typeof navigator !== 'undefined' ? navigator.onLine : true
@@ -273,7 +329,7 @@ const WORKER_URL = 'https://downtown-guide.wemea-5ahhf.workers.dev'
 export const ICAL_URL = `${WORKER_URL}/cal/events.ics`
 export const ICAL_DOWNTOWN_URL = `${WORKER_URL}/cal/events.ics?section=downtown`
 export const ICAL_CROWN_URL = `${WORKER_URL}/cal/events.ics?section=crown`
-export const ICAL_FORTLIBERTY_URL = `${WORKER_URL}/cal/events.ics?section=fort_bragg`
+export const ICAL_FORTBRAGG_URL = `${WORKER_URL}/cal/events.ics?section=fort_bragg`
 export const ICAL_HOLIDAYS_URL = `${WORKER_URL}/cal/events.ics?source=fort_liberty_holidays`
 
 // WebCal URLs (for one-click subscription on mobile/desktop)
@@ -281,8 +337,9 @@ const WEBCAL_BASE = WORKER_URL.replace('https://', 'webcal://')
 export const WEBCAL_URL = `${WEBCAL_BASE}/cal/events.ics`
 export const WEBCAL_DOWNTOWN_URL = `${WEBCAL_BASE}/cal/events.ics?section=downtown`
 export const WEBCAL_CROWN_URL = `${WEBCAL_BASE}/cal/events.ics?section=crown`
-export const WEBCAL_FORTLIBERTY_URL = `${WEBCAL_BASE}/cal/events.ics?section=fort_bragg`
+export const WEBCAL_FORTBRAGG_URL = `${WEBCAL_BASE}/cal/events.ics?section=fort_bragg`
 export const WEBCAL_HOLIDAYS_URL = `${WEBCAL_BASE}/cal/events.ics?source=fort_liberty_holidays`
 
-// Legacy alias
-export const ICAL_FORTBRAGG_URL = ICAL_FORTLIBERTY_URL
+// Legacy alias (deprecated)
+export const ICAL_FORTLIBERTY_URL = ICAL_FORTBRAGG_URL
+export const WEBCAL_FORTLIBERTY_URL = WEBCAL_FORTBRAGG_URL

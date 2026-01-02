@@ -117,16 +117,19 @@ export default function SectionShareModal({
     setShareError(null)
 
     try {
-      const blob = await generateImage()
-      if (blob) {
-          await navigator.clipboard.write([
-              new ClipboardItem({ 'image/png': blob })
-          ])
-          setCopiedImage(true)
-          setTimeout(() => setCopiedImage(false), 2000)
-      } else {
-          setShareError("Failed to generate image.")
-      }
+        // Safari requires the ClipboardItem to be created immediately within the user gesture.
+        // We pass a Promise that resolves to the blob.
+        const clipboardItem = new ClipboardItem({
+            'image/png': generateImage().then(blob => {
+                if (!blob) throw new Error("Blob generation failed");
+                return blob;
+            })
+        });
+        
+        await navigator.clipboard.write([clipboardItem]);
+        
+        setCopiedImage(true)
+        setTimeout(() => setCopiedImage(false), 2000)
     } catch (err) {
       console.error('Copy image failed', err)
       setShareError("Failed to copy image. Your browser might not support this.")

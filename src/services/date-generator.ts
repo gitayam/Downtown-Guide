@@ -61,13 +61,46 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
   let currentDuration = 0;
   let order = 1;
 
-  // Step 1: Activity or Event (Afternoon/Early Evening)
-  // Prioritize a relevant event if one exists
+  // Step 1: Identify key anchor (Event)
   const relevantEvent = events.find(e => matchEventVibe(e, prefs.vibes));
-  
+  let eventStartHour = 19; // Default to 7 PM for generic evening plans
+
   if (relevantEvent) {
-    stops.push({
-      order: order++,
+    const startDate = new Date(relevantEvent.start_datetime);
+    eventStartHour = startDate.getHours();
+  }
+
+  // Helper to add stop
+  const addStop = (stop: DateStop) => {
+    stop.order = order++;
+    stops.push(stop);
+    currentCost += stop.cost;
+    currentDuration += stop.duration;
+  };
+
+  // Scenario A: Evening Event (starts 6 PM or later) -> Dinner First
+  // Scenario B: Late Afternoon Event (4 PM - 6 PM) -> Dinner After
+  // Scenario C: Day Event (before 4 PM) -> Activity -> Dinner
+
+  // --- SLOT 1: Pre-Game / Activity / Early Dinner ---
+  if (eventStartHour >= 18) {
+    // Dinner before event
+    const dinner = getRandom(candidates.filter((v: any) => v.category === 'food' && matchVibe(v, prefs.vibes)));
+    if (dinner) {
+      addStop({
+        order: 0,
+        venue: dinner,
+        activity: 'Pre-Event Dinner',
+        duration: 90,
+        cost: dinner.average_cost || 40,
+        notes: dinner.description || 'Start the night with a great meal.',
+        transitionTip: relevantEvent ? 'Head to the event venue.' : undefined
+      });
+    }
+  } else if (eventStartHour < 16 && relevantEvent) {
+    // Event is first (Day time)
+    addStop({
+      order: 0,
       event: relevantEvent,
       venue: { 
         name: relevantEvent.venue_name || relevantEvent.location_name,
@@ -75,61 +108,83 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
         longitude: relevantEvent.venue_longitude,
         address: relevantEvent.venue_address
       },
-      activity: 'Attend Event',
-      duration: 120, // Assume 2 hours for event
-      cost: 20, // Estimate ticket cost if unknown
-      notes: relevantEvent.title,
-      transitionTip: 'Head to dinner after the event.'
+      activity: relevantEvent.title,
+      duration: 120,
+      cost: 20,
+      notes: relevantEvent.description?.slice(0, 100) + '...',
+      transitionTip: 'Find something fun to do next.'
     });
-    currentCost += 20;
-    currentDuration += 120;
+  } else if (eventStartHour >= 16 && eventStartHour < 18 && relevantEvent) {
+    // Event is first (Late Afternoon)
+    addStop({
+      order: 0,
+      event: relevantEvent,
+      venue: { 
+        name: relevantEvent.venue_name || relevantEvent.location_name,
+        latitude: relevantEvent.venue_latitude,
+        longitude: relevantEvent.venue_longitude,
+        address: relevantEvent.venue_address
+      },
+      activity: relevantEvent.title,
+      duration: 120,
+      cost: 20,
+      notes: relevantEvent.description?.slice(0, 100) + '...',
+      transitionTip: 'Head to dinner.'
+    });
   } else {
-    // Fallback to venue activity
-    const activities = candidates.filter((v: any) => 
+    // No event, standard evening: Activity first
+    const activity = getRandom(candidates.filter((v: any) => 
       (v.category === 'activity' || v.category === 'nature' || v.category === 'culture') &&
       matchVibe(v, prefs.vibes)
-    );
-    
-    // If exact vibe match fails, try generic fallback
-    const activity = getRandom(activities) || getRandom(candidates.filter((v: any) => v.category === 'activity'));
-    
+    ));
     if (activity) {
-      stops.push({
-        order: order++,
+      addStop({
+        order: 0,
         venue: activity,
         activity: activity.category === 'nature' ? 'Walk & Talk' : 'Fun Activity',
         duration: 90,
         cost: activity.average_cost || 15,
         notes: activity.description || 'Enjoy some time together.',
-        transitionTip: 'Head to dinner afterwards.'
+        transitionTip: 'Time for dinner?'
       });
-      currentCost += activity.average_cost || 15;
-      currentDuration += 90;
     }
   }
 
-  // Step 2: Dinner (Main event)
-  const restaurants = candidates.filter((v: any) => 
-    v.category === 'food' && matchVibe(v, prefs.vibes)
-  );
-  
-  const dinner = getRandom(restaurants) || getRandom(candidates.filter((v: any) => v.category === 'food'));
-  
-  if (dinner) {
-    stops.push({
-      order: order++,
-      venue: dinner,
-      activity: 'Dinner',
-      duration: 90,
-      cost: dinner.average_cost || 40,
-      notes: dinner.description || 'Enjoy a lovely meal.',
-      transitionTip: 'Time for dessert or drinks?'
+  // --- SLOT 2: Main Event / Dinner ---
+  if (eventStartHour >= 18 && relevantEvent) {
+    // The Event
+    addStop({
+      order: 0,
+      event: relevantEvent,
+      venue: { 
+        name: relevantEvent.venue_name || relevantEvent.location_name,
+        latitude: relevantEvent.venue_latitude,
+        longitude: relevantEvent.venue_longitude,
+        address: relevantEvent.venue_address
+      },
+      activity: relevantEvent.title,
+      duration: 120,
+      cost: 20,
+      notes: relevantEvent.description?.slice(0, 100) + '...',
+      transitionTip: 'Wind down with a drink or dessert?'
     });
-    currentCost += dinner.average_cost || 40;
-    currentDuration += 90;
+  } else if (eventStartHour < 18) {
+    // Dinner (Post-event)
+    const dinner = getRandom(candidates.filter((v: any) => v.category === 'food' && matchVibe(v, prefs.vibes)));
+    if (dinner) {
+      addStop({
+        order: 0,
+        venue: dinner,
+        activity: 'Dinner',
+        duration: 90,
+        cost: dinner.average_cost || 40,
+        notes: dinner.description || 'Enjoy a lovely meal.',
+        transitionTip: 'Optional nightcap?'
+      });
+    }
   }
 
-  // Step 3: Drinks or Dessert (Late evening)
+  // --- SLOT 3: Nightcap / Dessert ---
   if (currentDuration < (prefs.duration_hours * 60)) {
     const nightcaps = candidates.filter((v: any) => 
       (v.category === 'drink' || (v.category === 'food' && v.subcategory?.includes('dessert'))) &&
@@ -138,16 +193,14 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
     
     const nightcap = getRandom(nightcaps);
     if (nightcap) {
-      stops.push({
-        order: order++,
+      addStop({
+        order: 0,
         venue: nightcap,
         activity: nightcap.category === 'drink' ? 'Drinks' : 'Dessert',
         duration: 60,
         cost: nightcap.average_cost || 15,
         notes: nightcap.description || 'Wind down the evening.',
       });
-      currentCost += nightcap.average_cost || 15;
-      currentDuration += 60;
     }
   }
 
@@ -173,6 +226,13 @@ function matchVibe(venue: any, userVibes: string[]): boolean {
   // Check partial matches (e.g. "adventure" matches "adventurous")
   return userVibes.some(v => {
     const vibe = v.toLowerCase();
+    
+    // Loose matching for common date vibes if data is sparse
+    if (vibe === 'date night' || vibe === 'romantic') {
+      if (venue.category === 'food' || venue.category === 'drink') return true;
+      if (venueTags.some(t => t.includes('dinner') || t.includes('intimate') || t.includes('cozy'))) return true;
+    }
+
     // Direct match
     if (venueTags.includes(vibe)) return true;
     // Partial/Stem match (simple)

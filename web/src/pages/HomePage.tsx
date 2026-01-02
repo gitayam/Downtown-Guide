@@ -40,7 +40,7 @@ export default function HomePage() {
   const [section, setSection] = useState('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [search, setSearch] = useState('')
-  const [dateRange, setDateRange] = useState<DateRange>('today')
+  const [dateRange, setDateRange] = useState<DateRange>('week')
   const [customDateRange, setCustomDateRange] = useState<CustomDateRange | undefined>(undefined)
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[] | null>(null)

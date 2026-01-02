@@ -58,20 +58,37 @@ export default function SectionShareModal({
   const generateTextSummary = () => {
     const title = getTitle()
     const subtitle = getSubtitle()
-    
+
     let text = `📅 *${title}* - ${subtitle}\n\n`
-    
+
+    // Group events by date
+    const eventsByDate = new Map<string, typeof events>()
     events.slice(0, 20).forEach(event => {
-      const time = format(new Date(event.start_datetime), 'h:mm a')
-      const location = event.location_name || event.venue_name || 'TBD'
-      text += `• ${time}: ${event.title} @ ${location}\n`
+      const dateKey = format(new Date(event.start_datetime), 'yyyy-MM-dd')
+      const existing = eventsByDate.get(dateKey) || []
+      existing.push(event)
+      eventsByDate.set(dateKey, existing)
+    })
+
+    // Format each date group
+    eventsByDate.forEach((dateEvents, dateKey) => {
+      const dateLabel = format(new Date(dateKey), 'EEEE, MMMM d')
+      text += `*${dateLabel}*\n`
+
+      dateEvents.forEach(event => {
+        const time = format(new Date(event.start_datetime), 'h:mm a')
+        const location = event.location_name || event.venue_name || ''
+        const locationStr = location ? ` @ ${location}` : ''
+        text += `• ${time} - ${event.title}${locationStr}\n`
+      })
+      text += '\n'
     })
 
     if (events.length > 20) {
-      text += `\n...and ${events.length - 20} more.\n`
+      text += `...and ${events.length - 20} more events.\n\n`
     }
 
-    text += `\n🔗 Full details: https://ncfayetteville.com`
+    text += `🔗 Full details: https://ncfayetteville.com`
     return text
   }
 

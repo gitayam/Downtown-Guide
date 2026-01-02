@@ -1,6 +1,7 @@
 
 import { Hono } from 'hono';
 import { Bindings } from '../types';
+import { generateDatePlan } from '../services/date-generator';
 
 const datePlanner = new Hono<{ Bindings: Bindings }>();
 
@@ -19,23 +20,18 @@ datePlanner.get('/suggestions', async (c) => {
 // Generate a date plan based on user preferences
 datePlanner.post('/generate', async (c) => {
   const body = await c.req.json();
-  const { event_type, budget, vibes, duration_hours, date } = body;
-
-  // TODO: Implement recommendation engine (rule-based first)
-  // 1. Fetch venues matching vibes/budget
-  // 2. Fetch events matching date
-  // 3. Construct itinerary
-
-  return c.json({
-    status: 'success',
-    plan: {
-      title: "Sample Romantic Evening",
-      stops: [
-        { order: 1, activity: "Dinner at Mash House", cost: 60 },
-        { order: 2, activity: "Walk at Festival Park", cost: 0 }
-      ]
-    }
-  });
+  const { DB } = c.env;
+  
+  try {
+    const plan = await generateDatePlan(DB, body);
+    return c.json({
+      status: 'success',
+      plan
+    });
+  } catch (error) {
+    console.error('Date generation error:', error);
+    return c.json({ error: 'Failed to generate plan' }, 500);
+  }
 });
 
 // GET /api/date-planner/plan/:id

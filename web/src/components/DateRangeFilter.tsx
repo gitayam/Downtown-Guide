@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { format } from 'date-fns'
 
-export type DateRange = 'all' | 'today' | 'tomorrow' | 'weekend' | 'custom'
+export type DateRange = 'all' | 'today' | 'tomorrow' | 'week' | 'month' | 'custom'
 
 export interface CustomDateRange {
   from: Date
@@ -18,9 +18,10 @@ interface DateRangeFilterProps {
 const RANGES: { id: DateRange; label: string; emoji: string }[] = [
   { id: 'today', label: 'Today', emoji: '📅' },
   { id: 'tomorrow', label: 'Tomorrow', emoji: '⏩' },
-  { id: 'weekend', label: 'This Weekend', emoji: '🎉' },
+  { id: 'week', label: 'This Week', emoji: '🗓️' },
+  { id: 'month', label: 'This Month', emoji: '📆' },
   { id: 'all', label: 'All Upcoming', emoji: '∞' },
-  { id: 'custom', label: 'Custom', emoji: '📆' },
+  { id: 'custom', label: 'Custom', emoji: '✨' },
 ]
 
 export default function DateRangeFilter({

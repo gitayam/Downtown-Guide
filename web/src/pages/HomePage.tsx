@@ -18,7 +18,7 @@ import MapView from '../components/MapView'
 import SearchBar from '../components/SearchBar'
 import CategoryFilter from '../components/CategoryFilter'
 import DateRangeFilter, { type DateRange, type CustomDateRange } from '../components/DateRangeFilter'
-import { startOfDay, endOfDay, addDays, nextSunday, isFriday, isSaturday, isSunday } from 'date-fns'
+import { startOfDay, endOfDay, addDays, startOfMonth, endOfMonth } from 'date-fns'
 
 import SectionShareButton from '../components/share/SectionShareButton'
 
@@ -117,27 +117,12 @@ export default function HomePage() {
         const tomorrow = addDays(now, 1)
         params.from = startOfDay(tomorrow).toISOString()
         params.to = endOfDay(tomorrow).toISOString()
-      } else if (dateRange === 'weekend') {
-        // Logic for "This Weekend"
-        // If today is Friday, Sat, or Sun => show through Sunday
-        // If today is Mon-Thu => show coming Fri-Sun
-        let start = now
-        let end = nextSunday(now)
-
-        if (isFriday(now) || isSaturday(now) || isSunday(now)) {
-           start = startOfDay(now)
-           end = endOfDay(isSunday(now) ? now : nextSunday(now))
-        } else {
-           // Find next Friday
-           // date-fns doesn't have nextFriday, so simple calculation:
-           // Fri is day 5.
-           const day = now.getDay()
-           const daysUntilFriday = (5 + 7 - day) % 7 || 7
-           start = startOfDay(addDays(now, daysUntilFriday))
-           end = endOfDay(addDays(start, 2)) // Sunday
-        }
-        params.from = start.toISOString()
-        params.to = end.toISOString()
+      } else if (dateRange === 'week') {
+        params.from = startOfDay(now).toISOString()
+        params.to = endOfDay(addDays(now, 6)).toISOString()
+      } else if (dateRange === 'month') {
+        params.from = startOfMonth(now).toISOString()
+        params.to = endOfMonth(now).toISOString()
       } else if (dateRange === 'custom' && customDateRange) {
         params.from = customDateRange.from.toISOString()
         params.to = customDateRange.to.toISOString()

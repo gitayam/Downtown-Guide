@@ -28,9 +28,30 @@
  */
 
 import { Hono } from 'hono';
+
+// Polyfill process for Satori/Yoga
+if (typeof process === 'undefined') {
+  (globalThis as any).process = { env: { NODE_ENV: 'production' } };
+}
+
 import { cors } from 'hono/cors';
 import { cache } from 'hono/cache';
 import { secureHeaders } from 'hono/secure-headers';
+import satori from 'satori';
+import { initWasm, Resvg } from '@resvg/resvg-wasm';
+import React from 'react';
+// @ts-ignore - wasm import is handled by esbuild/wrangler
+import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
+import { EventListTemplate } from './templates/EventListTemplate';
+
+// Initialize Resvg WASM once
+let wasmInitialized = false;
+const initResvg = async () => {
+  if (!wasmInitialized) {
+    await initWasm(resvgWasm);
+    wasmInitialized = true;
+  }
+};
 
 type Bindings = {
   DB: D1Database;
@@ -40,7 +61,200 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Allowed origins for CORS
+// ... (existing CORS and middleware code) ...
+
+// Helper: Fetch Events Logic (refactored for reuse)
+async function fetchEvents(DB: D1Database, params: {
+  section?: string;
+  source?: string;
+  from?: string;
+  to?: string;
+  search?: string;
+  category?: string;
+  categories?: string;
+  featured?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const conditions: string[] = [];
+  const queryParams: any[] = [];
+
+  // Only show confirmed or active events
+  conditions.push("e.status IN ('confirmed', 'active')");
+
+  // Date filters
+  const now = new Date().toISOString();
+  if (!params.from) {
+    // Default: show events active now or in future
+    conditions.push('datetime(e.end_datetime) >= datetime(?)');
+    queryParams.push(now);
+  } else {
+    conditions.push('datetime(e.start_datetime) >= datetime(?)');
+    queryParams.push(params.from);
+  }
+
+  if (params.to) {
+    conditions.push('datetime(e.start_datetime) <= datetime(?)');
+    queryParams.push(params.to);
+  }
+
+  if (params.section && params.section !== 'all') {
+    conditions.push('e.section = ?');
+    queryParams.push(params.section);
+  }
+
+  if (params.category && params.category !== 'all') {
+    conditions.push('e.categories LIKE ?');
+    queryParams.push(`%"${params.category}"%`);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const limit = params.limit || 50;
+  
+  // Reuse the main query structure
+  queryParams.push(limit);
+  
+  const result = await DB.prepare(`
+    SELECT
+      e.id, e.title, e.start_datetime, e.end_datetime, 
+      e.location_name, e.categories, e.image_url,
+      v.name as venue_name, v.address as venue_address,
+      v.image_url as venue_image_url
+    FROM events e
+    LEFT JOIN venues v ON e.venue_id = v.id
+    ${whereClause}
+    ORDER BY e.start_datetime ASC
+    LIMIT ?
+  `).bind(...queryParams).all();
+
+  return result.results || [];
+}
+
+// =============================================================================
+// GET /api/events/image - Generate Social Image
+// =============================================================================
+
+app.get('/api/events/image', async (c) => {
+  const { DB } = c.env;
+  const section = c.req.query('section') || 'all';
+  const dateFilter = c.req.query('date') || 'upcoming'; // today, tomorrow, weekend, upcoming
+
+  // Calculate Date Ranges
+  const now = new Date();
+  let from = now.toISOString();
+  let to: string | undefined;
+  let title = 'Upcoming Events';
+  let subtitle = 'Fayetteville, NC';
+
+  if (dateFilter === 'today') {
+    title = "Today's Events";
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    from = startOfDay.toISOString();
+    to = endOfDay.toISOString();
+  } else if (dateFilter === 'tomorrow') {
+    title = "Tomorrow's Events";
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+    from = start.toISOString();
+    to = end.toISOString();
+  } else if (dateFilter === 'week') {
+    title = "This Week's Events";
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+    from = start.toISOString();
+    to = end.toISOString();
+  } else if (dateFilter === 'month') {
+    title = "This Month's Events";
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    from = start.toISOString();
+    to = end.toISOString();
+  }
+
+  // Refine Title based on Section
+  if (section === 'downtown') subtitle = 'Downtown Fayetteville';
+  if (section === 'fort_bragg') subtitle = 'Fort Liberty';
+  if (section === 'crown') subtitle = 'Crown Complex';
+
+  // Fetch Events
+  const events = await fetchEvents(DB, {
+    section,
+    from,
+    to,
+    limit: 8 // Fit nicely in the image
+  });
+
+  try {
+    // Init Resvg
+    console.log('Starting Resvg init...');
+    try {
+        await initResvg();
+        console.log('Resvg init success');
+    } catch (e) {
+        console.error('Resvg init failed:', e);
+        throw e;
+    }
+
+    // Fetch Font (Inter)
+    console.log('Fetching fonts...');
+    // We use a CDN for 400/700 weights
+    const [font400, font700] = await Promise.all([
+      fetch('https://cdn.jsdelivr.net/npm/@fontsource/inter/files/inter-latin-400-normal.woff').then(r => r.arrayBuffer()),
+      fetch('https://cdn.jsdelivr.net/npm/@fontsource/inter/files/inter-latin-700-normal.woff').then(r => r.arrayBuffer())
+    ]);
+    console.log('Fonts fetched');
+
+    // Render SVG with Satori
+    console.log('Starting Satori render...');
+    const svg = await satori(
+      // @ts-ignore - JSX element
+      React.createElement(EventListTemplate, { 
+        events: events as any, 
+        title, 
+        subtitle 
+      }),
+      {
+        width: 800,
+        height: 600, // Minimum height, satori grows if needed but we fixed content
+        fonts: [
+          { name: 'Inter', data: font400, weight: 400, style: 'normal' },
+          { name: 'Inter', data: font700, weight: 700, style: 'normal' },
+        ],
+      }
+    );
+    console.log('Satori render success');
+
+    // Render PNG with Resvg
+    console.log('Starting Resvg PNG render...');
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: 'width', value: 800 },
+    });
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
+    console.log('PNG render success');
+
+    return new Response(pngBuffer, {
+      headers: {
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=600', // Cache for 10 mins
+      },
+    });
+  } catch (err) {
+    console.error('Image generation error:', err);
+    return c.json(
+      { error: 'Failed to generate image', details: String(err) }, 
+      500,
+      {
+        'Access-Control-Allow-Origin': c.req.header('origin') || '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      }
+    );
+  }
+});
+
+// ... (rest of the existing endpoints) ...
+
 const ALLOWED_ORIGINS = [
   'https://ncfayetteville.com',
   'https://fayetteville-events.pages.dev',
@@ -113,6 +327,19 @@ app.use('/api/*', cache({
   cacheName: 'downtown-events-api',
   cacheControl: 'public, max-age=300',
 }));
+
+// Global error handler with CORS
+app.onError((err, c) => {
+  console.error('Global Worker Error:', err);
+  return c.json(
+    { error: 'Internal Server Error', details: err.message }, 
+    500, 
+    {
+      'Access-Control-Allow-Origin': c.req.header('origin') || '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    }
+  );
+});
 
 // =============================================================================
 // Health Check

@@ -34,3 +34,13 @@ mode = "smart"
 # 6. Observability
 [observability]
 enabled = true
+
+[define]
+"process.env.NODE_ENV" = "\"production\""
+"process.env" = "{}"
+
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+fallthrough = true
+

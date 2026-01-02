@@ -1,6 +1,7 @@
 import type { Event, EventsResponse, SourcesResponse } from './types'
 
-export const API_URL = 'https://downtown-guide.wemea-5ahhf.workers.dev'
+// Use relative URLs - requests will be proxied through Pages Functions
+export const API_URL = ''
 
 // Configuration for resilient API calls
 const RETRY_CONFIG = {
@@ -270,15 +271,18 @@ export function hasCachedEvents(params?: Record<string, unknown>): boolean {
   return getCache(CACHE_KEYS.events, cacheParams) !== null
 }
 
+// Worker URL for calendar feeds (needs full URL for external calendar apps)
+const WORKER_URL = 'https://downtown-guide.wemea-5ahhf.workers.dev'
+
 // iCal feed URLs (HTTPS - for download)
-export const ICAL_URL = `${API_URL}/cal/events.ics`
-export const ICAL_DOWNTOWN_URL = `${API_URL}/cal/events.ics?section=downtown`
-export const ICAL_CROWN_URL = `${API_URL}/cal/events.ics?section=crown`
-export const ICAL_FORTLIBERTY_URL = `${API_URL}/cal/events.ics?section=fort_bragg`
-export const ICAL_HOLIDAYS_URL = `${API_URL}/cal/events.ics?source=fort_liberty_holidays`
+export const ICAL_URL = `${WORKER_URL}/cal/events.ics`
+export const ICAL_DOWNTOWN_URL = `${WORKER_URL}/cal/events.ics?section=downtown`
+export const ICAL_CROWN_URL = `${WORKER_URL}/cal/events.ics?section=crown`
+export const ICAL_FORTLIBERTY_URL = `${WORKER_URL}/cal/events.ics?section=fort_bragg`
+export const ICAL_HOLIDAYS_URL = `${WORKER_URL}/cal/events.ics?source=fort_liberty_holidays`
 
 // WebCal URLs (for one-click subscription on mobile/desktop)
-const WEBCAL_BASE = API_URL.replace('https://', 'webcal://')
+const WEBCAL_BASE = WORKER_URL.replace('https://', 'webcal://')
 export const WEBCAL_URL = `${WEBCAL_BASE}/cal/events.ics`
 export const WEBCAL_DOWNTOWN_URL = `${WEBCAL_BASE}/cal/events.ics?section=downtown`
 export const WEBCAL_CROWN_URL = `${WEBCAL_BASE}/cal/events.ics?section=crown`

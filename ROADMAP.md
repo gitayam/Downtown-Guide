@@ -240,6 +240,19 @@ Create the go-to source for "What's happening in Fayetteville?" by aggregating e
 
 ---
 
+## Parallel Roadmap: Perfect Date
+
+**Goal:** Transform the platform into a personalized experience curator.
+
+- **Status:** Phase 0 (Data Collection)
+- **Roadmap:** [docs/PERFECT_DATE_ROADMAP.md](docs/PERFECT_DATE_ROADMAP.md)
+- **Key Features:**
+  - Personalized date itinerary generation
+  - Curated venue database (Romantic, Fun, Budget-friendly)
+  - Map-based route planning
+
+---
+
 ## Future Event Sources (Backlog)
 
 ### Downtown Fayetteville

@@ -56,9 +56,17 @@ export default function DirectionsModal({ isOpen, onClose, event }: DirectionsMo
   if (!isOpen) return null
 
   // Type guards to handle different object shapes
-  const getLat = (e: VenueLike) => 'venue_latitude' in e ? e.venue_latitude : e.latitude;
-  const getLng = (e: VenueLike) => 'venue_longitude' in e ? e.venue_longitude : e.longitude;
-  const getName = (e: VenueLike) => 'venue_name' in e ? e.venue_name : e.venue_name;
+  const getLat = (e: VenueLike): number | undefined => {
+    if ('venue_latitude' in e && typeof e.venue_latitude === 'number') return e.venue_latitude;
+    if ('latitude' in e && typeof e.latitude === 'number') return e.latitude;
+    return undefined;
+  };
+  const getLng = (e: VenueLike): number | undefined => {
+    if ('venue_longitude' in e && typeof e.venue_longitude === 'number') return e.venue_longitude;
+    if ('longitude' in e && typeof e.longitude === 'number') return e.longitude;
+    return undefined;
+  };
+  const getName = (e: VenueLike) => ('venue_name' in e && e.venue_name) ? e.venue_name : e.location_name;
 
   const lat = getLat(event);
   const lng = getLng(event);
@@ -73,7 +81,7 @@ export default function DirectionsModal({ isOpen, onClose, event }: DirectionsMo
   const appleMapsUrl = event.venue_apple_maps_url || 
     `http://maps.apple.com/?q=${encodeURIComponent(getName(event) || fullAddress)}&address=${encodeURIComponent(fullAddress)}`
 
-  const osmUrl = (lat && lng)
+  const osmUrl = (typeof lat === 'number' && typeof lng === 'number')
     ? `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`
     : `https://www.openstreetmap.org/search?query=${encodeURIComponent(fullAddress)}`
 

@@ -1,8 +1,5 @@
 import type { Event, EventsResponse, SourcesResponse } from './types'
 
-// Use relative URLs - requests will be proxied through Pages Functions
-export const API_URL = ''
-
 // Configuration for resilient API calls
 const RETRY_CONFIG = {
   maxRetries: 3,
@@ -190,28 +187,30 @@ export async function fetchEvents(params?: {
   limit?: number
   offset?: number
 }): Promise<EventsResponse> {
-  const url = new URL(`${API_URL}/api/events`)
-
+  // Build URL with query params
+  const queryParams = new URLSearchParams()
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
-        url.searchParams.set(key, String(value))
+        queryParams.set(key, String(value))
       }
     })
   }
+  const queryString = queryParams.toString()
+  const url = `/api/events${queryString ? `?${queryString}` : ''}`
 
   // Create cache key from params
   const cacheParams = params ? JSON.stringify(params) : 'default'
 
   return resilientFetch<EventsResponse>(
-    url.toString(),
+    url,
     CACHE_KEYS.events,
     cacheParams
   )
 }
 
 export async function fetchEvent(id: string): Promise<{ data: Event }> {
-  const url = `${API_URL}/api/events/${encodeURIComponent(id)}`
+  const url = `/api/events/${encodeURIComponent(id)}`
   return resilientFetch<{ data: Event }>(
     url,
     `${CACHE_KEYS.events}_${id}`,
@@ -224,9 +223,8 @@ export async function fetchTodayEvents(): Promise<{
   count: number
   date: string
 }> {
-  const url = `${API_URL}/api/events/today`
   return resilientFetch<{ data: Event[]; count: number; date: string }>(
-    url,
+    '/api/events/today',
     `${CACHE_KEYS.events}_today`,
     'today'
   )
@@ -236,26 +234,23 @@ export async function fetchUpcomingEvents(): Promise<{
   data: Event[]
   count: number
 }> {
-  const url = `${API_URL}/api/events/upcoming`
   return resilientFetch<{ data: Event[]; count: number }>(
-    url,
+    '/api/events/upcoming',
     `${CACHE_KEYS.events}_upcoming`,
     'upcoming'
   )
 }
 
 export async function fetchSources(): Promise<SourcesResponse> {
-  const url = `${API_URL}/api/sources`
-  return resilientFetch<SourcesResponse>(url, CACHE_KEYS.sources)
+  return resilientFetch<SourcesResponse>('/api/sources', CACHE_KEYS.sources)
 }
 
 export async function fetchCategories(): Promise<{
   data: string[]
   count: number
 }> {
-  const url = `${API_URL}/api/categories`
   return resilientFetch<{ data: string[]; count: number }>(
-    url,
+    '/api/categories',
     CACHE_KEYS.categories
   )
 }

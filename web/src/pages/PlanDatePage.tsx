@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeftIcon, SparklesIcon, ShareIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon } from '@heroicons/react/24/outline'
 import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, type DatePlan } from '../lib/api'
 import DatePlanMap from '../components/date-planner/DatePlanMap'
 import ShareModal from '../components/share/ShareModal'
@@ -90,6 +90,17 @@ export default function PlanDatePage() {
         ? p.vibes.filter(v => v !== vibe)
         : [...p.vibes, vibe]
     }))
+  }
+
+  const getGoogleMapsUrl = (venue: any) => {
+    if (venue?.google_maps_url) return venue.google_maps_url;
+    if (venue?.latitude && venue?.longitude) {
+      return `https://www.google.com/maps/search/?api=1&query=${venue.latitude},${venue.longitude}`;
+    }
+    if (venue?.address) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address + ', Fayetteville, NC')}`;
+    }
+    return null;
   }
 
   if (loading) return <div className="p-8 text-center">Loading...</div>
@@ -296,22 +307,63 @@ export default function PlanDatePage() {
                   </div>
                   
                   <h3 className="text-xl font-bold text-gray-900 mb-1">
-                    {stop.venue?.name || stop.activity}
+                    {stop.event ? (
+                      <Link to={`/events/${stop.event.id}`} className="hover:text-brick hover:underline">
+                        {stop.event.title}
+                      </Link>
+                    ) : (
+                      stop.venue?.name || stop.activity
+                    )}
                   </h3>
                   
                   <p className="text-stone text-sm mb-3">
                     {stop.notes}
                   </p>
 
-                  <div className="text-xs text-stone bg-sand/10 p-2 rounded">
+                  <div className="text-xs text-stone bg-sand/10 p-2 rounded inline-block mb-3">
                     💰 Est. ${stop.cost}
                   </div>
 
                   {stop.transitionTip && (
-                    <div className="mt-4 pt-3 border-t border-sand text-xs text-stone italic flex items-center gap-2">
+                    <div className="pt-3 border-t border-sand text-xs text-stone italic flex items-center gap-2 mb-3">
                       <span>👣</span> {stop.transitionTip}
                     </div>
                   )}
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {getGoogleMapsUrl(stop.venue) && (
+                      <a
+                        href={getGoogleMapsUrl(stop.venue)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"
+                      >
+                        <MapPinIcon className="w-3.5 h-3.5" />
+                        Directions
+                      </a>
+                    )}
+                    {stop.venue?.website && (
+                      <a
+                        href={stop.venue.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"
+                      >
+                        <GlobeAltIcon className="w-3.5 h-3.5" />
+                        Website
+                      </a>
+                    )}
+                    {stop.event && (
+                      <Link
+                        to={`/events/${stop.event.id}`}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"
+                      >
+                        <TicketIcon className="w-3.5 h-3.5" />
+                        View Event
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

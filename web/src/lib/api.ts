@@ -264,10 +264,20 @@ export interface DateStop {
   notes: string
   transitionTip?: string
   venue?: {
+    id: string
     name: string
     address?: string
+    city?: string
+    state?: string
+    zip?: string
     latitude?: number
     longitude?: number
+    website?: string
+    google_maps_url?: string
+  }
+  event?: {
+    id: string
+    title: string
   }
 }
 

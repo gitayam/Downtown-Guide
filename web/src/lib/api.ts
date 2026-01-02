@@ -256,25 +256,27 @@ export async function fetchCategories(): Promise<{
 }
 
 // Date Planner API
+export interface DateStop {
+  order: number
+  activity: string
+  duration: number
+  cost: number
+  notes: string
+  transitionTip?: string
+  venue?: {
+    name: string
+    address?: string
+    latitude?: number
+    longitude?: number
+  }
+}
+
 export interface DatePlan {
   id: string
   title: string
   totalDuration: number
   estimatedCost: number
-  stops: {
-    order: number
-    activity: string
-    duration: number
-    cost: number
-    notes: string
-    transitionTip?: string
-    venue?: {
-      name: string
-      address?: string
-      latitude?: number
-      longitude?: number
-    }
-  }[]
+  stops: DateStop[]
   tips: string[]
 }
 
@@ -309,6 +311,31 @@ export async function generateDatePlan(preferences: {
   }
 
   return response.json()
+}
+
+export async function saveDatePlan(plan: DatePlan): Promise<{ id: string; shareId: string }> {
+  const response = await fetch('/api/date-planner/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(plan),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to save plan')
+  }
+
+  return response.json()
+}
+
+export async function getDatePlan(shareId: string): Promise<DatePlan> {
+  const response = await fetch(`/api/date-planner/share/${shareId}`)
+  
+  if (!response.ok) {
+    throw new Error('Plan not found')
+  }
+
+  const json = await response.json()
+  return json.data
 }
 
 // Export for checking network status

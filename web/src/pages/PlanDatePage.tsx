@@ -1,13 +1,22 @@
 
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeftIcon, SparklesIcon } from '@heroicons/react/24/outline'
-import { fetchDateSuggestions, generateDatePlan, type DatePlan } from '../lib/api'
+import { ArrowLeftIcon, SparklesIcon, ShareIcon } from '@heroicons/react/24/outline'
+import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, type DatePlan } from '../lib/api'
 import DatePlanMap from '../components/date-planner/DatePlanMap'
+import ShareModal from '../components/share/ShareModal'
 
 export default function PlanDatePage() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  
+  // Check if we are viewing a shared plan
+  const urlParams = new URLSearchParams(window.location.search)
+  const sharedId = urlParams.get('id')
+
   const [suggestions, setSuggestions] = useState<{
     event_types: string[]
     vibes: string[]
@@ -25,21 +34,52 @@ export default function PlanDatePage() {
   const [result, setResult] = useState<DatePlan | null>(null)
 
   useEffect(() => {
-    fetchDateSuggestions()
-      .then(setSuggestions)
-      .finally(() => setLoading(false))
-  }, [])
+    // If shared ID present, load that plan
+    if (sharedId) {
+      getDatePlan(sharedId)
+        .then(plan => {
+          setResult(plan)
+          setLoading(false)
+        })
+        .catch(() => {
+          alert('Shared plan not found. Starting fresh.')
+          setLoading(false)
+        })
+    } else {
+      fetchDateSuggestions()
+        .then(setSuggestions)
+        .finally(() => setLoading(false))
+    }
+  }, [sharedId])
 
   const handleGenerate = async () => {
     setGenerating(true)
     try {
       const res = await generateDatePlan(prefs)
       setResult(res.plan)
+      // Clear share URL when generating new plan
+      setShareUrl('')
     } catch (e) {
       console.error(e)
       alert('Failed to generate plan. Please try again.')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!result) return
+    setSaving(true)
+    try {
+      const res = await saveDatePlan(result)
+      const link = `${window.location.origin}/plan-date?id=${res.shareId}`
+      setShareUrl(link)
+      setShareModalOpen(true)
+    } catch (e) {
+      console.error(e)
+      alert('Failed to save plan.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -52,10 +92,23 @@ export default function PlanDatePage() {
     }))
   }
 
-  if (loading) return <div className="p-8 text-center">Loading options...</div>
+  if (loading) return <div className="p-8 text-center">Loading...</div>
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        content={{
+          type: 'event', // Reusing event type for now
+          id: 'plan',
+          title: result?.title || 'Date Plan',
+          description: `Check out this date plan: ${result?.stops.map(s => s.activity).join(', ')}`,
+          url: shareUrl,
+        }}
+      />
+
       <Link to="/" className="inline-flex items-center text-stone hover:text-brick mb-6">
         <ArrowLeftIcon className="w-4 h-4 mr-1" />
         Back to Events
@@ -63,15 +116,18 @@ export default function PlanDatePage() {
 
       <div className="text-center mb-10">
         <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-2">
-          Plan Your Perfect Date
+          {result && sharedId ? 'Shared Date Plan' : 'Plan Your Perfect Date'}
         </h1>
         <p className="text-lg text-stone">
-          Tell us what you're looking for, and we'll curate a custom itinerary in Fayetteville.
+          {result && sharedId 
+            ? 'A curated itinerary for a perfect outing in Fayetteville.' 
+            : "Tell us what you're looking for, and we'll curate a custom itinerary in Fayetteville."}
         </p>
       </div>
 
       {!result ? (
         <div className="bg-white rounded-2xl shadow-sm border border-sand p-6 md:p-8 space-y-8">
+          {/* ... (Form Content - unchanged) ... */}
           {/* Occasion */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">What's the occasion?</label>
@@ -181,12 +237,26 @@ export default function PlanDatePage() {
                 Est. Cost: ${result.estimatedCost} • Duration: {result.totalDuration / 60}h
               </p>
             </div>
-            <button
-              onClick={() => setResult(null)}
-              className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20"
-            >
-              Start Over
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-4 py-2 text-sm font-medium text-white bg-brick hover:bg-brick-600 rounded-lg transition-colors flex items-center gap-2"
+              >
+                {saving ? 'Saving...' : (
+                  <>
+                    <ShareIcon className="w-4 h-4" />
+                    Share Plan
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => { setResult(null); window.history.pushState({}, '', '/plan-date'); }}
+                className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20"
+              >
+                Start Over
+              </button>
+            </div>
           </div>
 
           {/* Map Visualization */}

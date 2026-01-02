@@ -56,11 +56,35 @@ datePlanner.post('/save', async (c) => {
   const body = await c.req.json();
   const { DB } = c.env;
   
-  // TODO: Insert into saved_dates
   const id = crypto.randomUUID();
-  const shareId = crypto.randomUUID().slice(0, 8); // Short ID for sharing
+  const shareId = crypto.randomUUID().split('-')[0]; // Short ID for sharing (first 8 chars)
+  const now = new Date().toISOString();
 
-  return c.json({ id, shareId, message: "Plan saved" });
+  // Validate body structure (basic)
+  if (!body.title || !body.stops) {
+    return c.json({ error: 'Invalid plan data' }, 400);
+  }
+
+  try {
+    await DB.prepare(`
+      INSERT INTO saved_dates (id, share_id, title, venues, events, notes, budget, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      shareId,
+      body.title,
+      JSON.stringify(body.stops.map((s: any) => s.venue?.id || null).filter(Boolean)), // Extract venue IDs
+      JSON.stringify([]), // Events not yet fully linked in MVP
+      JSON.stringify(body), // Store full plan JSON in notes for now to reconstruct easily
+      body.estimatedCost,
+      now
+    ).run();
+
+    return c.json({ id, shareId, message: "Plan saved" });
+  } catch (error) {
+    console.error('Save plan error:', error);
+    return c.json({ error: 'Failed to save plan' }, 500);
+  }
 });
 
 // GET /api/date-planner/share/:shareId
@@ -69,13 +93,22 @@ datePlanner.get('/share/:shareId', async (c) => {
   const shareId = c.req.param('shareId');
   const { DB } = c.env;
 
-  const plan = await DB.prepare('SELECT * FROM saved_dates WHERE share_id = ?').bind(shareId).first();
+  const row = await DB.prepare('SELECT * FROM saved_dates WHERE share_id = ?').bind(shareId).first();
 
-  if (!plan) {
+  if (!row) {
     return c.json({ error: 'Plan not found' }, 404);
   }
 
-  return c.json({ data: plan });
+  // Reconstruct plan object
+  // In MVP we stored the full JSON in 'notes' for simplicity
+  let planData;
+  try {
+    planData = JSON.parse(row.notes as string);
+  } catch {
+    planData = { title: row.title, stops: [] };
+  }
+
+  return c.json({ data: planData });
 });
 
 export default datePlanner;

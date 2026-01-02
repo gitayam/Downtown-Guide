@@ -8,6 +8,7 @@ export interface DatePreferences {
   vibes: string[];
   duration_hours: number;
   date?: string;
+  time_of_day?: 'morning' | 'afternoon' | 'evening';
   start_time?: string; // "18:00"
 }
 
@@ -44,13 +45,40 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
   
   const candidates = venues.results || [];
 
+  // Filter venues by Time of Day suitability (Heuristic)
+  const morningVenues = candidates.filter((v: any) => 
+    v.category === 'nature' || v.category === 'activity' || 
+    (v.category === 'food' && (v.subcategory?.includes('cafe') || v.subcategory?.includes('bakery') || v.subcategory?.includes('breakfast')))
+  );
+  
+  const afternoonVenues = candidates.filter((v: any) => 
+    v.category !== 'drink' // Avoid bars in afternoon unless specified
+  );
+
+  const eveningVenues = candidates; // All valid for evening typically
+
+  let pool = eveningVenues;
+  if (prefs.time_of_day === 'morning') pool = morningVenues;
+  if (prefs.time_of_day === 'afternoon') pool = afternoonVenues;
+
   // 3. Fetch candidate events if date provided
   let events: any[] = [];
   if (prefs.date) {
-    // Use the lib helper to get events for that day
+    // Define time range for event fetch
+    let startHour = 0;
+    let endHour = 24;
+
+    if (prefs.time_of_day === 'morning') { startHour = 6; endHour = 12; }
+    else if (prefs.time_of_day === 'afternoon') { startHour = 12; endHour = 17; }
+    else if (prefs.time_of_day === 'evening') { startHour = 17; endHour = 24; }
+
+    const dateBase = new Date(prefs.date);
+    const fromDate = new Date(dateBase); fromDate.setHours(startHour, 0, 0);
+    const toDate = new Date(dateBase); toDate.setHours(endHour, 59, 59);
+
     events = await fetchEvents(DB, {
-      from: new Date(prefs.date).toISOString(),
-      to: new Date(new Date(prefs.date).getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      from: fromDate.toISOString(),
+      to: toDate.toISOString(),
       limit: 10
     });
   }
@@ -61,15 +89,6 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
   let currentDuration = 0;
   let order = 1;
 
-  // Step 1: Identify key anchor (Event)
-  const relevantEvent = events.find(e => matchEventVibe(e, prefs.vibes));
-  let eventStartHour = 19; // Default to 7 PM for generic evening plans
-
-  if (relevantEvent) {
-    const startDate = new Date(relevantEvent.start_datetime);
-    eventStartHour = startDate.getHours();
-  }
-
   // Helper to add stop
   const addStop = (stop: DateStop) => {
     stop.order = order++;
@@ -78,135 +97,112 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
     currentDuration += stop.duration;
   };
 
-  // Scenario A: Evening Event (starts 6 PM or later) -> Dinner First
-  // Scenario B: Late Afternoon Event (4 PM - 6 PM) -> Dinner After
-  // Scenario C: Day Event (before 4 PM) -> Activity -> Dinner
-
-  // --- SLOT 1: Pre-Game / Activity / Early Dinner ---
-  if (eventStartHour >= 18) {
-    // Dinner before event
-    const dinner = getRandom(candidates.filter((v: any) => v.category === 'food' && matchVibe(v, prefs.vibes)));
-    if (dinner) {
+  // Find Anchor Event
+  const relevantEvent = events.find(e => matchEventVibe(e, prefs.vibes));
+  
+  if (prefs.time_of_day === 'morning') {
+    // MORNING: Breakfast -> Activity -> Lunch
+    const breakfast = getRandom(pool.filter((v: any) => v.category === 'food'));
+    if (breakfast) {
       addStop({
-        order: 0,
-        venue: dinner,
-        activity: 'Pre-Event Dinner',
-        duration: 90,
-        cost: dinner.average_cost || 40,
-        notes: dinner.description || 'Start the night with a great meal.',
-        transitionTip: relevantEvent ? 'Head to the event venue.' : undefined
+        order: 0, venue: breakfast, activity: 'Breakfast/Coffee', duration: 45, cost: 15,
+        notes: breakfast.description || 'Start the day right.', transitionTip: 'Head to your activity.'
       });
     }
-  } else if (eventStartHour < 16 && relevantEvent) {
-    // Event is first (Day time)
-    addStop({
-      order: 0,
-      event: relevantEvent,
-      venue: { 
-        name: relevantEvent.venue_name || relevantEvent.location_name,
-        latitude: relevantEvent.venue_latitude,
-        longitude: relevantEvent.venue_longitude,
-        address: relevantEvent.venue_address
-      },
-      activity: relevantEvent.title,
-      duration: 120,
-      cost: 20,
-      notes: relevantEvent.description?.slice(0, 100) + '...',
-      transitionTip: 'Find something fun to do next.'
-    });
-  } else if (eventStartHour >= 16 && eventStartHour < 18 && relevantEvent) {
-    // Event is first (Late Afternoon)
-    addStop({
-      order: 0,
-      event: relevantEvent,
-      venue: { 
-        name: relevantEvent.venue_name || relevantEvent.location_name,
-        latitude: relevantEvent.venue_latitude,
-        longitude: relevantEvent.venue_longitude,
-        address: relevantEvent.venue_address
-      },
-      activity: relevantEvent.title,
-      duration: 120,
-      cost: 20,
-      notes: relevantEvent.description?.slice(0, 100) + '...',
-      transitionTip: 'Head to dinner.'
-    });
+
+    if (relevantEvent) {
+      addStop({
+        order: 0, event: relevantEvent, venue: { name: relevantEvent.venue_name || relevantEvent.location_name, latitude: relevantEvent.venue_latitude, longitude: relevantEvent.venue_longitude },
+        activity: relevantEvent.title, duration: 90, cost: 20, notes: relevantEvent.title
+      });
+    } else {
+      const activity = getRandom(pool.filter((v: any) => v.category === 'nature' || v.category === 'activity'));
+      if (activity) {
+        addStop({
+          order: 0, venue: activity, activity: 'Morning Activity', duration: 90, cost: 10,
+          notes: activity.description || 'Enjoy the morning air.', transitionTip: 'Ready for lunch?'
+        });
+      }
+    }
+
+    const lunch = getRandom(candidates.filter((v: any) => v.category === 'food' && v.id !== breakfast?.id));
+    if (lunch && currentDuration < prefs.duration_hours * 60) {
+      addStop({
+        order: 0, venue: lunch, activity: 'Lunch', duration: 60, cost: 25,
+        notes: 'Refuel with a nice lunch.'
+      });
+    }
+
+  } else if (prefs.time_of_day === 'afternoon') {
+    // AFTERNOON: Lunch -> Activity -> Treat
+    const lunch = getRandom(pool.filter((v: any) => v.category === 'food'));
+    if (lunch) {
+      addStop({
+        order: 0, venue: lunch, activity: 'Lunch', duration: 60, cost: 25,
+        notes: lunch.description || 'Mid-day meal.', transitionTip: 'Head to your activity.'
+      });
+    }
+
+    if (relevantEvent) {
+      addStop({
+        order: 0, event: relevantEvent, venue: { name: relevantEvent.venue_name || relevantEvent.location_name, latitude: relevantEvent.venue_latitude, longitude: relevantEvent.venue_longitude },
+        activity: relevantEvent.title, duration: 90, cost: 20, notes: relevantEvent.title
+      });
+    } else {
+      const activity = getRandom(pool.filter((v: any) => v.category === 'culture' || v.category === 'activity' || v.category === 'nature'));
+      if (activity) {
+        addStop({
+          order: 0, venue: activity, activity: 'Afternoon Fun', duration: 90, cost: 15,
+          notes: activity.description || 'Explore the city.'
+        });
+      }
+    }
+
+    const treat = getRandom(pool.filter((v: any) => v.category === 'food' && (v.subcategory?.includes('dessert') || v.subcategory?.includes('cafe'))));
+    if (treat && currentDuration < prefs.duration_hours * 60) {
+      addStop({
+        order: 0, venue: treat, activity: 'Sweet Treat', duration: 30, cost: 10,
+        notes: 'A little pick-me-up.'
+      });
+    }
+
   } else {
-    // No event, standard evening: Activity first
-    const activity = getRandom(candidates.filter((v: any) => 
-      (v.category === 'activity' || v.category === 'nature' || v.category === 'culture') &&
-      matchVibe(v, prefs.vibes)
-    ));
-    if (activity) {
-      addStop({
-        order: 0,
-        venue: activity,
-        activity: activity.category === 'nature' ? 'Walk & Talk' : 'Fun Activity',
-        duration: 90,
-        cost: activity.average_cost || 15,
-        notes: activity.description || 'Enjoy some time together.',
-        transitionTip: 'Time for dinner?'
-      });
+    // EVENING (Default): Pre-Game -> Event/Dinner -> Nightcap
+    // ... (Existing Evening Logic) ...
+    let eventStartHour = 19;
+    if (relevantEvent) {
+      eventStartHour = new Date(relevantEvent.start_datetime).getHours();
     }
-  }
 
-  // --- SLOT 2: Main Event / Dinner ---
-  if (eventStartHour >= 18 && relevantEvent) {
-    // The Event
-    addStop({
-      order: 0,
-      event: relevantEvent,
-      venue: { 
-        name: relevantEvent.venue_name || relevantEvent.location_name,
-        latitude: relevantEvent.venue_latitude,
-        longitude: relevantEvent.venue_longitude,
-        address: relevantEvent.venue_address
-      },
-      activity: relevantEvent.title,
-      duration: 120,
-      cost: 20,
-      notes: relevantEvent.description?.slice(0, 100) + '...',
-      transitionTip: 'Wind down with a drink or dessert?'
-    });
-  } else if (eventStartHour < 18) {
-    // Dinner (Post-event)
-    const dinner = getRandom(candidates.filter((v: any) => v.category === 'food' && matchVibe(v, prefs.vibes)));
-    if (dinner) {
-      addStop({
-        order: 0,
-        venue: dinner,
-        activity: 'Dinner',
-        duration: 90,
-        cost: dinner.average_cost || 40,
-        notes: dinner.description || 'Enjoy a lovely meal.',
-        transitionTip: 'Optional nightcap?'
-      });
+    // SLOT 1
+    if (eventStartHour >= 18) {
+      const dinner = getRandom(pool.filter((v: any) => v.category === 'food' && matchVibe(v, prefs.vibes)));
+      if (dinner) addStop({ order: 0, venue: dinner, activity: 'Dinner', duration: 90, cost: 40, notes: dinner.description || 'Dinner time.', transitionTip: relevantEvent ? 'Head to event.' : undefined });
+    } else if (relevantEvent) {
+      addStop({ order: 0, event: relevantEvent, venue: { name: relevantEvent.venue_name || relevantEvent.location_name, latitude: relevantEvent.venue_latitude, longitude: relevantEvent.venue_longitude }, activity: relevantEvent.title, duration: 120, cost: 20, notes: relevantEvent.title });
+    } else {
+      const activity = getRandom(pool.filter((v: any) => (v.category === 'activity' || v.category === 'culture') && matchVibe(v, prefs.vibes)));
+      if (activity) addStop({ order: 0, venue: activity, activity: 'Evening Activity', duration: 60, cost: 20, notes: activity.description || 'Start the evening fun.', transitionTip: 'Dinner next.' });
     }
-  }
 
-  // --- SLOT 3: Nightcap / Dessert ---
-  if (currentDuration < (prefs.duration_hours * 60)) {
-    const nightcaps = candidates.filter((v: any) => 
-      (v.category === 'drink' || (v.category === 'food' && v.subcategory?.includes('dessert'))) &&
-      matchVibe(v, prefs.vibes)
-    );
-    
-    const nightcap = getRandom(nightcaps);
-    if (nightcap) {
-      addStop({
-        order: 0,
-        venue: nightcap,
-        activity: nightcap.category === 'drink' ? 'Drinks' : 'Dessert',
-        duration: 60,
-        cost: nightcap.average_cost || 15,
-        notes: nightcap.description || 'Wind down the evening.',
-      });
+    // SLOT 2
+    if (eventStartHour >= 18 && relevantEvent) {
+      addStop({ order: 0, event: relevantEvent, venue: { name: relevantEvent.venue_name || relevantEvent.location_name, latitude: relevantEvent.venue_latitude, longitude: relevantEvent.venue_longitude }, activity: relevantEvent.title, duration: 120, cost: 20, notes: relevantEvent.title });
+    } else if (eventStartHour < 18) {
+      const dinner = getRandom(pool.filter((v: any) => v.category === 'food' && matchVibe(v, prefs.vibes)));
+      if (dinner && !stops.find(s => s.activity === 'Dinner')) addStop({ order: 0, venue: dinner, activity: 'Dinner', duration: 90, cost: 40, notes: dinner.description || 'Dinner time.' });
+    }
+
+    // SLOT 3
+    if (currentDuration < prefs.duration_hours * 60) {
+      const nightcap = getRandom(pool.filter((v: any) => v.category === 'drink' || (v.category === 'food' && v.subcategory?.includes('dessert'))));
+      if (nightcap) addStop({ order: 0, venue: nightcap, activity: 'Nightcap', duration: 60, cost: 15, notes: 'Wind down.' });
     }
   }
 
   return {
     id: crypto.randomUUID(),
-    title: `${prefs.vibes[0] || 'Perfect'} ${prefs.event_type} in Fayetteville`,
+    title: `${prefs.time_of_day ? (prefs.time_of_day.charAt(0).toUpperCase() + prefs.time_of_day.slice(1)) : 'Perfect'} ${prefs.event_type}`,
     totalDuration: currentDuration,
     estimatedCost: currentCost,
     stops,

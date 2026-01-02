@@ -31,7 +31,8 @@ export default function PlanDatePage() {
     budget_range: '$$',
     vibes: [] as string[],
     duration_hours: 4,
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    time_of_day: 'evening' as 'morning' | 'afternoon' | 'evening'
   })
 
   const [result, setResult] = useState<DatePlan | null>(null)
@@ -177,13 +178,24 @@ export default function PlanDatePage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">When?</label>
-              <input
-                type="date"
-                value={prefs.date}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setPrefs({ ...prefs, date: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-sand focus:border-brick focus:ring-1 focus:ring-brick outline-none text-gray-900 bg-white"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={prefs.date}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setPrefs({ ...prefs, date: e.target.value })}
+                  className="flex-1 px-4 py-2 rounded-lg border border-sand focus:border-brick focus:ring-1 focus:ring-brick outline-none text-gray-900 bg-white"
+                />
+                <select
+                  value={prefs.time_of_day}
+                  onChange={(e) => setPrefs({ ...prefs, time_of_day: e.target.value as any })}
+                  className="flex-1 px-4 py-2 rounded-lg border border-sand focus:border-brick focus:ring-1 focus:ring-brick outline-none text-gray-900 bg-white"
+                >
+                  <option value="morning">Morning</option>
+                  <option value="afternoon">Afternoon</option>
+                  <option value="evening">Evening</option>
+                </select>
+              </div>
             </div>
           </div>
 

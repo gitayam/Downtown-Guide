@@ -34,7 +34,7 @@ export default function EventExportList({ events, title, subtitle }: EventExport
               {subtitle && <p className="text-white/90 text-xl font-medium">{subtitle}</p>}
             </div>
             <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/30">
-              <span className="font-bold tracking-wide">FAYETTEVILLE.EVENTS</span>
+              <span className="font-bold tracking-wide">NCFAYETTEVILLE.COM</span>
             </div>
           </div>
         </div>
@@ -136,8 +136,8 @@ export default function EventExportList({ events, title, subtitle }: EventExport
             </div>
         </div>
         <div className="text-right">
-             <p className="text-sm font-medium text-brick">fayetteville.events</p>
-             <p className="text-xs text-gray-400">Scan QR or visit site for tickets</p>
+             <p className="text-sm font-medium text-brick">ncfayetteville.com</p>
+             <p className="text-xs text-gray-400">Visit site for full details & tickets</p>
         </div>
       </div>
     </div>

@@ -73,7 +73,7 @@ export default function SectionShareModal({
       text += `\n...and ${events.length - 20} more.\n`
     }
 
-    text += `\n🔗 Full details: https://fayetteville.events`
+    text += `\n🔗 Full details: https://ncfayetteville.com`
     return text
   }
 

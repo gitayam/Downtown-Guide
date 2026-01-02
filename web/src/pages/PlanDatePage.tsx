@@ -128,23 +128,36 @@ export default function PlanDatePage() {
       {!result ? (
         <div className="bg-white rounded-2xl shadow-sm border border-sand p-6 md:p-8 space-y-8">
           {/* ... (Form Content - unchanged) ... */}
-          {/* Occasion */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">What's the occasion?</label>
-            <div className="flex flex-wrap gap-2">
-              {suggestions?.event_types.map(type => (
-                <button
-                  key={type}
-                  onClick={() => setPrefs({ ...prefs, event_type: type })}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    prefs.event_type === type
-                      ? 'bg-brick text-white'
-                      : 'bg-sand/30 text-stone hover:bg-sand/50'
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
+          {/* Occasion & Date */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">What's the occasion?</label>
+              <div className="flex flex-wrap gap-2">
+                {suggestions?.event_types.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => setPrefs({ ...prefs, event_type: type })}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      prefs.event_type === type
+                        ? 'bg-brick text-white'
+                        : 'bg-sand/30 text-stone hover:bg-sand/50'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">When?</label>
+              <input
+                type="date"
+                value={prefs.date}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setPrefs({ ...prefs, date: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-sand focus:border-brick focus:ring-1 focus:ring-brick outline-none text-gray-900 bg-white"
+              />
             </div>
           </div>
 

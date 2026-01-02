@@ -89,18 +89,50 @@ export default function SectionShareModal({
     const element = document.getElementById('event-export-container')
     if (!element) return null
 
+    // Clone the element to ensure it's fully rendered and visible for capture
+    // This fixes issues where 'left: -9999px' causes empty renders
+    const clone = element.cloneNode(true) as HTMLElement
+    
+    // Style the clone to be "visible" but hidden behind everything
+    Object.assign(clone.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      zIndex: '-1000',
+      visibility: 'visible', // Must be visible for html2canvas
+      display: 'block',
+      transform: 'none' // Reset any transforms
+    })
+    
+    document.body.appendChild(clone)
+
     try {
-      const canvas = await html2canvas(element, {
+      const canvas = await html2canvas(clone, {
         scale: 2, // Retina quality
         useCORS: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: true, // Help debug issues
+        windowWidth: 600, // Match component width
+        onclone: (clonedDoc) => {
+            // Ensure the cloned element in the iframe (if used) is visible
+            const clonedElement = clonedDoc.getElementById('event-export-container')
+            if (clonedElement) {
+                clonedElement.style.display = 'block'
+                clonedElement.style.visibility = 'visible'
+            }
+        }
       })
+      
+      document.body.removeChild(clone)
       
       return new Promise((resolve) => {
         canvas.toBlob((blob) => resolve(blob), 'image/png')
       })
     } catch (err) {
       console.error('Image generation failed', err)
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone)
+      }
       return null
     }
   }

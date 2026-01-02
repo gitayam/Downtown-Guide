@@ -1,6 +1,6 @@
 import type { Event, EventsResponse, SourcesResponse } from './types'
 
-const API_BASE = 'https://downtown-guide.wemea-5ahhf.workers.dev'
+export const API_URL = 'https://downtown-guide.wemea-5ahhf.workers.dev'
 
 // Configuration for resilient API calls
 const RETRY_CONFIG = {
@@ -189,7 +189,7 @@ export async function fetchEvents(params?: {
   limit?: number
   offset?: number
 }): Promise<EventsResponse> {
-  const url = new URL(`${API_BASE}/api/events`)
+  const url = new URL(`${API_URL}/api/events`)
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -210,7 +210,7 @@ export async function fetchEvents(params?: {
 }
 
 export async function fetchEvent(id: string): Promise<{ data: Event }> {
-  const url = `${API_BASE}/api/events/${encodeURIComponent(id)}`
+  const url = `${API_URL}/api/events/${encodeURIComponent(id)}`
   return resilientFetch<{ data: Event }>(
     url,
     `${CACHE_KEYS.events}_${id}`,
@@ -223,7 +223,7 @@ export async function fetchTodayEvents(): Promise<{
   count: number
   date: string
 }> {
-  const url = `${API_BASE}/api/events/today`
+  const url = `${API_URL}/api/events/today`
   return resilientFetch<{ data: Event[]; count: number; date: string }>(
     url,
     `${CACHE_KEYS.events}_today`,
@@ -235,7 +235,7 @@ export async function fetchUpcomingEvents(): Promise<{
   data: Event[]
   count: number
 }> {
-  const url = `${API_BASE}/api/events/upcoming`
+  const url = `${API_URL}/api/events/upcoming`
   return resilientFetch<{ data: Event[]; count: number }>(
     url,
     `${CACHE_KEYS.events}_upcoming`,
@@ -244,7 +244,7 @@ export async function fetchUpcomingEvents(): Promise<{
 }
 
 export async function fetchSources(): Promise<SourcesResponse> {
-  const url = `${API_BASE}/api/sources`
+  const url = `${API_URL}/api/sources`
   return resilientFetch<SourcesResponse>(url, CACHE_KEYS.sources)
 }
 
@@ -252,7 +252,7 @@ export async function fetchCategories(): Promise<{
   data: string[]
   count: number
 }> {
-  const url = `${API_BASE}/api/categories`
+  const url = `${API_URL}/api/categories`
   return resilientFetch<{ data: string[]; count: number }>(
     url,
     CACHE_KEYS.categories
@@ -271,14 +271,14 @@ export function hasCachedEvents(params?: Record<string, unknown>): boolean {
 }
 
 // iCal feed URLs (HTTPS - for download)
-export const ICAL_URL = `${API_BASE}/cal/events.ics`
-export const ICAL_DOWNTOWN_URL = `${API_BASE}/cal/events.ics?section=downtown`
-export const ICAL_CROWN_URL = `${API_BASE}/cal/events.ics?section=crown`
-export const ICAL_FORTLIBERTY_URL = `${API_BASE}/cal/events.ics?section=fort_bragg`
-export const ICAL_HOLIDAYS_URL = `${API_BASE}/cal/events.ics?source=fort_liberty_holidays`
+export const ICAL_URL = `${API_URL}/cal/events.ics`
+export const ICAL_DOWNTOWN_URL = `${API_URL}/cal/events.ics?section=downtown`
+export const ICAL_CROWN_URL = `${API_URL}/cal/events.ics?section=crown`
+export const ICAL_FORTLIBERTY_URL = `${API_URL}/cal/events.ics?section=fort_bragg`
+export const ICAL_HOLIDAYS_URL = `${API_URL}/cal/events.ics?source=fort_liberty_holidays`
 
 // WebCal URLs (for one-click subscription on mobile/desktop)
-const WEBCAL_BASE = API_BASE.replace('https://', 'webcal://')
+const WEBCAL_BASE = API_URL.replace('https://', 'webcal://')
 export const WEBCAL_URL = `${WEBCAL_BASE}/cal/events.ics`
 export const WEBCAL_DOWNTOWN_URL = `${WEBCAL_BASE}/cal/events.ics?section=downtown`
 export const WEBCAL_CROWN_URL = `${WEBCAL_BASE}/cal/events.ics?section=crown`

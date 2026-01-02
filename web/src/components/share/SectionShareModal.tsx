@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   XMarkIcon,
@@ -9,10 +9,9 @@ import {
   PhotoIcon
 } from '@heroicons/react/24/outline'
 import { format } from 'date-fns'
-import { toPng } from 'html-to-image'
 import type { Event } from '../../lib/types'
 import { type DateRange } from '../DateRangeFilter'
-import EventExportList from './EventExportList'
+import { API_URL } from '../../lib/api'
 
 interface SectionShareModalProps {
   isOpen: boolean
@@ -33,7 +32,6 @@ export default function SectionShareModal({
   const [copiedText, setCopiedText] = useState(false)
   const [copiedImage, setCopiedImage] = useState(false)
   const [shareError, setShareError] = useState<string | null>(null)
-  const exportRef = useRef<HTMLDivElement>(null)
 
   if (!isOpen) return null
 
@@ -41,7 +39,8 @@ export default function SectionShareModal({
     switch (dateRange) {
       case 'today': return 'Today\'s Events'
       case 'tomorrow': return 'Tomorrow\'s Events'
-      case 'weekend': return 'Weekend Events'
+      case 'week': return 'This Week\'s Events'
+      case 'month': return 'This Month\'s Events'
       case 'all': return 'Upcoming Events'
       case 'custom': return 'Event Schedule'
       default: return 'Events'
@@ -88,24 +87,24 @@ export default function SectionShareModal({
   }
 
   const generateImage = async (): Promise<Blob | null> => {
-    if (!exportRef.current) return null
-
-    const element = exportRef.current
-
     try {
-      // html-to-image is much faster and handles styles better
-      const dataUrl = await toPng(element, {
-        cacheBust: true,
-        backgroundColor: '#ffffff',
-        width: 800,
-        height: element.offsetHeight,
-        pixelRatio: 2, // Retina quality
-      })
-
-      // Convert Data URL to Blob
-      const res = await fetch(dataUrl)
-      const blob = await res.blob()
-      return blob
+      // Map frontend params to API params
+      const apiSection = sectionName === 'all' ? 'all' : sectionName
+      let apiDate = 'upcoming'
+      
+      if (dateRange === 'today') apiDate = 'today'
+      else if (dateRange === 'tomorrow') apiDate = 'tomorrow'
+      else if (dateRange === 'week') apiDate = 'week'
+      else if (dateRange === 'month') apiDate = 'month'
+      else if (dateRange === 'all') apiDate = 'upcoming'
+      
+      // Fetch the generated image from our Worker API
+      // This bypasses client-side CORS issues with external images
+      const response = await fetch(`${API_URL}/api/events/image?section=${apiSection}&date=${apiDate}`)
+      
+      if (!response.ok) throw new Error('API image generation failed')
+      
+      return await response.blob()
     } catch (err) {
       console.error('Image generation failed', err)
       return null
@@ -301,26 +300,6 @@ export default function SectionShareModal({
           )}
 
         </div>
-      </div>
-
-      {/* Hidden Render Container for Image Generation */}
-      <div 
-        ref={exportRef}
-        style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            zIndex: -9999,
-            opacity: 1,
-            pointerEvents: 'none',
-            backgroundColor: 'white'
-        }}
-      >
-        <EventExportList 
-          events={events} 
-          title={getTitle()}
-          subtitle={getSubtitle()}
-        />
       </div>
     </div>,
     document.body

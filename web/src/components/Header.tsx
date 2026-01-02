@@ -53,7 +53,7 @@ export default function Header() {
               }`
             }
           >
-            Plan a Date
+            Plan
           </NavLink>
           <NavLink
             to="/calendar"
@@ -135,7 +135,7 @@ export default function Header() {
                 }`
               }
             >
-              Plan a Date
+              Plan
             </NavLink>
             <NavLink
               to="/calendar"

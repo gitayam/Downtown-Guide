@@ -8,7 +8,7 @@ import {
   ShareIcon
 } from '@heroicons/react/24/outline'
 import { format } from 'date-fns'
-import html2canvas from 'html2canvas'
+import { toPng } from 'html-to-image'
 import type { Event } from '../../lib/types'
 import { type DateRange } from '../DateRangeFilter'
 import EventExportList from './EventExportList'
@@ -89,35 +89,21 @@ export default function SectionShareModal({
     if (!exportRef.current) return null
 
     const element = exportRef.current
-    
-    // Create a promise that rejects after 5 seconds to prevent infinite hangs
-    const timeoutPromise = new Promise<null>((_, reject) => {
-      setTimeout(() => reject(new Error('Image generation timed out')), 5000)
-    })
 
     try {
-      // html2canvas capture promise
-      const capturePromise = html2canvas(element, {
-        scale: 2, // Retina quality
-        useCORS: true, // changed to true for better resource handling
-        allowTaint: true,
+      // html-to-image is much faster and handles styles better
+      const dataUrl = await toPng(element, {
+        cacheBust: true,
         backgroundColor: '#ffffff',
-        logging: false, 
-        width: 600, // Explicit width matches component
+        width: 600,
         height: element.offsetHeight,
-        x: 0, // Force capture from top-left of the element
-        y: 0,
-        scrollX: 0, // Ignore window scroll
-        scrollY: 0,
-        windowWidth: 1200, // Fake a standard window width
-      }).then(canvas => {
-         return new Promise<Blob | null>((resolve) => {
-           canvas.toBlob((blob) => resolve(blob), 'image/png')
-         })
+        pixelRatio: 2, // Retina quality
       })
 
-      // Race between capture and timeout
-      return await Promise.race([capturePromise, timeoutPromise])
+      // Convert Data URL to Blob
+      const res = await fetch(dataUrl)
+      const blob = await res.blob()
+      return blob
     } catch (err) {
       console.error('Image generation failed', err)
       return null
@@ -265,13 +251,13 @@ export default function SectionShareModal({
       <div 
         ref={exportRef}
         style={{
-            position: 'fixed', // Fixed ensures it's relative to viewport top-left
+            position: 'fixed',
             top: 0,
             left: 0,
-            zIndex: -9999, // Way behind everything
-            opacity: 1, // Visible (opacity 1) but hidden by z-index
+            zIndex: -9999,
+            opacity: 1, 
             pointerEvents: 'none',
-            backgroundColor: 'white' // Ensure background is opaque
+            backgroundColor: 'white'
         }}
       >
         <EventExportList 

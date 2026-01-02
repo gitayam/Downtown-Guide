@@ -234,5 +234,152 @@
     "features": [
       "outdoor_patio"
     ]
+  },
+  {
+    "name": "The Melting Pot",
+    "category": "food",
+    "subcategory": "fondue",
+    "description": "A classic fondue restaurant providing a fun, interactive, and romantic dining experience.",
+    "source": "Melting Pot Website",
+    "price_level": 3,
+    "romantic_score": 5,
+    "good_for": [
+      "anniversary",
+      "interactive",
+      "romantic"
+    ],
+    "features": [
+      "private_booths"
+    ]
+  },
+  {
+    "name": "Fayetteville Rose Garden",
+    "category": "nature",
+    "subcategory": "garden",
+    "description": "Located at FTCC, this 23-acre garden features over 1,000 rose bushes, gazebos, and fountains. Perfect for a tranquil stroll.",
+    "source": "Dale Lets Travel",
+    "romantic_score": 5,
+    "good_for": [
+      "walking",
+      "photos",
+      "quiet_conversation"
+    ],
+    "features": [
+      "gardens"
+    ]
+  },
+  {
+    "name": "Cross Creek Park",
+    "category": "nature",
+    "subcategory": "park",
+    "description": "A lovely park in Downtown Fayetteville with a beautiful fountain and a statue of Marquis de Lafayette, ideal for a picnic.",
+    "source": "Sometimes Home",
+    "romantic_score": 4,
+    "good_for": [
+      "picnic",
+      "walking"
+    ],
+    "features": [
+      "fountain",
+      "downtown"
+    ]
+  },
+  {
+    "name": "The Climbing Place",
+    "category": "activity",
+    "subcategory": "climbing",
+    "description": "Indoor rock climbing facility for an active and challenging date.",
+    "source": "Wordpress Blog",
+    "price_level": 2,
+    "romantic_score": 3,
+    "good_for": [
+      "adventure",
+      "active",
+      "trust_building"
+    ],
+    "features": [
+      "indoor"
+    ]
+  },
+  {
+    "name": "DEFY Extreme Air Sports Park",
+    "category": "activity",
+    "subcategory": "trampoline_park",
+    "description": "For a thrilling and active date, soar high and enjoy various activities like trampolines, foam pits, and obstacle courses.",
+    "source": "ENC Explorer",
+    "price_level": 2,
+    "romantic_score": 2,
+    "good_for": [
+      "fun",
+      "playful",
+      "active"
+    ],
+    "features": [
+      "indoor"
+    ]
+  },
+  {
+    "name": "Wana Navu Kava Bar",
+    "category": "drink",
+    "subcategory": "kava_bar",
+    "description": "Fayetteville's first and only alcohol-alternative bar, offering a friendly atmosphere and unique kava-based drinks.",
+    "source": "Reddit",
+    "price_level": 1,
+    "romantic_score": 3,
+    "good_for": [
+      "relaxed",
+      "conversation",
+      "unique_experience"
+    ],
+    "features": [
+      "alcohol_free"
+    ]
+  },
+  {
+    "name": "Archives",
+    "category": "drink",
+    "subcategory": "speakeasy",
+    "description": "A new speakeasy on Rowan Street with a sophisticated and intimate atmosphere for craft cocktails.",
+    "source": "Reddit",
+    "price_level": 3,
+    "romantic_score": 5,
+    "good_for": [
+      "romantic",
+      "cocktails",
+      "intimate"
+    ],
+    "features": [
+      "craft_cocktails"
+    ]
+  },
+  {
+    "name": "The White Rabbit",
+    "category": "drink",
+    "subcategory": "dive_bar",
+    "description": "A dive bar on Fort Bragg Road for a very casual, laid-back night out.",
+    "source": "Reddit",
+    "price_level": 1,
+    "romantic_score": 1,
+    "good_for": [
+      "casual_drinks",
+      "dive_bar_vibe"
+    ],
+    "features": []
+  },
+  {
+    "name": "District House of Taps",
+    "category": "drink",
+    "subcategory": "bar",
+    "description": "Bar with a wide selection of beers on tap.",
+    "source": "Reddit",
+    "price_level": 2,
+    "romantic_score": 2,
+    "good_for": [
+      "casual_drinks",
+      "beer_lovers"
+    ],
+    "features": [
+      "beer_selection"
+    ]
   }
 ]

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   XMarkIcon,
@@ -31,10 +31,10 @@ export default function SectionShareModal({
   const [isGenerating, setIsGenerating] = useState(false)
   const [copiedText, setCopiedText] = useState(false)
   const [shareError, setShareError] = useState<string | null>(null)
+  const exportRef = useRef<HTMLDivElement>(null)
 
-  // We render EventExportList but keep it off-screen in the modal portal
-  
   if (!isOpen) return null
+
   const getTitle = () => {
     switch (dateRange) {
       case 'today': return 'Today\'s Events'
@@ -86,100 +86,97 @@ export default function SectionShareModal({
   }
 
   const generateImage = async (): Promise<Blob | null> => {
-    const element = document.getElementById('event-export-container')
-    if (!element) return null
+    if (!exportRef.current) return null
 
-    // Clone the element to ensure it's fully rendered and visible for capture
-    // This fixes issues where 'left: -9999px' causes empty renders
-    const clone = element.cloneNode(true) as HTMLElement
+    const element = exportRef.current
     
-    // Style the clone to be "visible" but hidden behind everything
-    Object.assign(clone.style, {
-      position: 'fixed',
-      top: '0',
-      left: '0',
-      zIndex: '-1000',
-      visibility: 'visible', // Must be visible for html2canvas
-      display: 'block',
-      transform: 'none' // Reset any transforms
+    // Create a promise that rejects after 5 seconds to prevent infinite hangs
+    const timeoutPromise = new Promise<null>((_, reject) => {
+      setTimeout(() => reject(new Error('Image generation timed out')), 5000)
     })
-    
-    document.body.appendChild(clone)
 
     try {
-      const canvas = await html2canvas(clone, {
+      // html2canvas capture promise
+      const capturePromise = html2canvas(element, {
         scale: 2, // Retina quality
-        useCORS: true,
+        useCORS: true, // changed to true for better resource handling
+        allowTaint: true,
         backgroundColor: '#ffffff',
-        logging: true, // Help debug issues
-        windowWidth: 600, // Match component width
-        onclone: (clonedDoc) => {
-            // Ensure the cloned element in the iframe (if used) is visible
-            const clonedElement = clonedDoc.getElementById('event-export-container')
-            if (clonedElement) {
-                clonedElement.style.display = 'block'
-                clonedElement.style.visibility = 'visible'
-            }
-        }
+        logging: false, 
+        width: 600, // Explicit width matches component
+        height: element.offsetHeight,
+        x: 0, // Force capture from top-left of the element
+        y: 0,
+        scrollX: 0, // Ignore window scroll
+        scrollY: 0,
+        windowWidth: 1200, // Fake a standard window width
+      }).then(canvas => {
+         return new Promise<Blob | null>((resolve) => {
+           canvas.toBlob((blob) => resolve(blob), 'image/png')
+         })
       })
-      
-      document.body.removeChild(clone)
-      
-      return new Promise((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), 'image/png')
-      })
+
+      // Race between capture and timeout
+      return await Promise.race([capturePromise, timeoutPromise])
     } catch (err) {
       console.error('Image generation failed', err)
-      if (document.body.contains(clone)) {
-        document.body.removeChild(clone)
-      }
       return null
     }
   }
 
   const handleDownloadImage = async () => {
     setIsGenerating(true)
-    const blob = await generateImage()
-    if (blob) {
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `fayetteville-events-${format(new Date(), 'yyyy-MM-dd')}.png`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    }
-    setIsGenerating(false)
+    setShareError(null)
+    
+    // Give the DOM a moment to ensure EventExportList is rendered
+    setTimeout(async () => {
+      const blob = await generateImage()
+      if (blob) {
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `fayetteville-events-${format(new Date(), 'yyyy-MM-dd')}.png`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      } else {
+        setShareError("Failed to generate image. Try 'Copy Text Summary' instead.")
+      }
+      setIsGenerating(false)
+    }, 100)
   }
 
   const handleShareImage = async () => {
     setIsGenerating(true)
     setShareError(null)
-    const blob = await generateImage()
-    
-    if (blob && navigator.share) {
-      try {
-        const file = new File([blob], 'events.png', { type: 'image/png' })
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: getTitle(),
-            text: getSubtitle()
-          })
-        } else {
-            setShareError("Your browser doesn't support image sharing.")
+
+    setTimeout(async () => {
+      const blob = await generateImage()
+      
+      if (blob && navigator.share) {
+        try {
+          const file = new File([blob], 'events.png', { type: 'image/png' })
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: getTitle(),
+              text: getSubtitle()
+            })
+          } else {
+              setShareError("Your browser doesn't support image sharing.")
+          }
+        } catch (err) {
+           if (err instanceof Error && err.name !== 'AbortError') {
+               console.error('Share failed', err)
+               setShareError('Failed to share image.')
+           }
         }
-      } catch (err) {
-         if (err instanceof Error && err.name !== 'AbortError') {
-             console.error('Share failed', err)
-             setShareError('Failed to share image.')
-         }
+      } else {
+          setShareError("Sharing not supported on this device.")
       }
-    } else {
-        setShareError("Sharing not supported on this device.")
-    }
-    setIsGenerating(false)
+      setIsGenerating(false)
+    }, 100)
   }
 
   const canShareFiles = typeof navigator !== 'undefined' && 
@@ -265,11 +262,24 @@ export default function SectionShareModal({
       </div>
 
       {/* Hidden Render Container for Image Generation */}
-      <EventExportList 
-        events={events} 
-        title={getTitle()}
-        subtitle={getSubtitle()}
-      />
+      <div 
+        ref={exportRef}
+        style={{
+            position: 'fixed', // Fixed ensures it's relative to viewport top-left
+            top: 0,
+            left: 0,
+            zIndex: -9999, // Way behind everything
+            opacity: 1, // Visible (opacity 1) but hidden by z-index
+            pointerEvents: 'none',
+            backgroundColor: 'white' // Ensure background is opaque
+        }}
+      >
+        <EventExportList 
+          events={events} 
+          title={getTitle()}
+          subtitle={getSubtitle()}
+        />
+      </div>
     </div>,
     document.body
   )

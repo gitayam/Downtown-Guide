@@ -28,30 +28,9 @@
  */
 
 import { Hono } from 'hono';
-
-// Polyfill process for Satori/Yoga
-if (typeof process === 'undefined') {
-  (globalThis as any).process = { env: { NODE_ENV: 'production' } };
-}
-
 import { cors } from 'hono/cors';
 import { cache } from 'hono/cache';
 import { secureHeaders } from 'hono/secure-headers';
-import satori from 'satori';
-import { initWasm, Resvg } from '@resvg/resvg-wasm';
-import React from 'react';
-// @ts-ignore - wasm import is handled by esbuild/wrangler
-import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
-import { EventListTemplate } from './templates/EventListTemplate';
-
-// Initialize Resvg WASM once
-let wasmInitialized = false;
-const initResvg = async () => {
-  if (!wasmInitialized) {
-    await initWasm(resvgWasm);
-    wasmInitialized = true;
-  }
-};
 
 type Bindings = {
   DB: D1Database;
@@ -134,10 +113,12 @@ async function fetchEvents(DB: D1Database, params: {
 // GET /api/events/image - Generate Social Image
 // =============================================================================
 
+// Image generation endpoint - returns event data for client-side rendering
+// Note: Server-side image generation disabled due to WASM limitations in Workers
 app.get('/api/events/image', async (c) => {
   const { DB } = c.env;
   const section = c.req.query('section') || 'all';
-  const dateFilter = c.req.query('date') || 'upcoming'; // today, tomorrow, weekend, upcoming
+  const dateFilter = c.req.query('date') || 'upcoming';
 
   // Calculate Date Ranges
   const now = new Date();
@@ -172,7 +153,6 @@ app.get('/api/events/image', async (c) => {
     to = end.toISOString();
   }
 
-  // Refine Title based on Section
   if (section === 'downtown') subtitle = 'Downtown Fayetteville';
   if (section === 'fort_bragg') subtitle = 'Fort Liberty';
   if (section === 'crown') subtitle = 'Crown Complex';
@@ -182,75 +162,16 @@ app.get('/api/events/image', async (c) => {
     section,
     from,
     to,
-    limit: 8 // Fit nicely in the image
+    limit: 8
   });
 
-  try {
-    // Init Resvg
-    console.log('Starting Resvg init...');
-    try {
-        await initResvg();
-        console.log('Resvg init success');
-    } catch (e) {
-        console.error('Resvg init failed:', e);
-        throw e;
-    }
-
-    // Fetch Font (Inter)
-    console.log('Fetching fonts...');
-    // We use a CDN for 400/700 weights
-    const [font400, font700] = await Promise.all([
-      fetch('https://cdn.jsdelivr.net/npm/@fontsource/inter/files/inter-latin-400-normal.woff').then(r => r.arrayBuffer()),
-      fetch('https://cdn.jsdelivr.net/npm/@fontsource/inter/files/inter-latin-700-normal.woff').then(r => r.arrayBuffer())
-    ]);
-    console.log('Fonts fetched');
-
-    // Render SVG with Satori
-    console.log('Starting Satori render...');
-    const svg = await satori(
-      // @ts-ignore - JSX element
-      React.createElement(EventListTemplate, { 
-        events: events as any, 
-        title, 
-        subtitle 
-      }),
-      {
-        width: 800,
-        height: 600, // Minimum height, satori grows if needed but we fixed content
-        fonts: [
-          { name: 'Inter', data: font400, weight: 400, style: 'normal' },
-          { name: 'Inter', data: font700, weight: 700, style: 'normal' },
-        ],
-      }
-    );
-    console.log('Satori render success');
-
-    // Render PNG with Resvg
-    console.log('Starting Resvg PNG render...');
-    const resvg = new Resvg(svg, {
-      fitTo: { mode: 'width', value: 800 },
-    });
-    const pngData = resvg.render();
-    const pngBuffer = pngData.asPng();
-    console.log('PNG render success');
-
-    return new Response(pngBuffer, {
-      headers: {
-        'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=600', // Cache for 10 mins
-      },
-    });
-  } catch (err) {
-    console.error('Image generation error:', err);
-    return c.json(
-      { error: 'Failed to generate image', details: String(err) }, 
-      500,
-      {
-        'Access-Control-Allow-Origin': c.req.header('origin') || '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      }
-    );
-  }
+  // Return JSON data for client-side image generation
+  return c.json({
+    title,
+    subtitle,
+    events,
+    generatedAt: new Date().toISOString(),
+  });
 });
 
 // ... (rest of the existing endpoints) ...

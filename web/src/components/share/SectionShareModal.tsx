@@ -11,7 +11,6 @@ import {
 import { format } from 'date-fns'
 import type { Event } from '../../lib/types'
 import { type DateRange } from '../DateRangeFilter'
-import { API_URL } from '../../lib/api'
 
 interface SectionShareModalProps {
   isOpen: boolean
@@ -86,25 +85,75 @@ export default function SectionShareModal({
     }
   }
 
+  // Generate image client-side using canvas
   const generateImage = async (): Promise<Blob | null> => {
     try {
-      // Map frontend params to API params
-      const apiSection = sectionName === 'all' ? 'all' : sectionName
-      let apiDate = 'upcoming'
-      
-      if (dateRange === 'today') apiDate = 'today'
-      else if (dateRange === 'tomorrow') apiDate = 'tomorrow'
-      else if (dateRange === 'week') apiDate = 'week'
-      else if (dateRange === 'month') apiDate = 'month'
-      else if (dateRange === 'all') apiDate = 'upcoming'
-      
-      // Fetch the generated image from our Worker API
-      // This bypasses client-side CORS issues with external images
-      const response = await fetch(`${API_URL}/api/events/image?section=${apiSection}&date=${apiDate}`)
-      
-      if (!response.ok) throw new Error('API image generation failed')
-      
-      return await response.blob()
+      const canvas = document.createElement('canvas')
+      const width = 800
+      const height = 600
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return null
+
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, width, height)
+      gradient.addColorStop(0, '#A65D57') // Brick
+      gradient.addColorStop(1, '#2D6A4F') // Forest
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, width, height)
+
+      // Title
+      ctx.fillStyle = 'white'
+      ctx.font = 'bold 36px system-ui, -apple-system, sans-serif'
+      ctx.fillText(getTitle(), 40, 60)
+
+      // Subtitle
+      ctx.font = '20px system-ui, -apple-system, sans-serif'
+      ctx.fillStyle = 'rgba(255,255,255,0.8)'
+      ctx.fillText(getSubtitle(), 40, 95)
+
+      // Events list
+      ctx.font = '16px system-ui, -apple-system, sans-serif'
+      let y = 140
+
+      events.slice(0, 10).forEach((event) => {
+        const time = format(new Date(event.start_datetime), 'h:mm a')
+        const location = event.location_name || event.venue_name || ''
+
+        // Event row background
+        ctx.fillStyle = 'rgba(255,255,255,0.1)'
+        ctx.fillRect(30, y - 20, width - 60, 45)
+
+        // Time
+        ctx.fillStyle = 'rgba(255,255,255,0.9)'
+        ctx.font = 'bold 14px system-ui, -apple-system, sans-serif'
+        ctx.fillText(time, 45, y)
+
+        // Title
+        ctx.fillStyle = 'white'
+        ctx.font = '15px system-ui, -apple-system, sans-serif'
+        const truncatedTitle = event.title.length > 45 ? event.title.slice(0, 42) + '...' : event.title
+        ctx.fillText(truncatedTitle, 140, y)
+
+        // Location
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'
+        ctx.font = '12px system-ui, -apple-system, sans-serif'
+        const truncatedLocation = location.length > 40 ? location.slice(0, 37) + '...' : location
+        ctx.fillText(truncatedLocation, 140, y + 18)
+
+        y += 50
+      })
+
+      // Footer
+      ctx.fillStyle = 'rgba(255,255,255,0.6)'
+      ctx.font = '14px system-ui, -apple-system, sans-serif'
+      ctx.fillText('ncfayetteville.com', 40, height - 30)
+
+      // Convert to blob
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), 'image/png')
+      })
     } catch (err) {
       console.error('Image generation failed', err)
       return null

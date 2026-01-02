@@ -1001,13 +1001,22 @@ async function fetchFortLibertyEvents(useEnhanced = false): Promise<UnifiedEvent
         const contextEnd = Math.min(html.length, match.index + 500);
         const context = html.slice(contextStart, contextEnd);
 
-        // Convert slug to title as default
+        // Convert slug to title as default (most reliable source)
         let title = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const slugTitle = title; // Save original slug-based title
 
-        // Try to find better title from link text (not image alt)
+        // Try to find better title from link text, but validate it matches the slug
         const linkTextMatch = context.match(/>([A-Z][^<]{4,60})<\/a>/);
         if (linkTextMatch && !linkTextMatch[1].includes('.png') && !linkTextMatch[1].includes('.jpg')) {
-          title = linkTextMatch[1].trim();
+          const contextTitle = linkTextMatch[1].trim();
+          // Only use context title if it shares significant words with slug
+          // This prevents picking up unrelated nearby event titles
+          const slugWords = slug.toLowerCase().split('-').filter(w => w.length > 3);
+          const contextWords = contextTitle.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+          const sharedWords = slugWords.filter(w => contextWords.some(cw => cw.includes(w) || w.includes(cw)));
+          if (sharedWords.length >= 2 || (sharedWords.length >= 1 && slugWords.length <= 3)) {
+            title = contextTitle;
+          }
         }
 
         // Decode HTML entities

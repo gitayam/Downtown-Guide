@@ -543,5 +543,120 @@
     "features": [
       "free_admission"
     ]
+  },
+  {
+    "name": "Bound and Vine",
+    "address": "134 Person Street, Fayetteville, NC 28301",
+    "category": "culture",
+    "subcategory": "bookstore",
+    "description": "A bookstore combined with a wine bar, offering a unique and relaxed atmosphere.",
+    "url": "https://boundandvine.com/",
+    "source": "Google Search",
+    "price_level": 2,
+    "romantic_score": 5,
+    "good_for": [
+      "relaxed",
+      "conversation",
+      "wine_lovers",
+      "book_lovers"
+    ],
+    "features": [
+      "wine_selection"
+    ]
+  },
+  {
+    "name": "Greg's Pottery",
+    "address": "122 Maxwell St, Fayetteville, NC 28301",
+    "category": "activity",
+    "subcategory": "creative_class",
+    "description": "A vibrant and inviting creative haven offering an exceptional pottery painting experience for all ages. Known for chill vibes and fair pricing.",
+    "url": "https://www.facebook.com/gregspottery/",
+    "source": "Wanderlog",
+    "price_level": 2,
+    "romantic_score": 4,
+    "good_for": [
+      "creative_date",
+      "hands-on",
+      "relaxed"
+    ],
+    "features": [
+      "art_class"
+    ]
+  },
+  {
+    "name": "Fuller's Old Fashioned BBQ",
+    "address": "113 North Eastern Boulevard, Fayetteville, NC 28301",
+    "category": "food",
+    "subcategory": "bbq",
+    "description": "A cherished culinary gem in Fayetteville, NC, known for its authentic Southern comfort food and warm, inviting atmosphere.",
+    "source": "Google Search",
+    "price_level": 1,
+    "romantic_score": 2,
+    "good_for": [
+      "casual_lunch",
+      "comfort_food"
+    ],
+    "features": [
+      "buffet"
+    ]
+  },
+  {
+    "name": "Mac's Speed Shop",
+    "address": "482 N McPherson Church Rd, Fayetteville, NC 28303",
+    "category": "food",
+    "subcategory": "bbq",
+    "description": "Hickory-smoked BBQ, a wide selection of draft beers, and a lively, biker-friendly atmosphere.",
+    "url": "https://macspeedshop.com/",
+    "source": "Google Search",
+    "price_level": 2,
+    "romantic_score": 3,
+    "good_for": [
+      "casual_dinner",
+      "beer_lovers",
+      "lively"
+    ],
+    "features": [
+      "craft_beer",
+      "outdoor_seating"
+    ]
+  },
+  {
+    "name": "Sky Zone Trampoline Park",
+    "address": "361 Westwood Shopping Center, Fayetteville, NC 28314",
+    "category": "activity",
+    "subcategory": "trampoline_park",
+    "description": "Indoor trampoline park offering freestyle bouncing, dodgeball, and other aerial activities.",
+    "url": "https://www.skyzone.com/fayetteville",
+    "source": "Google Search",
+    "price_level": 2,
+    "romantic_score": 2,
+    "good_for": [
+      "fun",
+      "playful",
+      "active"
+    ],
+    "features": [
+      "indoor"
+    ]
+  },
+  {
+    "name": "Cross Creek Mall",
+    "address": "419 Cross Creek Mall, Fayetteville, NC 28303",
+    "category": "activity",
+    "subcategory": "shopping",
+    "description": "The main shopping mall in Fayetteville, featuring a variety of retail stores, a food court, and a cinema.",
+    "url": "https://crosscreekmall.com/",
+    "source": "Google Search",
+    "price_level": 2,
+    "romantic_score": 1,
+    "good_for": [
+      "shopping",
+      "browsing",
+      "rainy_day"
+    ],
+    "features": [
+      "food_court",
+      "cinema"
+    ]
   }
 ]

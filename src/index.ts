@@ -85,8 +85,12 @@ app.use('/api/*', async (c, next) => {
   await next();
 });
 
-// Cache API responses for 5 minutes
-app.use('/api/*', cache({
+// Cache GET API responses for 5 minutes (exclude POST/date-planner)
+app.use('/api/events/*', cache({
+  cacheName: 'downtown-events-api',
+  cacheControl: 'public, max-age=300',
+}));
+app.use('/api/sources', cache({
   cacheName: 'downtown-events-api',
   cacheControl: 'public, max-age=300',
 }));

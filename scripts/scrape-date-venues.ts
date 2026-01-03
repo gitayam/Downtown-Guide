@@ -282,6 +282,125 @@ const CURATED_VENUES: EnrichedVenue[] = [
     romantic_score: 2,
     good_for: ['casual_drinks', 'beer_lovers'],
     features: ['beer_selection']
+  },
+
+  // --- From User Request ---
+  {
+    name: 'Muse & Co',
+    address: '311 Hay St, Fayetteville, NC 28301',
+    category: 'drink',
+    subcategory: 'teahouse',
+    description: 'Fayetteville\'s Artist Lounge and Teahouse in downtown. Great tea selection, LGBTQ+ friendly, and women-owned.',
+    url: 'https://ncmuse.co/',
+    source: 'User Request',
+    price_level: 2,
+    romantic_score: 4,
+    good_for: ['relaxed', 'conversation', 'first_date'],
+    features: ['gender-neutral_restroom', 'wheelchair_accessible']
+  },
+  {
+    name: 'Winterbloom Tea',
+    address: '238 Hay Street, Fayetteville, NC 28301',
+    category: 'drink',
+    subcategory: 'teahouse',
+    description: 'Cozy and elegant teahouse on Hay Street, perfect for a quiet and sophisticated date.',
+    url: 'https://winterbloomtea.wixsite.com/wbtea',
+    source: 'Google Search',
+    price_level: 2,
+    romantic_score: 4,
+    good_for: ['relaxed', 'conversation'],
+    features: []
+  },
+  {
+    name: 'Rude Awakening Coffee House',
+    address: '227 Hay Street, Fayetteville, NC 28301',
+    category: 'drink',
+    subcategory: 'coffee_shop',
+    description: 'Long-standing local coffee shop with a charming courtyard garden.',
+    url: 'https://www.rudeawakening.coffee/',
+    source: 'Google Search',
+    price_level: 1,
+    romantic_score: 3,
+    good_for: ['casual_date', 'morning'],
+    features: ['outdoor_seating']
+  },
+  {
+    name: 'Ichikaku Japanese Restaurant',
+    address: '350 North Eastern Boulevard, Suite 200, Fayetteville, NC 28301',
+    category: 'food',
+    subcategory: 'japanese',
+    description: 'Japanese restaurant, likely serving ramen and other classic dishes.',
+    url: 'https://ichikaku.com/',
+    source: 'Google Search',
+    price_level: 2,
+    romantic_score: 3,
+    good_for: ['dinner', 'casual_date'],
+    features: []
+  },
+  {
+    name: "Mai's Kitchen",
+    address: '329 Person St, Fayetteville, NC 28301',
+    category: 'food',
+    subcategory: 'thai',
+    description: 'Authentic Thai cuisine in downtown Fayetteville.',
+    url: 'https://maiskitchenthaicuisine.com/',
+    source: 'Google Search',
+    price_level: 2,
+    romantic_score: 3,
+    good_for: ['dinner', 'adventurous_eaters'],
+    features: []
+  },
+  {
+    name: "Miller's Brew Coffee Shop",
+    address: '1401 Morganton Rd, Fayetteville, NC 28305',
+    category: 'drink',
+    subcategory: 'coffee_shop',
+    description: 'Local coffee shop with a mission, part of the Miller\'s Crew non-profit.',
+    url: 'https://www.millerscrew.com/millers-brew-coffee-shop',
+    source: 'Google Search',
+    price_level: 1,
+    romantic_score: 3,
+    good_for: ['casual_date', 'morning', 'supporting_local'],
+    features: []
+  },
+  {
+    name: 'Anchor Allie\'s',
+    address: '1204 Bragg Blvd, Fayetteville, NC 28301',
+    category: 'food',
+    subcategory: 'american',
+    description: 'A local favorite, especially for brunch. Features the elegant Sirens Flamingo Lounge for cocktails.',
+    url: 'https://anchorallies.com/',
+    source: 'Google Search',
+    price_level: 2,
+    romantic_score: 4,
+    good_for: ['brunch', 'lunch', 'cocktails'],
+    features: ['full_bar']
+  },
+  {
+    name: "Sol's Arcade and Taproom",
+    address: '421 Maiden Lane, Fayetteville, NC 28301',
+    category: 'activity',
+    subcategory: 'arcade_bar',
+    description: 'Retro arcade bar with a great selection of craft beer and classic games.',
+    url: 'https://solsarcade-taproom.com/',
+    source: 'Google Search',
+    price_level: 2,
+    romantic_score: 4,
+    good_for: ['fun', 'interactive', 'playful', 'casual_drinks'],
+    features: ['craft_beer', 'games']
+  },
+  {
+    name: 'U.S. Army Airborne & Special Operations Museum',
+    address: '100 Bragg Boulevard, Fayetteville, NC 28301',
+    category: 'culture',
+    subcategory: 'museum',
+    description: 'Free-admission museum detailing the history of the U.S. Army Airborne and Special Operations forces.',
+    url: 'https://www.asomf.org/',
+    source: 'Google Search',
+    price_level: 1, // Free admission
+    romantic_score: 3,
+    good_for: ['history_buffs', 'learning', 'day_date'],
+    features: ['free_admission']
   }
 ];
 

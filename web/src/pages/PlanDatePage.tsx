@@ -302,6 +302,26 @@ export default function PlanDatePage() {
                 )}
               </button>
               <button
+                onClick={() => {
+                  if (result) {
+                    // Extract prefs from result (if possible, this is a heuristic)
+                    // For a real app, preferences would be part of the saved plan
+                    setPrefs(p => ({
+                      ...p,
+                      event_type: result.title.includes('Anniversary') ? 'Anniversary' : result.title.includes('First Date') ? 'First Date' : 'Date Night', // Heuristic
+                      budget_range: result.estimatedCost > 100 ? '$$$' : result.estimatedCost > 50 ? '$$' : '$',
+                      vibes: result.title.includes('Romantic') ? ['Romantic'] : result.title.includes('Adventurous') ? ['Adventurous'] : [],
+                      duration_hours: result.totalDuration / 60,
+                    }));
+                  }
+                  setResult(null); 
+                  window.history.pushState({}, '', '/plan-date');
+                }}
+                className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20"
+              >
+                Edit Plan
+              </button>
+              <button
                 onClick={() => { setResult(null); window.history.pushState({}, '', '/plan-date'); }}
                 className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20"
               >

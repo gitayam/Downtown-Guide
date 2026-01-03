@@ -21,12 +21,13 @@ export interface Venue {
   typical_duration?: number;
   rating?: number;
   review_count?: number;
+  description?: string; // Venue description
 }
 
 export interface ScoringContext {
   vibes: string[];
   budgetRange: string;          // '$', '$$', '$$$'
-  timeOfDay?: 'morning' | 'afternoon' | 'evening';
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
   eventType?: string;           // 'first_date', 'anniversary', etc.
   previousStop?: Coordinates;   // For proximity scoring
 }

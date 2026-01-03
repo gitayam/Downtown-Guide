@@ -1,6 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types';
 import { fetchEvents } from '../lib/events';
-import { ScoringContext, selectBestVenue } from '../lib/scoring';
+import { ScoringContext, selectBestVenue, Venue } from '../lib/scoring';
 
 // --- INTERFACES ---
 

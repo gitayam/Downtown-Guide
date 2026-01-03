@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon, ArrowPathIcon, PlusIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
-import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, type DatePlan, type DateStop, type DateSuggestions } from '../lib/api'
+import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, type DatePlan, type DateSuggestions } from '../lib/api'
 import DatePlanMap from '../components/date-planner/DatePlanMap'
 import ShareModal from '../components/share/ShareModal'
 import DirectionsModal from '../components/DirectionsModal'
@@ -14,7 +14,7 @@ export default function PlanDatePage() {
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [swappingIndex, setSwappingIndex] = useState<number | null>(null)
-  const [addingAfterIndex, setAddingAfterIndex] = useState<number | null>(null)
+  const [_addingAfterIndex, _setAddingAfterIndex] = useState<number | null>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [directionsModalOpen, setDirectionsModalOpen] = useState(false)
   const [selectedVenue, setSelectedVenue] = useState<any>(null)
@@ -24,8 +24,8 @@ export default function PlanDatePage() {
   const sharedId = urlParams.get('id')
 
   const [suggestions, setSuggestions] = useState<DateSuggestions | null>(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [whenSelection, setWhenSelection] = useState<string>('pick_date')
+  const [_showAdvanced, _setShowAdvanced] = useState(false)
+  const [_whenSelection, _setWhenSelection] = useState<string>('pick_date')
 
   const [prefs, setPrefs] = useState({
     event_type: 'date_night',

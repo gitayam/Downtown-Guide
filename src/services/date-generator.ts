@@ -269,34 +269,72 @@ export async function getSwapSuggestion(
   stopToSwap: DateStop,
   allStops: DateStop[]
 ): Promise<DateStop | null> {
-  if (!stopToSwap.venue) return null; // Can't swap events yet
 
-  const category = stopToSwap.venue.category;
-  const budgetTier = prefs.budget_range === '$$$' ? 4 : prefs.budget_range === '$$' ? 3 : 2;
-  const usedVenueIds = allStops.map(s => s.venue?.id).filter(Boolean);
+  // --- SWAP VENUE ---
+  if (stopToSwap.venue) {
+    const category = stopToSwap.venue.category;
+    const budgetTier = prefs.budget_range === '$$$' ? 4 : prefs.budget_range === '$$' ? 3 : 2;
+    const usedVenueIds = allStops.map(s => s.venue?.id).filter(Boolean);
 
-  // Fetch candidate venues of the same category, excluding used ones
-  const query = `
-    SELECT * FROM venues 
-    WHERE category = ? 
-    AND (price_level <= ? OR price_level IS NULL)
-    AND id NOT IN (${usedVenueIds.map(() => '?').join(',')})
-  `;
-  
-  const venues = await DB.prepare(query).bind(category, budgetTier, ...usedVenueIds).all();
-  
-  const candidates = venues.results || [];
-  const suggestion = getRandom(candidates.filter(v => matchVibe(v, prefs.vibes))) || getRandom(candidates);
+    const query = `
+      SELECT * FROM venues 
+      WHERE category = ? 
+      AND (price_level <= ? OR price_level IS NULL)
+      AND id NOT IN (${usedVenueIds.map(() => '?').join(',')})
+      LIMIT 10
+    `;
+    
+    const venues = await DB.prepare(query).bind(category, budgetTier, ...usedVenueIds).all();
+    
+    const candidates = venues.results || [];
+    const suggestion = getRandom(candidates.filter(v => matchVibe(v, prefs.vibes))) || getRandom(candidates);
 
-  if (!suggestion) return null;
+    if (!suggestion) return null;
 
-  // Create a new stop object
-  const newStop: DateStop = {
-    ...stopToSwap,
-    venue: suggestion,
-    notes: suggestion.description || stopToSwap.notes,
-    cost: suggestion.average_cost || stopToSwap.cost
-  };
+    return {
+      ...stopToSwap,
+      venue: suggestion,
+      notes: suggestion.description || stopToSwap.notes,
+      cost: suggestion.average_cost || stopToSwap.cost
+    };
+  }
 
-  return newStop;
+  // --- SWAP EVENT ---
+  if (stopToSwap.event && prefs.date) {
+    const usedEventIds = allStops.map(s => s.event?.id).filter(Boolean);
+    
+    let startHour = 0, endHour = 24;
+    if (prefs.time_of_day === 'morning') { startHour = 6; endHour = 12; }
+    else if (prefs.time_of_day === 'afternoon') { startHour = 12; endHour = 17; }
+    else if (prefs.time_of_day === 'evening') { startHour = 17; endHour = 24; }
+
+    const fromDate = new Date(prefs.date); fromDate.setHours(startHour, 0, 0);
+    const toDate = new Date(prefs.date); toDate.setHours(endHour, 59, 59);
+
+    const events = await fetchEvents(DB, {
+      from: fromDate.toISOString(),
+      to: toDate.toISOString(),
+      limit: 20 // Fetch more to find alternatives
+    });
+
+    const alternateEvents = events.filter(e => !usedEventIds.includes(e.id));
+    const suggestion = getRandom(alternateEvents.filter(e => matchEventVibe(e, prefs.vibes))) || getRandom(alternateEvents);
+
+    if (!suggestion) return null;
+
+    return {
+      ...stopToSwap,
+      event: suggestion,
+      venue: { 
+        name: suggestion.venue_name || suggestion.location_name,
+        latitude: suggestion.venue_latitude,
+        longitude: suggestion.venue_longitude,
+        address: suggestion.venue_address
+      },
+      activity: suggestion.title,
+      notes: suggestion.description?.slice(0, 100) + '...',
+    };
+  }
+
+  return null; // No suggestion found
 }

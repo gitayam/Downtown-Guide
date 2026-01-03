@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon } from '@heroicons/react/24/outline'
-import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, type DatePlan } from '../lib/api'
+import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, type DatePlan } from '../lib/api'
 import DatePlanMap from '../components/date-planner/DatePlanMap'
 import ShareModal from '../components/share/ShareModal'
 import DirectionsModal from '../components/DirectionsModal'
@@ -11,6 +11,7 @@ export default function PlanDatePage() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [swappingIndex, setSwappingIndex] = useState<number | null>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [directionsModalOpen, setDirectionsModalOpen] = useState(false)
   const [selectedVenue, setSelectedVenue] = useState<any>(null)
@@ -104,10 +105,48 @@ export default function PlanDatePage() {
   const toggleVibe = (vibe: string) => {
     setPrefs(p => ({
       ...p,
-      vibes: p.vibes.includes(vibe) 
+      vibes: p.vibes.includes(vibe)
         ? p.vibes.filter(v => v !== vibe)
         : [...p.vibes, vibe]
     }))
+  }
+
+  const handleSwap = async (stopIndex: number) => {
+    if (!result) return
+    const stopToSwap = result.stops[stopIndex]
+
+    setSwappingIndex(stopIndex)
+    try {
+      const response = await swapDateStop({
+        stopToSwap,
+        allStops: result.stops,
+        preferences: prefs
+      })
+
+      if (response.newStop) {
+        // Update the stops array with the new stop
+        const newStops = [...result.stops]
+        newStops[stopIndex] = { ...response.newStop, order: stopToSwap.order }
+
+        // Recalculate totals
+        const totalDuration = newStops.reduce((sum, s) => sum + s.duration, 0)
+        const estimatedCost = newStops.reduce((sum, s) => sum + s.cost, 0)
+
+        setResult({
+          ...result,
+          stops: newStops,
+          totalDuration,
+          estimatedCost
+        })
+        // Clear share URL since plan changed
+        setShareUrl('')
+      }
+    } catch (e) {
+      console.error('Swap failed:', e)
+      alert('Could not find an alternative. Try a different stop.')
+    } finally {
+      setSwappingIndex(null)
+    }
   }
 
   if (loading) return <div className="p-8 text-center">Loading...</div>
@@ -379,6 +418,19 @@ export default function PlanDatePage() {
 
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2 pt-2">
+                    {/* Swap Button */}
+                    <button
+                      onClick={() => handleSwap(i)}
+                      disabled={swappingIndex !== null}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brick hover:bg-brick-600 disabled:opacity-50 rounded-lg transition-colors"
+                    >
+                      {swappingIndex === i ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <ArrowPathIcon className="w-3.5 h-3.5" />
+                      )}
+                      {swappingIndex === i ? 'Swapping...' : 'Swap'}
+                    </button>
                     {stop.venue && (
                       <button
                         onClick={() => handleDirections(stop.venue)}

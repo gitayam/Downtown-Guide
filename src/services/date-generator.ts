@@ -76,11 +76,13 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
     const fromDate = new Date(dateBase); fromDate.setHours(startHour, 0, 0);
     const toDate = new Date(dateBase); toDate.setHours(endHour, 59, 59);
 
-    events = await fetchEvents(DB, {
+    const allEvents = await fetchEvents(DB, {
       from: fromDate.toISOString(),
       to: toDate.toISOString(),
-      limit: 10
+      limit: 20
     });
+    // Only include events that have venue coordinates for map display
+    events = allEvents.filter((e: any) => e.venue_latitude && e.venue_longitude);
   }
 
   // 4. Planning Logic

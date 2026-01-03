@@ -50,8 +50,9 @@ const stopNumberLayer: LayerProps = {
   source: 'stops',
   layout: {
     'text-field': '{order}',
-    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-    'text-size': 14
+    'text-font': ['Noto Sans Regular'],
+    'text-size': 14,
+    'text-allow-overlap': true
   },
   paint: {
     'text-color': '#ffffff'

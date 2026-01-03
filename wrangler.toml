@@ -18,20 +18,25 @@ database_id = "fd953a64-4f1a-452c-aac4-84ad28c68370"
 binding = "RAW_DATA"
 bucket_name = "downtown-raw-data"
 
-# 3. Scheduled Workers (Cron Triggers) for Syncing
+# 3. Workers AI Binding (Cloudflare's built-in AI - alternative to OpenAI)
+# Models: @cf/meta/llama-3.1-8b-instruct, @cf/mistral/mistral-7b-instruct-v0.1
+[ai]
+binding = "AI"
+
+# 4. Scheduled Workers (Cron Triggers) for Syncing
 # Run every hour at minute 0
 [triggers]
 crons = ["0 * * * *"]
 
-# 4. Smart Placement (Speed)
+# 5. Smart Placement (Speed)
 [placement]
 mode = "smart"
 
-# 5. Build Configuration (Wrangler handles TypeScript natively)
+# 6. Build Configuration (Wrangler handles TypeScript natively)
 # [build]
 # watch_dir = "src"
 
-# 6. Observability
+# 7. Observability
 [observability]
 enabled = true
 

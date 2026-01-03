@@ -63,9 +63,15 @@ export default function DatePlanMap({ stops, className = '' }: DatePlanMapProps)
   const mapRef = useRef<MapRef>(null)
   const [popupInfo, setPopupInfo] = useState<DateStop | null>(null)
 
-  // Filter stops that have venue locations
-  const validStops = useMemo(() => 
-    stops.filter(s => s.venue?.latitude && s.venue?.longitude),
+  // Filter stops that have valid numeric venue locations
+  const validStops = useMemo(() =>
+    stops.filter(s =>
+      s.venue &&
+      typeof s.venue.latitude === 'number' &&
+      typeof s.venue.longitude === 'number' &&
+      !isNaN(s.venue.latitude) &&
+      !isNaN(s.venue.longitude)
+    ),
   [stops])
 
   const routeGeoJSON = useMemo(() => {

@@ -6,12 +6,12 @@
  * 2. Segra Stadium (Squarespace JSON)
  * 3. Distinctly Fayetteville (RSS Feed)
  * 4. Dogwood Festival (Web Scraping)
- * 5. Fort Liberty MWR (Web Scraping)
+ * 5. Fort Bragg MWR (Web Scraping)
  * 6. Crown Complex (Web Scraping)
  * 7. Downtown Alliance / FayDTA (MEC API + Signature Events)
  * 8. MLK Committee (Signature Annual Events)
  * 9. Headquarters Library (Web Scraping - filtered by location)
- * 10. Fort Liberty Training Holidays (Static FY26 Schedule)
+ * 10. Fort Bragg Training Holidays (Static FY26 Schedule)
  * 11. Arts Council of Fayetteville (Wix Events Scraping)
  * 12. Fayetteville Symphony Orchestra (Season Schedule)
  * 13. Cameo Art House Theatre (Dynamic Scraping - Movies & Special Events)
@@ -826,10 +826,10 @@ async function fetchDogwoodEvents(): Promise<UnifiedEvent[]> {
 }
 
 // =============================================================================
-// Source 5: Fort Liberty MWR (Scraping) - FORT BRAGG SECTION
+// Source 5: Fort Bragg MWR (Scraping) - FORT BRAGG SECTION
 // =============================================================================
 
-const FORT_LIBERTY_URL = 'https://bragg.armymwr.com/calendar';
+const FORT_BRAGG_MWR_URL = 'https://bragg.armymwr.com/calendar';
 
 // Helper to fetch and parse individual MWR event pages for rich data
 interface MwrEventDetails {
@@ -935,7 +935,7 @@ async function fetchMwrEventDetails(eventUrl: string): Promise<MwrEventDetails |
     if (locationMatch) {
       details.venue = {
         name: decodeHtmlEntities(locationMatch[1].trim()),
-        city: 'Fort Liberty',
+        city: 'Fort Bragg',
         state: 'NC',
       };
     }
@@ -959,8 +959,8 @@ async function fetchMwrEventDetails(eventUrl: string): Promise<MwrEventDetails |
   }
 }
 
-async function fetchFortLibertyEvents(useEnhanced = false): Promise<UnifiedEvent[]> {
-  console.error('Fetching: Fort Liberty MWR...');
+async function fetchFortBraggMwrEvents(useEnhanced = false): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Fort Bragg MWR...');
 
   const results: UnifiedEvent[] = [];
   const now = new Date();
@@ -976,7 +976,7 @@ async function fetchFortLibertyEvents(useEnhanced = false): Promise<UnifiedEvent
     const dateParam = `${month}/${day}/${year}`;
 
     try {
-      const url = `${FORT_LIBERTY_URL}?date=${encodeURIComponent(dateParam)}&mode=agenda`;
+      const url = `${FORT_BRAGG_MWR_URL}?date=${encodeURIComponent(dateParam)}&mode=agenda`;
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'FayettevilleCentralCalendar/1.0',
@@ -1114,11 +1114,11 @@ async function fetchFortLibertyEvents(useEnhanced = false): Promise<UnifiedEvent
         // Use venue from event details if available, otherwise from calendar
         const venue = eventDetails?.venue || (venueMatch ? {
           name: venueMatch[1].trim(),
-          city: 'Fort Liberty',
+          city: 'Fort Bragg',
           state: 'NC',
         } : {
-          name: 'Fort Liberty',
-          city: 'Fort Liberty',
+          name: 'Fort Bragg',
+          city: 'Fort Bragg',
           state: 'NC',
         });
 
@@ -1745,11 +1745,11 @@ async function fetchLibraryEvents(): Promise<UnifiedEvent[]> {
 }
 
 // =============================================================================
-// Source 10: Fort Liberty Training Holidays (Static Schedule)
+// Source 10: Fort Bragg Training Holidays (Static Schedule)
 // =============================================================================
 
-async function fetchFortLibertyHolidays(): Promise<UnifiedEvent[]> {
-  console.error('Fetching: Fort Liberty Training Holidays...');
+async function fetchFortBraggHolidays(): Promise<UnifiedEvent[]> {
+  console.error('Fetching: Fort Bragg Training Holidays...');
 
   const results: UnifiedEvent[] = [];
   const now = new Date();
@@ -1767,9 +1767,9 @@ async function fetchFortLibertyHolidays(): Promise<UnifiedEvent[]> {
     // Create description based on type
     let description = '';
     if (holiday.type === 'federal') {
-      description = `Fort Liberty soldiers have a ${holiday.days}-day weekend for ${holiday.name}. Expect increased activity in downtown Fayetteville as military families enjoy time off.`;
+      description = `Fort Bragg soldiers have a ${holiday.days}-day weekend for ${holiday.name}. Expect increased activity in downtown Fayetteville as military families enjoy time off.`;
     } else if (holiday.type === 'block') {
-      description = `Fort Liberty Block Leave period - many soldiers will be on leave. Some may travel, others will stay local. Good time for family-friendly events and promotions.`;
+      description = `Fort Bragg Block Leave period - many soldiers will be on leave. Some may travel, others will stay local. Good time for family-friendly events and promotions.`;
     } else {
       description = `Corps Training Holiday - soldiers have a ${holiday.days}-day weekend. Great opportunity for local businesses to welcome military families.`;
     }
@@ -1783,8 +1783,8 @@ async function fetchFortLibertyHolidays(): Promise<UnifiedEvent[]> {
       startDateTime: startDate,
       endDateTime: endDate,
       venue: {
-        name: 'Fort Liberty',
-        city: 'Fort Liberty',
+        name: 'Fort Bragg',
+        city: 'Fort Bragg',
         state: 'NC',
       },
       categories: ['Military', 'Long Weekend'],
@@ -2722,12 +2722,12 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
     woodpeckers: fetchWoodpeckersGames,
     distinctly: fetchDistinctlyEvents,
     dogwood: fetchDogwoodEvents,
-    fortliberty: () => fetchFortLibertyEvents(useEnhanced),
+    fortliberty: () => fetchFortBraggMwrEvents(useEnhanced),
     crown: fetchCrownComplexEvents,
     faydta: fetchFayDTAEvents,
     mlk: fetchMLKEvents,
     library: fetchLibraryEvents,
-    holidays: fetchFortLibertyHolidays,
+    holidays: fetchFortBraggHolidays,
     artscouncil: fetchArtsCouncilEvents,
     symphony: fetchSymphonyEvents,
     cameo: fetchCameoEvents,
@@ -2738,19 +2738,19 @@ async function syncEvents(source: SourceName = 'all', useEnhanced = false): Prom
   let allEvents: UnifiedEvent[] = [];
 
   if (source === 'all') {
-    // Fetch all sources in parallel (Fort Liberty is slower due to scraping)
+    // Fetch all sources in parallel (Fort Bragg is slower due to scraping)
     const results = await Promise.allSettled([
       fetchDowntownEvents(),
       fetchSegraEvents(),
       fetchWoodpeckersGames(),
       fetchDistinctlyEvents(),
       fetchDogwoodEvents(),
-      fetchFortLibertyEvents(useEnhanced),
+      fetchFortBraggMwrEvents(useEnhanced),
       fetchCrownComplexEvents(),
       fetchFayDTAEvents(),
       fetchMLKEvents(),
       fetchLibraryEvents(),
-      fetchFortLibertyHolidays(),
+      fetchFortBraggHolidays(),
       fetchArtsCouncilEvents(),
       fetchSymphonyEvents(),
       fetchCameoEvents(),
@@ -3396,7 +3396,7 @@ async function main() {
             });
 
             console.log(`    ${dateStr}: ${event.title}`);
-            if (event.venue?.name && event.venue.name !== 'Fayetteville' && event.venue.name !== 'Fort Liberty') {
+            if (event.venue?.name && event.venue.name !== 'Fayetteville' && event.venue.name !== 'Fort Bragg') {
               console.log(`              📍 ${event.venue.name}`);
             }
           }
@@ -3415,7 +3415,7 @@ async function main() {
       console.log('SUMMARY');
       console.log('-'.repeat(60));
       console.log(`  Downtown Fayetteville: ${downtownCount} events`);
-      console.log(`  Fort Liberty (Bragg):  ${fortBraggCount} events`);
+      console.log(`  Fort Bragg:            ${fortBraggCount} events`);
       console.log(`  Total:                 ${events.length} events`);
       console.log('='.repeat(60) + '\n');
     }

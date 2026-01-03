@@ -51,7 +51,7 @@ export default function SectionShareModal({
     const source = sectionName === 'all' ? 'All Locations' : 
                    sectionName === 'downtown' ? 'Downtown Fayetteville' : 
                    sectionName === 'crown' ? 'Crown Complex' : 
-                   sectionName === 'fort_bragg' ? 'Fort Liberty' : sectionName
+                   sectionName === 'fort_bragg' ? 'Fort Bragg' : sectionName
     return `${count} events • ${source}`
   }
 

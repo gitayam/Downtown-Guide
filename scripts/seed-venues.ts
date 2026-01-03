@@ -309,23 +309,23 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     aliases: ["Fascinate-U Children's Museum", 'Fascinate-U', 'Fascinate U']
   },
 
-  // Fort Liberty
+  // Fort Bragg
   {
-    id: 'fort_liberty',
-    name: 'Fort Liberty',
-    short_name: 'Ft. Liberty',
-    description: 'U.S. Army installation (formerly Fort Bragg) with MWR facilities and community events.',
+    id: 'fort_bragg',
+    name: 'Fort Bragg',
+    short_name: 'Ft. Bragg',
+    description: 'U.S. Army installation with MWR facilities and community events.',
     address: '3550 All American Fwy',
-    city: 'Fort Liberty',
+    city: 'Fort Bragg',
     state: 'NC',
     zip: '28310',
     latitude: 35.1395,
     longitude: -79.0064,
     website: 'https://bragg.armymwr.com',
     venue_type: 'military',
-    google_maps_url: 'https://maps.google.com/?q=Fort+Liberty+NC',
-    apple_maps_url: 'https://maps.apple.com/?address=3550%20All%20American%20Fwy,%20Fort%20Liberty,%20NC%20%2028310,%20United%20States',
-    aliases: ['Fort Bragg', 'Ft. Bragg', 'Ft Liberty']
+    google_maps_url: 'https://maps.google.com/?q=Fort+Bragg+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=3550%20All%20American%20Fwy,%20Fort%20Bragg,%20NC%20%2028310,%20United%20States',
+    aliases: ['Fort Liberty', 'Ft. Liberty', 'Ft. Bragg', 'Ft Bragg']
   },
 
   // Motor Sports
@@ -566,7 +566,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     id: 'fayetteville_airport',
     name: 'Fayetteville Regional Airport',
     short_name: 'FAY Airport',
-    description: 'Public airport serving Fayetteville and Fort Liberty.',
+    description: 'Public airport serving Fayetteville and Fort Bragg.',
     address: '400 Airport Rd',
     city: 'Fayetteville',
     state: 'NC',
@@ -659,7 +659,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     id: 'airborne_cigar',
     name: 'The Airborne Cigar Emporium',
     short_name: 'Airborne Cigar',
-    description: 'Cigar lounge and bar near Fort Liberty.',
+    description: 'Cigar lounge and bar near Fort Bragg.',
     address: '5500 Yadkin Rd',
     city: 'Fayetteville',
     state: 'NC',
@@ -691,15 +691,15 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     id: 'dragon_lanes',
     name: 'Dragon Lanes',
     short_name: 'Dragon Lanes',
-    description: 'Bowling alley at Fort Liberty.',
-    address: 'Fort Liberty',
-    city: 'Fort Liberty',
+    description: 'Bowling alley at Fort Bragg.',
+    address: 'Fort Bragg',
+    city: 'Fort Bragg',
     state: 'NC',
     zip: '28310',
     website: 'https://bragg.armymwr.com/programs/dragon-lanes-bowling',
     venue_type: 'bowling',
-    google_maps_url: 'https://www.google.com/maps/search/?api=1&query=Dragon+Lanes+Fort+Liberty+NC',
-    apple_maps_url: 'https://maps.apple.com/?q=Dragon+Lanes+Fort+Liberty+NC',
+    google_maps_url: 'https://www.google.com/maps/search/?api=1&query=Dragon+Lanes+Fort+Bragg+NC',
+    apple_maps_url: 'https://maps.apple.com/?q=Dragon+Lanes+Fort+Bragg+NC',
     aliases: ['Dragon Lanes']
   },
   {

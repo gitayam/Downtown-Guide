@@ -56,7 +56,7 @@ export default function AboutPage() {
               { name: 'Cool Spring Downtown District', url: 'https://visitdowntownfayetteville.com', desc: 'Fostering creativity and commerce in the heart of the city.' },
               { name: 'Distinctly Fayetteville', url: 'https://www.distinctlyfayettevillenc.com', desc: 'Positioning Cumberland County as a premier destination.' },
               { name: 'Fayetteville History Museum', url: 'https://www.fayettevillenc.gov/Parks-and-Recreation/Facilities/Fayetteville-History-Museum', desc: 'Preserving and sharing the rich history of our region.' },
-              { name: 'Fort Liberty MWR', url: 'https://bragg.armymwr.com', desc: 'Supporting our service members and families.' },
+              { name: 'Fort Bragg MWR', url: 'https://bragg.armymwr.com', desc: 'Supporting our service members and families.' },
               { name: 'Greater Fayetteville Chamber', url: 'https://www.faybiz.com', desc: 'Building a resilient community through business leadership.' },
               { name: 'The Arts Council', url: 'https://www.wearethearts.com', desc: 'Connecting our community through diverse cultural experiences.' },
             ].map((org) => (

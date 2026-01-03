@@ -2,7 +2,7 @@ import {
   WEBCAL_URL,
   WEBCAL_DOWNTOWN_URL,
   WEBCAL_CROWN_URL,
-  WEBCAL_FORTLIBERTY_URL,
+  WEBCAL_FORTBRAGG_URL,
   WEBCAL_HOLIDAYS_URL
 } from '../lib/api'
 import { Link } from 'react-router-dom'
@@ -78,10 +78,10 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href={WEBCAL_FORTLIBERTY_URL}
+                  href={WEBCAL_FORTBRAGG_URL}
                   className="text-white/70 hover:text-dogwood transition-colors flex items-center gap-2"
                 >
-                  <span>🎖️</span> Fort Liberty
+                  <span>🎖️</span> Fort Bragg
                 </a>
               </li>
               <li>
@@ -115,7 +115,7 @@ export default function Footer() {
                   <li><a href="https://visitdowntownfayetteville.com/events/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Visit Downtown</a></li>
                 </ul>
               </div>
-              {/* Column 2: Greater Fayetteville + Fort Liberty */}
+              {/* Column 2: Greater Fayetteville + Fort Bragg */}
               <div>
                 <p className="text-white/50 text-xs mb-1.5">🏟️ Greater Fayetteville</p>
                 <ul className="space-y-1 mb-3">
@@ -125,7 +125,7 @@ export default function Footer() {
                   <li><a href="https://www.segrastadium.com/events-calendar" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Segra Stadium</a></li>
                   <li><a href="https://www.milb.com/fayetteville/schedule" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">Woodpeckers</a></li>
                 </ul>
-                <p className="text-white/50 text-xs mb-1.5">🎖️ Fort Liberty</p>
+                <p className="text-white/50 text-xs mb-1.5">🎖️ Fort Bragg</p>
                 <ul className="space-y-1">
                   <li><a href="https://bragg.armymwr.com/calendar" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-dogwood transition-colors">MWR Events</a></li>
                 </ul>

@@ -23,17 +23,53 @@ const GoogleMapsIcon = () => (
   </svg>
 )
 
+// OpenStreetMap Icon
+const OpenStreetMapIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+  </svg>
+)
+
+type VenueLike = Event | {
+  venue_name?: string
+  location_name?: string
+  venue_address?: string
+  venue_city?: string
+  venue_state?: string
+  venue_zip?: string
+  venue_google_maps_url?: string
+  venue_apple_maps_url?: string
+  latitude?: number
+  longitude?: number
+}
+
 interface DirectionsModalProps {
   isOpen: boolean
   onClose: () => void
-  event: Event
+  event: VenueLike
 }
 
 export default function DirectionsModal({ isOpen, onClose, event }: DirectionsModalProps) {
   const [copiedAddress, setCopiedAddress] = useState(false)
-  const [copiedLink, setCopiedLink] = useState<'google' | 'apple' | null>(null)
+  const [copiedLink, setCopiedLink] = useState<'google' | 'apple' | 'osm' | null>(null)
 
   if (!isOpen) return null
+
+  // Type guards to handle different object shapes
+  const getLat = (e: VenueLike): number | undefined => {
+    if ('venue_latitude' in e && typeof e.venue_latitude === 'number') return e.venue_latitude;
+    if ('latitude' in e && typeof e.latitude === 'number') return e.latitude;
+    return undefined;
+  };
+  const getLng = (e: VenueLike): number | undefined => {
+    if ('venue_longitude' in e && typeof e.venue_longitude === 'number') return e.venue_longitude;
+    if ('longitude' in e && typeof e.longitude === 'number') return e.longitude;
+    return undefined;
+  };
+  const getName = (e: VenueLike) => ('venue_name' in e && e.venue_name) ? e.venue_name : e.location_name;
+
+  const lat = getLat(event);
+  const lng = getLng(event);
 
   const fullAddress = event.venue_address
     ? `${event.venue_address}, ${event.venue_city || 'Fayetteville'}, ${event.venue_state || 'NC'} ${event.venue_zip || ''}`
@@ -43,7 +79,11 @@ export default function DirectionsModal({ isOpen, onClose, event }: DirectionsMo
     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`
 
   const appleMapsUrl = event.venue_apple_maps_url || 
-    `http://maps.apple.com/?q=${encodeURIComponent(event.venue_name || fullAddress)}&address=${encodeURIComponent(fullAddress)}`
+    `http://maps.apple.com/?q=${encodeURIComponent(getName(event) || fullAddress)}&address=${encodeURIComponent(fullAddress)}`
+
+  const osmUrl = (typeof lat === 'number' && typeof lng === 'number')
+    ? `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`
+    : `https://www.openstreetmap.org/search?query=${encodeURIComponent(fullAddress)}`
 
   const handleCopyAddress = async () => {
     await navigator.clipboard.writeText(fullAddress)
@@ -51,7 +91,7 @@ export default function DirectionsModal({ isOpen, onClose, event }: DirectionsMo
     setTimeout(() => setCopiedAddress(false), 2000)
   }
 
-  const handleCopyLink = async (type: 'google' | 'apple', url: string) => {
+  const handleCopyLink = async (type: 'google' | 'apple' | 'osm', url: string) => {
     await navigator.clipboard.writeText(url)
     setCopiedLink(type)
     setTimeout(() => setCopiedLink(null), 2000)
@@ -179,6 +219,40 @@ export default function DirectionsModal({ isOpen, onClose, event }: DirectionsMo
                 title="Copy link"
               >
                 {copiedLink === 'google' ? <CheckIcon className="w-6 h-6" /> : <DocumentDuplicateIcon className="w-6 h-6" />}
+              </button>
+            </div>
+
+            {/* OpenStreetMap */}
+            <div className="flex gap-2">
+              <a
+                href={osmUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-between p-4 bg-white hover:bg-gray-50 border border-sand hover:border-gray-300 rounded-xl transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center text-green-600">
+                    <OpenStreetMapIcon />
+                  </div>
+                  <div className="text-left">
+                    <span className="block font-semibold text-gray-900">OpenStreetMap</span>
+                    <span className="text-xs text-stone group-hover:text-brick transition-colors">
+                      Open in browser
+                    </span>
+                  </div>
+                </div>
+                <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+              </a>
+              <button
+                onClick={() => handleCopyLink('osm', osmUrl)}
+                className={`w-14 flex items-center justify-center rounded-xl border transition-all ${
+                  copiedLink === 'osm'
+                    ? 'bg-green-50 border-green-200 text-green-600'
+                    : 'bg-white border-sand hover:border-brick text-stone hover:text-brick'
+                }`}
+                title="Copy link"
+              >
+                {copiedLink === 'osm' ? <CheckIcon className="w-6 h-6" /> : <DocumentDuplicateIcon className="w-6 h-6" />}
               </button>
             </div>
           </div>

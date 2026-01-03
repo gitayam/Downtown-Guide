@@ -290,16 +290,75 @@ export interface DatePlan {
   tips: string[]
 }
 
-export async function fetchDateSuggestions(): Promise<{
-  event_types: string[]
+// Rich suggestion types
+export interface EventType {
+  id: string
+  label: string
+  icon: string
+  description: string
+}
+
+export interface Vibe {
+  id: string
+  label: string
+  icon: string
+}
+
+export interface BudgetRange {
+  id: string
+  label: string
+  description: string
+  maxBudget: number
+}
+
+export interface ActivityLevel {
+  id: number
+  label: string
+  description: string
+}
+
+export interface QuickPreset {
+  id: string
+  label: string
+  duration: number
+  event_type: string
   vibes: string[]
-  budget_ranges: string[]
-}> {
-  return resilientFetch<{
-    event_types: string[]
-    vibes: string[]
-    budget_ranges: string[]
-  }>('/api/date-planner/suggestions', 'date_planner_suggestions')
+  budget: string
+}
+
+export interface WhenOption {
+  id: string
+  label: string
+}
+
+export interface TimeOfDay {
+  id: string
+  label: string
+  startHour: number
+  endHour: number
+  icon: string
+}
+
+export interface DurationOption {
+  hours: number
+  label: string
+}
+
+export interface DateSuggestions {
+  event_types: EventType[]
+  vibes: Vibe[]
+  budget_ranges: BudgetRange[]
+  activity_levels: ActivityLevel[]
+  quick_presets: QuickPreset[]
+  when_options: WhenOption[]
+  time_of_day: TimeOfDay[]
+  duration_options: DurationOption[]
+  food_preferences: { id: string; label: string }[]
+  activity_preferences: { id: string; label: string; default: boolean }[]
+}
+
+export async function fetchDateSuggestions(): Promise<DateSuggestions> {
+  return resilientFetch<DateSuggestions>('/api/date-planner/suggestions', 'date_planner_suggestions')
 }
 
 export async function generateDatePlan(preferences: {
@@ -361,6 +420,24 @@ export async function swapDateStop(payload: {
 
   if (!response.ok) {
     throw new Error('Failed to swap stop')
+  }
+
+  return response.json()
+}
+
+export async function addDateStop(payload: {
+  insertAfterIndex: number
+  allStops: DateStop[]
+  preferences: any
+}): Promise<{ status: string; newStop: DateStop }> {
+  const response = await fetch('/api/date-planner/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to add stop')
   }
 
   return response.json()

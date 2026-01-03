@@ -1,7 +1,7 @@
 
 import { Hono } from 'hono';
 import { Bindings } from '../types';
-import { generateDatePlan } from '../services/date-generator';
+import { generateDatePlan, getSwapSuggestion } from '../services/date-generator';
 
 const datePlanner = new Hono<{ Bindings: Bindings }>();
 
@@ -34,20 +34,49 @@ datePlanner.post('/generate', async (c) => {
   }
 });
 
+// POST /api/date-planner/swap
+// Swap a single stop in an itinerary
+datePlanner.post('/swap', async (c) => {
+  const { DB } = c.env;
+  const { stopToSwap, allStops, preferences } = await c.req.json();
+
+  if (!stopToSwap || !allStops || !preferences) {
+    return c.json({ error: 'Invalid request body' }, 400);
+  }
+  
+  try {
+    const newStop = await getSwapSuggestion(DB, preferences, stopToSwap, allStops);
+    if (!newStop) {
+      return c.json({ error: 'No alternative found' }, 404);
+    }
+    return c.json({ status: 'success', newStop });
+  } catch (error) {
+    console.error('Swap stop error:', error);
+    return c.json({ error: 'Failed to swap stop' }, 500);
+  }
+});
+
 // GET /api/date-planner/plan/:id
 // Retrieve a specific plan by ID
 datePlanner.get('/plan/:id', async (c) => {
   const id = c.req.param('id');
   const { DB } = c.env;
   
-  // TODO: Fetch from date_plans or saved_dates table
   const plan = await DB.prepare('SELECT * FROM saved_dates WHERE id = ?').bind(id).first();
   
   if (!plan) {
     return c.json({ error: 'Plan not found' }, 404);
   }
 
-  return c.json({ data: plan });
+  // Reconstruct plan object
+  let planData;
+  try {
+    planData = JSON.parse(plan.notes as string);
+  } catch {
+    planData = { title: plan.title, stops: [] };
+  }
+
+  return c.json({ data: planData });
 });
 
 // POST /api/date-planner/save

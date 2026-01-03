@@ -262,3 +262,41 @@ function getRandom<T>(arr: T[]): T | undefined {
   if (arr.length === 0) return undefined;
   return arr[Math.floor(Math.random() * arr.length)];
 }
+
+export async function getSwapSuggestion(
+  DB: D1Database,
+  prefs: DatePreferences,
+  stopToSwap: DateStop,
+  allStops: DateStop[]
+): Promise<DateStop | null> {
+  if (!stopToSwap.venue) return null; // Can't swap events yet
+
+  const category = stopToSwap.venue.category;
+  const budgetTier = prefs.budget_range === '$$$' ? 4 : prefs.budget_range === '$$' ? 3 : 2;
+  const usedVenueIds = allStops.map(s => s.venue?.id).filter(Boolean);
+
+  // Fetch candidate venues of the same category, excluding used ones
+  const query = `
+    SELECT * FROM venues 
+    WHERE category = ? 
+    AND (price_level <= ? OR price_level IS NULL)
+    AND id NOT IN (${usedVenueIds.map(() => '?').join(',')})
+  `;
+  
+  const venues = await DB.prepare(query).bind(category, budgetTier, ...usedVenueIds).all();
+  
+  const candidates = venues.results || [];
+  const suggestion = getRandom(candidates.filter(v => matchVibe(v, prefs.vibes))) || getRandom(candidates);
+
+  if (!suggestion) return null;
+
+  // Create a new stop object
+  const newStop: DateStop = {
+    ...stopToSwap,
+    venue: suggestion,
+    notes: suggestion.description || stopToSwap.notes,
+    cost: suggestion.average_cost || stopToSwap.cost
+  };
+
+  return newStop;
+}

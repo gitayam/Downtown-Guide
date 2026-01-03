@@ -348,6 +348,24 @@ export async function getDatePlan(shareId: string): Promise<DatePlan> {
   return json.data
 }
 
+export async function swapDateStop(payload: {
+  stopToSwap: DateStop
+  allStops: DateStop[]
+  preferences: any
+}): Promise<{ status: string; newStop: DateStop }> {
+  const response = await fetch('/api/date-planner/swap', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to swap stop')
+  }
+
+  return response.json()
+}
+
 // Export for checking network status
 export function isOnline(): boolean {
   return typeof navigator !== 'undefined' ? navigator.onLine : true

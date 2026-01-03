@@ -1,6 +1,12 @@
+/**
+ * Date Plan Generator - Intelligent Recommendation Engine
+ * Uses scoring-based venue selection with geographic optimization
+ */
 
 import { D1Database } from '@cloudflare/workers-types';
 import { fetchEvents } from '../lib/events';
+import { selectBestVenue, ScoringContext, Venue } from '../lib/scoring';
+import { generateTransitionTip, Coordinates } from '../lib/geo';
 
 export interface DatePreferences {
   event_type: string;
@@ -32,226 +38,435 @@ export interface DateStop {
   transitionTip?: string;
 }
 
+interface TimeSlot {
+  type: 'meal' | 'activity' | 'event' | 'drinks' | 'dessert';
+  activity: string;
+  categories: string[];
+  duration: number;
+  defaultCost: number;
+  required: boolean;
+}
+
 export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): Promise<DatePlan> {
-  // 1. Determine constraints
-  const budgetTier = prefs.budget_range === '$$$' ? 4 : prefs.budget_range === '$$' ? 3 : 2;
-  
-  // 2. Fetch candidate venues
+  // 1. Fetch all eligible venues
   const venues = await DB.prepare(`
-    SELECT * FROM venues 
-    WHERE (price_level <= ? OR price_level IS NULL)
-    AND category IN ('food', 'drink', 'activity', 'nature', 'culture')
-  `).bind(budgetTier).all();
-  
-  const candidates = venues.results || [];
+    SELECT * FROM venues
+    WHERE category IS NOT NULL
+    AND latitude IS NOT NULL
+    AND longitude IS NOT NULL
+  `).all();
 
-  // Filter venues by Time of Day suitability (Heuristic)
-  const morningVenues = candidates.filter((v: any) => 
-    v.category === 'nature' || v.category === 'activity' || 
-    (v.category === 'food' && (v.subcategory?.includes('cafe') || v.subcategory?.includes('bakery') || v.subcategory?.includes('breakfast')))
-  );
-  
-  const afternoonVenues = candidates.filter((v: any) => 
-    v.category !== 'drink' // Avoid bars in afternoon unless specified
-  );
+  const allVenues = (venues.results || []) as Venue[];
 
-  const eveningVenues = candidates; // All valid for evening typically
-
-  let pool = eveningVenues;
-  if (prefs.time_of_day === 'morning') pool = morningVenues;
-  if (prefs.time_of_day === 'afternoon') pool = afternoonVenues;
-
-  // 3. Fetch candidate events if date provided
+  // 2. Fetch events if date provided
   let events: any[] = [];
+  let anchorEvent: any = null;
+
   if (prefs.date) {
-    // Define time range for event fetch
-    let startHour = 0;
-    let endHour = 24;
-
-    if (prefs.time_of_day === 'morning') { startHour = 6; endHour = 12; }
-    else if (prefs.time_of_day === 'afternoon') { startHour = 12; endHour = 17; }
-    else if (prefs.time_of_day === 'evening') { startHour = 17; endHour = 24; }
-
-    const dateBase = new Date(prefs.date);
-    const fromDate = new Date(dateBase); fromDate.setHours(startHour, 0, 0);
-    const toDate = new Date(dateBase); toDate.setHours(endHour, 59, 59);
-
+    const timeRange = getTimeRange(prefs.date, prefs.time_of_day);
     const allEvents = await fetchEvents(DB, {
-      from: fromDate.toISOString(),
-      to: toDate.toISOString(),
+      from: timeRange.from,
+      to: timeRange.to,
       limit: 20
     });
-    // Only include events that have venue coordinates for map display
     events = allEvents.filter((e: any) => e.venue_latitude && e.venue_longitude);
+    anchorEvent = findBestEvent(events, prefs.vibes);
   }
 
-  // 4. Planning Logic
-  const stops: DateStop[] = [];
-  let currentCost = 0;
-  let currentDuration = 0;
-  let order = 1;
+  // 3. Build time slots based on time of day and duration
+  const slots = buildTimeSlots(prefs, anchorEvent);
 
-  // Helper to add stop
-  const addStop = (stop: DateStop) => {
-    stop.order = order++;
-    stops.push(stop);
-    currentCost += stop.cost;
-    currentDuration += stop.duration;
+  // 4. Fill slots with scored venue selection
+  const stops = await fillSlots(slots, allVenues, prefs, anchorEvent);
+
+  // 5. Calculate totals
+  const totalDuration = stops.reduce((sum, s) => sum + s.duration, 0);
+  const estimatedCost = stops.reduce((sum, s) => sum + s.cost, 0);
+
+  // 6. Generate tips
+  const tips = generatePlanTips(stops, prefs);
+
+  return {
+    id: crypto.randomUUID(),
+    title: generatePlanTitle(prefs, anchorEvent),
+    totalDuration,
+    estimatedCost,
+    stops,
+    tips
   };
+}
 
-  // Find Anchor Event
-  const relevantEvent = events.find(e => matchEventVibe(e, prefs.vibes));
-  
+/**
+ * Build time slots based on time of day
+ */
+function buildTimeSlots(prefs: DatePreferences, anchorEvent: any): TimeSlot[] {
+  const slots: TimeSlot[] = [];
+
   if (prefs.time_of_day === 'morning') {
-    // MORNING: Breakfast -> Activity -> Lunch
-    const breakfast = getRandom(pool.filter((v: any) => v.category === 'food'));
-    if (breakfast) {
-      addStop({
-        order: 0, venue: breakfast, activity: 'Breakfast/Coffee', duration: 45, cost: 15,
-        notes: breakfast.description || 'Start the day right.', transitionTip: 'Head to your activity.'
-      });
-    }
+    slots.push({
+      type: 'meal',
+      activity: 'Breakfast/Coffee',
+      categories: ['food'],
+      duration: 45,
+      defaultCost: 20,
+      required: true
+    });
 
-    if (relevantEvent) {
-      addStop({
-        order: 0, event: relevantEvent, venue: { name: relevantEvent.venue_name || relevantEvent.location_name, latitude: relevantEvent.venue_latitude, longitude: relevantEvent.venue_longitude },
-        activity: relevantEvent.title, duration: 90, cost: 20, notes: relevantEvent.title
+    if (anchorEvent) {
+      slots.push({
+        type: 'event',
+        activity: anchorEvent.title,
+        categories: [],
+        duration: 90,
+        defaultCost: 20,
+        required: true
       });
     } else {
-      const activity = getRandom(pool.filter((v: any) => v.category === 'nature' || v.category === 'activity'));
-      if (activity) {
-        addStop({
-          order: 0, venue: activity, activity: 'Morning Activity', duration: 90, cost: 10,
-          notes: activity.description || 'Enjoy the morning air.', transitionTip: 'Ready for lunch?'
-        });
-      }
+      slots.push({
+        type: 'activity',
+        activity: 'Morning Activity',
+        categories: ['nature', 'activity', 'culture'],
+        duration: 90,
+        defaultCost: 15,
+        required: true
+      });
     }
 
-    const lunch = getRandom(candidates.filter((v: any) => v.category === 'food' && v.id !== breakfast?.id));
-    if (lunch && currentDuration < prefs.duration_hours * 60) {
-      addStop({
-        order: 0, venue: lunch, activity: 'Lunch', duration: 60, cost: 25,
-        notes: 'Refuel with a nice lunch.'
+    if (prefs.duration_hours >= 4) {
+      slots.push({
+        type: 'meal',
+        activity: 'Lunch',
+        categories: ['food'],
+        duration: 60,
+        defaultCost: 25,
+        required: false
       });
     }
 
   } else if (prefs.time_of_day === 'afternoon') {
-    // AFTERNOON: Lunch -> Activity -> Treat
-    const lunch = getRandom(pool.filter((v: any) => v.category === 'food'));
-    if (lunch) {
-      addStop({
-        order: 0, venue: lunch, activity: 'Lunch', duration: 60, cost: 25,
-        notes: lunch.description || 'Mid-day meal.', transitionTip: 'Head to your activity.'
-      });
-    }
+    slots.push({
+      type: 'meal',
+      activity: 'Lunch',
+      categories: ['food'],
+      duration: 60,
+      defaultCost: 25,
+      required: true
+    });
 
-    if (relevantEvent) {
-      addStop({
-        order: 0, event: relevantEvent, venue: { name: relevantEvent.venue_name || relevantEvent.location_name, latitude: relevantEvent.venue_latitude, longitude: relevantEvent.venue_longitude },
-        activity: relevantEvent.title, duration: 90, cost: 20, notes: relevantEvent.title
+    if (anchorEvent) {
+      slots.push({
+        type: 'event',
+        activity: anchorEvent.title,
+        categories: [],
+        duration: 120,
+        defaultCost: 25,
+        required: true
       });
     } else {
-      const activity = getRandom(pool.filter((v: any) => v.category === 'culture' || v.category === 'activity' || v.category === 'nature'));
-      if (activity) {
-        addStop({
-          order: 0, venue: activity, activity: 'Afternoon Fun', duration: 90, cost: 15,
-          notes: activity.description || 'Explore the city.'
-        });
-      }
+      slots.push({
+        type: 'activity',
+        activity: 'Afternoon Fun',
+        categories: ['activity', 'culture', 'nature'],
+        duration: 90,
+        defaultCost: 20,
+        required: true
+      });
     }
 
-    const treat = getRandom(pool.filter((v: any) => v.category === 'food' && (v.subcategory?.includes('dessert') || v.subcategory?.includes('cafe'))));
-    if (treat && currentDuration < prefs.duration_hours * 60) {
-      addStop({
-        order: 0, venue: treat, activity: 'Sweet Treat', duration: 30, cost: 10,
-        notes: 'A little pick-me-up.'
+    if (prefs.duration_hours >= 4) {
+      slots.push({
+        type: 'dessert',
+        activity: 'Sweet Treat',
+        categories: ['food'],
+        duration: 30,
+        defaultCost: 12,
+        required: false
       });
     }
 
   } else {
-    // EVENING (Default): Pre-Game -> Event/Dinner -> Nightcap
-    // ... (Existing Evening Logic) ...
-    let eventStartHour = 19;
-    if (relevantEvent) {
-      eventStartHour = new Date(relevantEvent.start_datetime).getHours();
+    // Evening (default)
+    const eventStartHour = anchorEvent
+      ? new Date(anchorEvent.start_datetime).getHours()
+      : 20;
+
+    // Dinner first if event is 7pm+
+    if (eventStartHour >= 19 || !anchorEvent) {
+      slots.push({
+        type: 'meal',
+        activity: 'Dinner',
+        categories: ['food'],
+        duration: 90,
+        defaultCost: 45,
+        required: true
+      });
     }
 
-    // SLOT 1
-    if (eventStartHour >= 18) {
-      const dinner = getRandom(pool.filter((v: any) => v.category === 'food' && matchVibe(v, prefs.vibes)));
-      if (dinner) addStop({ order: 0, venue: dinner, activity: 'Dinner', duration: 90, cost: 40, notes: dinner.description || 'Dinner time.', transitionTip: relevantEvent ? 'Head to event.' : undefined });
-    } else if (relevantEvent) {
-      addStop({ order: 0, event: relevantEvent, venue: { name: relevantEvent.venue_name || relevantEvent.location_name, latitude: relevantEvent.venue_latitude, longitude: relevantEvent.venue_longitude }, activity: relevantEvent.title, duration: 120, cost: 20, notes: relevantEvent.title });
+    if (anchorEvent) {
+      slots.push({
+        type: 'event',
+        activity: anchorEvent.title,
+        categories: [],
+        duration: 120,
+        defaultCost: 30,
+        required: true
+      });
+
+      // Dinner after early event
+      if (eventStartHour < 19) {
+        slots.push({
+          type: 'meal',
+          activity: 'Dinner',
+          categories: ['food'],
+          duration: 90,
+          defaultCost: 45,
+          required: true
+        });
+      }
     } else {
-      const activity = getRandom(pool.filter((v: any) => (v.category === 'activity' || v.category === 'culture') && matchVibe(v, prefs.vibes)));
-      if (activity) addStop({ order: 0, venue: activity, activity: 'Evening Activity', duration: 60, cost: 20, notes: activity.description || 'Start the evening fun.', transitionTip: 'Dinner next.' });
+      // No event - add activity
+      slots.push({
+        type: 'activity',
+        activity: 'Evening Activity',
+        categories: ['activity', 'culture', 'entertainment'],
+        duration: 75,
+        defaultCost: 25,
+        required: false
+      });
     }
 
-    // SLOT 2
-    if (eventStartHour >= 18 && relevantEvent) {
-      addStop({ order: 0, event: relevantEvent, venue: { name: relevantEvent.venue_name || relevantEvent.location_name, latitude: relevantEvent.venue_latitude, longitude: relevantEvent.venue_longitude }, activity: relevantEvent.title, duration: 120, cost: 20, notes: relevantEvent.title });
-    } else if (eventStartHour < 18) {
-      const dinner = getRandom(pool.filter((v: any) => v.category === 'food' && matchVibe(v, prefs.vibes)));
-      if (dinner && !stops.find(s => s.activity === 'Dinner')) addStop({ order: 0, venue: dinner, activity: 'Dinner', duration: 90, cost: 40, notes: dinner.description || 'Dinner time.' });
-    }
-
-    // SLOT 3
-    if (currentDuration < prefs.duration_hours * 60) {
-      const nightcap = getRandom(pool.filter((v: any) => v.category === 'drink' || (v.category === 'food' && v.subcategory?.includes('dessert'))));
-      if (nightcap) addStop({ order: 0, venue: nightcap, activity: 'Nightcap', duration: 60, cost: 15, notes: 'Wind down.' });
+    // Nightcap if duration allows
+    if (prefs.duration_hours >= 3) {
+      slots.push({
+        type: 'drinks',
+        activity: 'Nightcap',
+        categories: ['drink'],
+        duration: 60,
+        defaultCost: 20,
+        required: false
+      });
     }
   }
 
+  return slots;
+}
+
+/**
+ * Fill slots with scored venue selection
+ */
+async function fillSlots(
+  slots: TimeSlot[],
+  allVenues: Venue[],
+  prefs: DatePreferences,
+  anchorEvent: any
+): Promise<DateStop[]> {
+  const stops: DateStop[] = [];
+  const usedVenueIds: string[] = [];
+  let previousCoords: Coordinates | undefined;
+  let remainingDuration = prefs.duration_hours * 60;
+
+  for (const slot of slots) {
+    // Skip non-required slots if running low on time
+    if (!slot.required && remainingDuration < slot.duration) continue;
+
+    // Handle event slots
+    if (slot.type === 'event' && anchorEvent) {
+      const stop: DateStop = {
+        order: stops.length + 1,
+        event: anchorEvent,
+        venue: {
+          id: anchorEvent.venue_id,
+          name: anchorEvent.venue_name || anchorEvent.location_name,
+          latitude: anchorEvent.venue_latitude,
+          longitude: anchorEvent.venue_longitude,
+          address: anchorEvent.venue_address
+        },
+        activity: anchorEvent.title,
+        duration: slot.duration,
+        cost: anchorEvent.price || slot.defaultCost,
+        notes: anchorEvent.description?.slice(0, 150) || anchorEvent.title,
+        transitionTip: previousCoords ? generateTransitionTip(
+          previousCoords,
+          { latitude: anchorEvent.venue_latitude, longitude: anchorEvent.venue_longitude }
+        ) : undefined
+      };
+
+      stops.push(stop);
+      remainingDuration -= slot.duration;
+      previousCoords = {
+        latitude: anchorEvent.venue_latitude,
+        longitude: anchorEvent.venue_longitude
+      };
+      continue;
+    }
+
+    // Filter venues by category
+    const candidates = allVenues.filter(v =>
+      slot.categories.includes(v.category)
+    );
+
+    // Build scoring context
+    const context: ScoringContext = {
+      vibes: prefs.vibes,
+      budgetRange: prefs.budget_range,
+      timeOfDay: prefs.time_of_day,
+      eventType: prefs.event_type,
+      previousStop: previousCoords
+    };
+
+    // Select best venue using scoring engine
+    const selected = selectBestVenue(candidates, context, usedVenueIds);
+
+    if (selected) {
+      const stop: DateStop = {
+        order: stops.length + 1,
+        venue: selected,
+        activity: slot.activity,
+        duration: selected.typical_duration || slot.duration,
+        cost: selected.average_cost || slot.defaultCost,
+        notes: (selected as any).description || getDefaultNote(slot.type),
+        transitionTip: previousCoords ? generateTransitionTip(
+          previousCoords,
+          { latitude: selected.latitude, longitude: selected.longitude }
+        ) : undefined
+      };
+
+      stops.push(stop);
+      usedVenueIds.push(selected.id);
+      remainingDuration -= stop.duration;
+      previousCoords = {
+        latitude: selected.latitude,
+        longitude: selected.longitude
+      };
+    }
+  }
+
+  return stops;
+}
+
+/**
+ * Find best matching event for the date
+ */
+function findBestEvent(events: any[], vibes: string[]): any {
+  if (events.length === 0) return null;
+
+  // Score events by vibe match
+  const scored = events.map(event => {
+    let score = 0;
+    const categories = safeParseArray(event.categories);
+
+    // Vibe-category matching
+    if (vibes.includes('Cultural') && (categories.includes('Arts') || categories.includes('Theatre'))) score += 10;
+    if (vibes.includes('Fun') && (categories.includes('Comedy') || categories.includes('Sports'))) score += 10;
+    if (vibes.includes('Romantic') && categories.includes('Music')) score += 8;
+    if (vibes.includes('Adventurous') && categories.includes('Sports')) score += 8;
+
+    // Bonus for having venue coordinates (better for planning)
+    if (event.venue_latitude && event.venue_longitude) score += 5;
+
+    return { event, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0]?.score > 0 ? scored[0].event : events[0];
+}
+
+/**
+ * Get time range for event fetching
+ */
+function getTimeRange(date: string, timeOfDay?: string): { from: string; to: string } {
+  const dateBase = new Date(date);
+  let startHour = 0;
+  let endHour = 24;
+
+  if (timeOfDay === 'morning') { startHour = 6; endHour = 12; }
+  else if (timeOfDay === 'afternoon') { startHour = 12; endHour = 17; }
+  else if (timeOfDay === 'evening') { startHour = 17; endHour = 24; }
+
+  const fromDate = new Date(dateBase);
+  fromDate.setHours(startHour, 0, 0);
+
+  const toDate = new Date(dateBase);
+  toDate.setHours(endHour, 59, 59);
+
   return {
-    id: crypto.randomUUID(),
-    title: `${prefs.time_of_day ? (prefs.time_of_day.charAt(0).toUpperCase() + prefs.time_of_day.slice(1)) : 'Perfect'} ${prefs.event_type}`,
-    totalDuration: currentDuration,
-    estimatedCost: currentCost,
-    stops,
-    tips: ["Check venue hours before going.", "Parking is usually free downtown after 5pm."]
+    from: fromDate.toISOString(),
+    to: toDate.toISOString()
   };
 }
 
-function matchVibe(venue: any, userVibes: string[]): boolean {
-  if (!userVibes || userVibes.length === 0) return true;
-  
-  // Combine all venue tags
-  const venueTags = [
-    ...(venue.vibe ? safeParse(venue.vibe) : []),
-    ...(venue.good_for ? safeParse(venue.good_for) : [])
-  ].map((t: string) => t.toLowerCase());
+/**
+ * Generate plan title
+ */
+function generatePlanTitle(prefs: DatePreferences, anchorEvent: any): string {
+  const timeLabel = prefs.time_of_day
+    ? prefs.time_of_day.charAt(0).toUpperCase() + prefs.time_of_day.slice(1)
+    : 'Perfect';
 
-  // Check partial matches (e.g. "adventure" matches "adventurous")
-  return userVibes.some(v => {
-    const vibe = v.toLowerCase();
-    
-    // Loose matching for common date vibes if data is sparse
-    if (vibe === 'date night' || vibe === 'romantic') {
-      if (venue.category === 'food' || venue.category === 'drink') return true;
-      if (venueTags.some(t => t.includes('dinner') || t.includes('intimate') || t.includes('cozy'))) return true;
-    }
+  if (anchorEvent) {
+    return `${timeLabel} Date: ${anchorEvent.title}`;
+  }
 
-    // Direct match
-    if (venueTags.includes(vibe)) return true;
-    // Partial/Stem match (simple)
-    if (vibe.includes('advent') && venueTags.some(t => t.includes('advent'))) return true;
-    if (vibe.includes('romant') && venueTags.some(t => t.includes('romant'))) return true;
-    if (vibe.includes('relax') && venueTags.some(t => t.includes('relax'))) return true;
-    if (vibe.includes('cultur') && venueTags.some(t => t.includes('cultur'))) return true;
-    return false;
+  return `${timeLabel} ${prefs.event_type}`;
+}
+
+/**
+ * Generate helpful tips for the plan
+ */
+function generatePlanTips(stops: DateStop[], prefs: DatePreferences): string[] {
+  const tips: string[] = [];
+
+  // Parking tip
+  if (prefs.time_of_day === 'evening') {
+    tips.push("Parking is free downtown after 5pm on weekdays.");
+  }
+
+  // Reservation tip for dinner
+  const hasDinner = stops.some(s => s.activity === 'Dinner');
+  if (hasDinner) {
+    tips.push("Consider making a dinner reservation, especially on weekends.");
+  }
+
+  // Walking tip if route is walkable
+  const allWalkable = stops.every((s, i) => {
+    if (i === 0) return true;
+    // Check transition tip for walking indicators
+    return s.transitionTip?.includes('walk') || s.transitionTip?.includes('stroll');
   });
+
+  if (allWalkable && stops.length > 1) {
+    tips.push("Great news - this entire route is walkable!");
+  }
+
+  // Weather check reminder
+  const hasOutdoor = stops.some(s =>
+    s.venue?.category === 'nature' ||
+    s.venue?.subcategory?.includes('outdoor')
+  );
+
+  if (hasOutdoor) {
+    tips.push("Check the weather forecast for outdoor activities.");
+  }
+
+  return tips.length > 0 ? tips : ["Have a wonderful time exploring Fayetteville!"];
 }
 
-function matchEventVibe(event: any, userVibes: string[]): boolean {
-  if (!userVibes || userVibes.length === 0) return true;
-  const cats = event.categories ? safeParse(event.categories) : [];
-  // Basic mapping
-  if (userVibes.includes('Cultural') && (cats.includes('Arts') || cats.includes('Theatre'))) return true;
-  if (userVibes.includes('Fun') && (cats.includes('Comedy') || cats.includes('Sports'))) return true;
-  return false;
+/**
+ * Default notes by slot type
+ */
+function getDefaultNote(type: string): string {
+  const notes: Record<string, string> = {
+    meal: "Enjoy your meal!",
+    activity: "Have fun!",
+    drinks: "Wind down and relax.",
+    dessert: "A sweet way to end.",
+    event: "Enjoy the show!"
+  };
+  return notes[type] || "";
 }
 
-function safeParse(json: string): any[] {
+function safeParseArray(json: string | null | undefined): string[] {
+  if (!json) return [];
   try {
     const parsed = JSON.parse(json);
     return Array.isArray(parsed) ? parsed : [];
@@ -260,10 +475,9 @@ function safeParse(json: string): any[] {
   }
 }
 
-function getRandom<T>(arr: T[]): T | undefined {
-  if (arr.length === 0) return undefined;
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+// ============================================
+// SWAP FUNCTIONALITY
+// ============================================
 
 export async function getSwapSuggestion(
   DB: D1Database,
@@ -271,72 +485,85 @@ export async function getSwapSuggestion(
   stopToSwap: DateStop,
   allStops: DateStop[]
 ): Promise<DateStop | null> {
+  const usedVenueIds = allStops.map(s => s.venue?.id).filter(Boolean);
+
+  // Get previous stop for proximity scoring
+  const stopIndex = allStops.findIndex(s => s.order === stopToSwap.order);
+  const previousStop = stopIndex > 0 ? allStops[stopIndex - 1] : null;
+
+  // Build scoring context
+  const context: ScoringContext = {
+    vibes: prefs.vibes,
+    budgetRange: prefs.budget_range,
+    timeOfDay: prefs.time_of_day,
+    eventType: prefs.event_type,
+    previousStop: previousStop?.venue ? {
+      latitude: previousStop.venue.latitude,
+      longitude: previousStop.venue.longitude
+    } : undefined
+  };
 
   // --- SWAP VENUE ---
-  if (stopToSwap.venue) {
+  if (stopToSwap.venue && !stopToSwap.event) {
     const category = stopToSwap.venue.category;
-    const budgetTier = prefs.budget_range === '$$$' ? 4 : prefs.budget_range === '$$' ? 3 : 2;
-    const usedVenueIds = allStops.map(s => s.venue?.id).filter(Boolean);
 
-    const query = `
-      SELECT * FROM venues 
-      WHERE category = ? 
-      AND (price_level <= ? OR price_level IS NULL)
-      AND id NOT IN (${usedVenueIds.map(() => '?').join(',')})
-      LIMIT 10
-    `;
-    
-    const venues = await DB.prepare(query).bind(category, budgetTier, ...usedVenueIds).all();
-    
-    const candidates = venues.results || [];
-    const suggestion = getRandom(candidates.filter(v => matchVibe(v, prefs.vibes))) || getRandom(candidates);
+    const venues = await DB.prepare(`
+      SELECT * FROM venues
+      WHERE category = ?
+      AND latitude IS NOT NULL
+      AND longitude IS NOT NULL
+    `).bind(category).all();
 
-    if (!suggestion) return null;
+    const candidates = (venues.results || []) as Venue[];
+    const selected = selectBestVenue(candidates, context, usedVenueIds);
+
+    if (!selected) return null;
 
     return {
       ...stopToSwap,
-      venue: suggestion,
-      notes: suggestion.description || stopToSwap.notes,
-      cost: suggestion.average_cost || stopToSwap.cost
+      venue: selected,
+      notes: (selected as any).description || stopToSwap.notes,
+      cost: selected.average_cost || stopToSwap.cost,
+      duration: selected.typical_duration || stopToSwap.duration
     };
   }
 
   // --- SWAP EVENT ---
   if (stopToSwap.event && prefs.date) {
     const usedEventIds = allStops.map(s => s.event?.id).filter(Boolean);
-    
-    let startHour = 0, endHour = 24;
-    if (prefs.time_of_day === 'morning') { startHour = 6; endHour = 12; }
-    else if (prefs.time_of_day === 'afternoon') { startHour = 12; endHour = 17; }
-    else if (prefs.time_of_day === 'evening') { startHour = 17; endHour = 24; }
-
-    const fromDate = new Date(prefs.date); fromDate.setHours(startHour, 0, 0);
-    const toDate = new Date(prefs.date); toDate.setHours(endHour, 59, 59);
+    const timeRange = getTimeRange(prefs.date, prefs.time_of_day);
 
     const events = await fetchEvents(DB, {
-      from: fromDate.toISOString(),
-      to: toDate.toISOString(),
-      limit: 20 // Fetch more to find alternatives
+      from: timeRange.from,
+      to: timeRange.to,
+      limit: 20
     });
 
-    const alternateEvents = events.filter(e => !usedEventIds.includes(e.id));
-    const suggestion = getRandom(alternateEvents.filter(e => matchEventVibe(e, prefs.vibes))) || getRandom(alternateEvents);
+    const candidates = events.filter((e: any) =>
+      e.venue_latitude &&
+      e.venue_longitude &&
+      !usedEventIds.includes(e.id)
+    );
 
-    if (!suggestion) return null;
+    if (candidates.length === 0) return null;
+
+    // Pick best event
+    const suggestion = findBestEvent(candidates, prefs.vibes);
 
     return {
       ...stopToSwap,
       event: suggestion,
-      venue: { 
+      venue: {
+        id: suggestion.venue_id,
         name: suggestion.venue_name || suggestion.location_name,
         latitude: suggestion.venue_latitude,
         longitude: suggestion.venue_longitude,
         address: suggestion.venue_address
       },
       activity: suggestion.title,
-      notes: suggestion.description?.slice(0, 100) + '...',
+      notes: suggestion.description?.slice(0, 100) + '...'
     };
   }
 
-  return null; // No suggestion found
+  return null;
 }

@@ -278,6 +278,8 @@ export interface DateStop {
   event?: {
     id: string
     title: string
+    start_datetime?: string
+    end_datetime?: string
   }
 }
 
@@ -344,6 +346,13 @@ export interface DurationOption {
   label: string
 }
 
+export interface AccessOption {
+  id: string
+  label: string
+  description: string
+  default: boolean
+}
+
 export interface DateSuggestions {
   event_types: EventType[]
   vibes: Vibe[]
@@ -355,6 +364,7 @@ export interface DateSuggestions {
   duration_options: DurationOption[]
   food_preferences: { id: string; label: string }[]
   activity_preferences: { id: string; label: string; default: boolean }[]
+  access_options?: AccessOption[]
 }
 
 export async function fetchDateSuggestions(): Promise<DateSuggestions> {
@@ -440,6 +450,85 @@ export async function addDateStop(payload: {
     throw new Error('Failed to add stop')
   }
 
+  return response.json()
+}
+
+// Venue Categories for Add Stop feature
+export interface VenueCategory {
+  id: string
+  label: string
+  icon: string
+  description: string
+}
+
+export async function fetchVenueCategories(): Promise<{ categories: VenueCategory[] }> {
+  const response = await fetch('/api/date-planner/venue-categories')
+  if (!response.ok) {
+    throw new Error('Failed to fetch venue categories')
+  }
+  return response.json()
+}
+
+export async function fetchVenuesByCategory(category: string, limit: number = 10): Promise<{
+  status: string
+  venues: any[]
+  count: number
+}> {
+  const response = await fetch(`/api/date-planner/venues-by-category/${category}?limit=${limit}`)
+  if (!response.ok) {
+    throw new Error('Failed to fetch venues')
+  }
+  return response.json()
+}
+
+export interface ScrapedVenue {
+  name?: string
+  address?: string
+  latitude?: number
+  longitude?: number
+  google_maps_url?: string
+  apple_maps_url?: string
+  source_type?: string
+}
+
+export async function scrapeMapUrl(url: string): Promise<{ status: string; venue: ScrapedVenue }> {
+  const response = await fetch('/api/date-planner/scrape-maps-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to scrape URL')
+  }
+  return response.json()
+}
+
+export async function addCustomVenue(payload: {
+  venue: {
+    name: string
+    address?: string
+    city?: string
+    state?: string
+    latitude?: number
+    longitude?: number
+    google_maps_url?: string
+    apple_maps_url?: string
+    suggested_category?: string
+    suggested_vibe?: string
+    notes?: string
+  }
+  planContext?: any
+  planId?: string
+}): Promise<{ status: string; message: string; venueRequestId?: string; isExisting: boolean }> {
+  const response = await fetch('/api/date-planner/add-custom-venue', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  if (!response.ok) {
+    throw new Error('Failed to add custom venue')
+  }
   return response.json()
 }
 

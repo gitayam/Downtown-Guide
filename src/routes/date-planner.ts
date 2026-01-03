@@ -110,6 +110,16 @@ datePlanner.get('/suggestions', async (c) => {
       { id: "include_dessert", label: "Include Dessert", default: false },
       { id: "include_activity", label: "Include Activity", default: true },
       { id: "include_outdoors", label: "Include Outdoors", default: false }
+    ],
+
+    // Military base access (Fort Bragg/Liberty venues often require military ID)
+    access_options: [
+      {
+        id: "has_military_access",
+        label: "I have military base access",
+        description: "Include Fort Bragg/Fort Liberty venues (requires military ID or star on license)",
+        default: false
+      }
     ]
   });
 });
@@ -258,6 +268,249 @@ datePlanner.get('/share/:shareId', async (c) => {
   }
 
   return c.json({ data: planData });
+});
+
+// POST /api/date-planner/scrape-maps-url
+// Scrape venue info from Google Maps or Apple Maps URL
+datePlanner.post('/scrape-maps-url', async (c) => {
+  const { url } = await c.req.json();
+
+  if (!url) {
+    return c.json({ error: 'URL is required' }, 400);
+  }
+
+  try {
+    const venueInfo = await scrapeMapUrl(url);
+    if (!venueInfo) {
+      return c.json({ error: 'Could not extract venue information' }, 400);
+    }
+    return c.json({ status: 'success', venue: venueInfo });
+  } catch (error) {
+    console.error('Scrape URL error:', error);
+    return c.json({ error: 'Failed to scrape URL' }, 500);
+  }
+});
+
+// POST /api/date-planner/add-custom-venue
+// Add a custom venue to a plan and track user demand
+datePlanner.post('/add-custom-venue', async (c) => {
+  const { DB } = c.env;
+  const { venue, planContext, planId } = await c.req.json();
+
+  if (!venue || !venue.name) {
+    return c.json({ error: 'Venue name is required' }, 400);
+  }
+
+  try {
+    // Check if we already have this venue request (by name similarity or maps URL)
+    let existingRequest = null;
+    if (venue.google_maps_url) {
+      existingRequest = await DB.prepare(
+        'SELECT * FROM user_venue_requests WHERE google_maps_url = ?'
+      ).bind(venue.google_maps_url).first();
+    }
+    if (!existingRequest && venue.apple_maps_url) {
+      existingRequest = await DB.prepare(
+        'SELECT * FROM user_venue_requests WHERE apple_maps_url = ?'
+      ).bind(venue.apple_maps_url).first();
+    }
+
+    const now = new Date().toISOString();
+
+    if (existingRequest) {
+      // Increment request count
+      await DB.prepare(`
+        UPDATE user_venue_requests
+        SET request_count = request_count + 1,
+            last_requested_at = ?
+        WHERE id = ?
+      `).bind(now, existingRequest.id).run();
+
+      return c.json({
+        status: 'success',
+        message: 'Venue demand recorded',
+        venueRequest: existingRequest,
+        isExisting: true
+      });
+    }
+
+    // Create new user venue request
+    const id = crypto.randomUUID();
+    await DB.prepare(`
+      INSERT INTO user_venue_requests (
+        id, name, address, city, state, latitude, longitude,
+        google_maps_url, apple_maps_url, suggested_category, suggested_vibe,
+        plan_context, submitted_from_plan_id, user_notes, first_requested_at, last_requested_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      venue.name,
+      venue.address || null,
+      venue.city || 'Fayetteville',
+      venue.state || 'NC',
+      venue.latitude || null,
+      venue.longitude || null,
+      venue.google_maps_url || null,
+      venue.apple_maps_url || null,
+      venue.suggested_category || null,
+      venue.suggested_vibe || null,
+      planContext ? JSON.stringify(planContext) : null,
+      planId || null,
+      venue.notes || null,
+      now,
+      now
+    ).run();
+
+    return c.json({
+      status: 'success',
+      message: 'Venue request saved',
+      venueRequestId: id,
+      isExisting: false
+    });
+  } catch (error) {
+    console.error('Add custom venue error:', error);
+    return c.json({ error: 'Failed to save venue request' }, 500);
+  }
+});
+
+// GET /api/date-planner/venues-by-category/:category
+// Get venue suggestions by category for "add stop" feature
+datePlanner.get('/venues-by-category/:category', async (c) => {
+  const { DB } = c.env;
+  const category = c.req.param('category');
+  const limit = parseInt(c.req.query('limit') || '10');
+
+  try {
+    const venues = await DB.prepare(`
+      SELECT id, name, address, city, category, subcategory,
+             latitude, longitude, average_cost, vibe, description,
+             rating, review_count, typical_duration
+      FROM venues
+      WHERE category = ? AND latitude IS NOT NULL
+      ORDER BY rating DESC, review_count DESC
+      LIMIT ?
+    `).bind(category, limit).all();
+
+    return c.json({
+      status: 'success',
+      venues: venues.results || [],
+      count: venues.results?.length || 0
+    });
+  } catch (error) {
+    console.error('Fetch venues by category error:', error);
+    return c.json({ error: 'Failed to fetch venues' }, 500);
+  }
+});
+
+// Helper: Scrape Google/Apple Maps URL for venue metadata
+async function scrapeMapUrl(url: string): Promise<any> {
+  // Normalize URL
+  const cleanUrl = url.trim();
+
+  // Detect URL type
+  const isGoogleMaps = cleanUrl.includes('google.com/maps') || cleanUrl.includes('maps.google') || cleanUrl.includes('goo.gl/maps');
+  const isAppleMaps = cleanUrl.includes('maps.apple.com');
+
+  let venueInfo: any = {
+    source_url: cleanUrl,
+    source_type: isGoogleMaps ? 'google_maps' : isAppleMaps ? 'apple_maps' : 'unknown'
+  };
+
+  try {
+    // Fetch the URL to get redirected URL and page content
+    const response = await fetch(cleanUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; DatePlanner/1.0)'
+      },
+      redirect: 'follow'
+    });
+
+    const finalUrl = response.url;
+    const html = await response.text();
+
+    if (isGoogleMaps) {
+      // Parse Google Maps URL for coordinates
+      // Pattern: /@35.0527,-78.8784,17z or /place/Venue+Name/@35.0527,-78.8784
+      const coordMatch = finalUrl.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+      if (coordMatch) {
+        venueInfo.latitude = parseFloat(coordMatch[1]);
+        venueInfo.longitude = parseFloat(coordMatch[2]);
+      }
+
+      // Try to extract place name from URL
+      const placeMatch = finalUrl.match(/\/place\/([^\/]+)/);
+      if (placeMatch) {
+        venueInfo.name = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+      }
+
+      // Try to extract from page title
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+      if (titleMatch && !venueInfo.name) {
+        // Google Maps titles are often "Venue Name - Google Maps"
+        const titleParts = titleMatch[1].split(' - ');
+        if (titleParts.length > 0) {
+          venueInfo.name = titleParts[0].trim();
+        }
+      }
+
+      // Look for address in meta tags or structured data
+      const addressMatch = html.match(/"address":"([^"]+)"/);
+      if (addressMatch) {
+        venueInfo.address = addressMatch[1];
+      }
+
+      venueInfo.google_maps_url = finalUrl;
+    }
+    else if (isAppleMaps) {
+      // Parse Apple Maps URL
+      // Pattern: ll=35.0527,-78.8784 or q=Venue+Name
+      const llMatch = finalUrl.match(/ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+      if (llMatch) {
+        venueInfo.latitude = parseFloat(llMatch[1]);
+        venueInfo.longitude = parseFloat(llMatch[2]);
+      }
+
+      const qMatch = finalUrl.match(/q=([^&]+)/);
+      if (qMatch) {
+        venueInfo.name = decodeURIComponent(qMatch[1].replace(/\+/g, ' '));
+      }
+
+      // Try to extract from page title
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+      if (titleMatch && !venueInfo.name) {
+        venueInfo.name = titleMatch[1].split(' - ')[0].trim();
+      }
+
+      venueInfo.apple_maps_url = finalUrl;
+    }
+
+    // If we still don't have a name, return null
+    if (!venueInfo.name) {
+      return null;
+    }
+
+    return venueInfo;
+  } catch (error) {
+    console.error('Error scraping URL:', error);
+    return null;
+  }
+}
+
+// GET /api/date-planner/venue-categories
+// Get available venue categories for the add stop dropdown
+datePlanner.get('/venue-categories', async (c) => {
+  return c.json({
+    categories: [
+      { id: 'food', label: 'Restaurant / Food', icon: '🍽️', description: 'Dining options' },
+      { id: 'drink', label: 'Bar / Drinks', icon: '🍸', description: 'Bars, breweries, cafes' },
+      { id: 'activity', label: 'Activity', icon: '🎯', description: 'Fun activities' },
+      { id: 'nature', label: 'Outdoors / Nature', icon: '🌲', description: 'Parks, trails, outdoor spots' },
+      { id: 'culture', label: 'Culture / Arts', icon: '🎭', description: 'Museums, galleries, theaters' },
+      { id: 'entertainment', label: 'Entertainment', icon: '🎬', description: 'Movies, shows, games' },
+      { id: 'shopping', label: 'Shopping', icon: '🛍️', description: 'Retail and shopping' },
+      { id: 'custom', label: 'Custom / Other', icon: '✨', description: 'Add your own spot' }
+    ]
+  });
 });
 
 export default datePlanner;

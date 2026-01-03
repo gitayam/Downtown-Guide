@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
-import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, type DatePlan, type DateSuggestions } from '../lib/api'
+import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon, ArrowPathIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, type DatePlan, type DateSuggestions, type DateStop } from '../lib/api'
 import DatePlanMap from '../components/date-planner/DatePlanMap'
 import ShareModal from '../components/share/ShareModal'
 import DirectionsModal from '../components/DirectionsModal'
+import AddStopModal from '../components/date-planner/AddStopModal'
 
 // This is the merged and resolved file content.
 // I have adopted the more advanced UI and re-integrated the swap and edit features.
@@ -14,7 +15,8 @@ export default function PlanDatePage() {
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [swappingIndex, setSwappingIndex] = useState<number | null>(null)
-  const [_addingAfterIndex, _setAddingAfterIndex] = useState<number | null>(null)
+  const [addStopModalOpen, setAddStopModalOpen] = useState(false)
+  const [addingAfterIndex, setAddingAfterIndex] = useState<number>(-1)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [directionsModalOpen, setDirectionsModalOpen] = useState(false)
   const [selectedVenue, setSelectedVenue] = useState<any>(null)
@@ -24,8 +26,6 @@ export default function PlanDatePage() {
   const sharedId = urlParams.get('id')
 
   const [suggestions, setSuggestions] = useState<DateSuggestions | null>(null)
-  const [_showAdvanced, _setShowAdvanced] = useState(false)
-  const [_whenSelection, _setWhenSelection] = useState<string>('pick_date')
 
   const [prefs, setPrefs] = useState({
     event_type: 'date_night',
@@ -39,6 +39,7 @@ export default function PlanDatePage() {
     include_drinks: false,
     include_dessert: false,
     include_outdoors: false,
+    has_military_access: false,
     notes: ''
   })
 
@@ -121,11 +122,61 @@ export default function PlanDatePage() {
         duration_hours: Math.round(result.totalDuration / 60),
       }));
     }
-    setResult(null); 
+    setResult(null);
     window.history.pushState({}, '', '/plan-date');
   }
 
+  const openAddStopModal = (afterIndex: number) => {
+    setAddingAfterIndex(afterIndex)
+    setAddStopModalOpen(true)
+  }
+
+  const handleAddStop = (newStop: DateStop) => {
+    if (!result) return
+
+    // Insert the new stop after the specified index
+    const newStops = [...result.stops]
+    const insertIndex = addingAfterIndex + 1
+    newStops.splice(insertIndex, 0, newStop)
+
+    // Renumber all stops
+    const renumberedStops = newStops.map((stop, idx) => ({
+      ...stop,
+      order: idx + 1
+    }))
+
+    // Recalculate totals
+    const totalDuration = renumberedStops.reduce((sum, s) => sum + s.duration, 0)
+    const estimatedCost = renumberedStops.reduce((sum, s) => sum + s.cost, 0)
+
+    setResult({
+      ...result,
+      stops: renumberedStops,
+      totalDuration,
+      estimatedCost
+    })
+    setShareUrl('') // Clear share URL since plan changed
+  }
+
   const toggleVibe = (vibe: string) => setPrefs(p => ({ ...p, vibes: p.vibes.includes(vibe) ? p.vibes.filter(v => v !== vibe) : [...p.vibes, vibe] }))
+
+  const formatEventTime = (startDatetime?: string, endDatetime?: string) => {
+    if (!startDatetime) return null
+    try {
+      const start = new Date(startDatetime)
+      const formatTime = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      const formatDate = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+
+      let result = `${formatDate(start)} at ${formatTime(start)}`
+      if (endDatetime) {
+        const end = new Date(endDatetime)
+        result += ` - ${formatTime(end)}`
+      }
+      return result
+    } catch {
+      return null
+    }
+  }
 
   if (loading) return <div className="p-8 text-center">Loading...</div>
 
@@ -133,6 +184,14 @@ export default function PlanDatePage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <ShareModal isOpen={shareModalOpen} onClose={() => setShareModalOpen(false)} content={{ type: 'event', id: 'plan', title: result?.title || 'Date Plan', description: `Check out this date plan: ${result?.stops.map(s => s.activity).join(', ')}`, url: shareUrl }} />
       {selectedVenue && <DirectionsModal isOpen={directionsModalOpen} onClose={() => setDirectionsModalOpen(false)} event={selectedVenue} />}
+      <AddStopModal
+        isOpen={addStopModalOpen}
+        onClose={() => setAddStopModalOpen(false)}
+        onAddStop={handleAddStop}
+        insertAfterIndex={addingAfterIndex}
+        planContext={prefs}
+        planId={result?.id}
+      />
       <Link to="/" className="inline-flex items-center text-stone hover:text-brick mb-6"><ArrowLeftIcon className="w-4 h-4 mr-1" />Back to Events</Link>
       <div className="text-center mb-10">
         <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-2">{result && sharedId ? 'Shared Date Plan' : 'Plan Your Perfect Date'}</h1>
@@ -171,6 +230,31 @@ export default function PlanDatePage() {
             <label className="block text-sm font-medium text-gray-700 mb-3">Select vibes</label>
             <div className="flex flex-wrap gap-2">{suggestions?.vibes.map(vibe => (<button key={vibe.id} onClick={() => toggleVibe(vibe.id)} className={`px-3 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${prefs.vibes.includes(vibe.id) ? 'bg-capefear text-white' : 'bg-sand/20 text-stone hover:bg-sand/40'}`}><span>{vibe.icon}</span>{vibe.label}</button>))}</div>
           </div>
+          {suggestions?.access_options && suggestions.access_options.length > 0 && (
+            <div className="pt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Access</label>
+              <div className="space-y-2">
+                {suggestions.access_options.map(option => (
+                  <label key={option.id} className="flex items-start gap-3 p-3 rounded-lg bg-sand/10 hover:bg-sand/20 cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={option.id === 'has_military_access' ? prefs.has_military_access : false}
+                      onChange={(e) => {
+                        if (option.id === 'has_military_access') {
+                          setPrefs({ ...prefs, has_military_access: e.target.checked })
+                        }
+                      }}
+                      className="mt-0.5 w-4 h-4 rounded border-sand text-brick focus:ring-brick"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-gray-900">{option.label}</span>
+                      <p className="text-xs text-stone mt-0.5">{option.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="pt-4"><button onClick={handleGenerate} disabled={generating} className="w-full py-4 bg-brick hover:bg-brick-600 disabled:opacity-70 text-white rounded-xl font-bold text-lg shadow-lg shadow-brick/20 transition-all flex items-center justify-center gap-2">{generating ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><SparklesIcon className="w-6 h-6" />Generate Itinerary</>}</button></div>
         </div>
       ) : (
@@ -185,6 +269,17 @@ export default function PlanDatePage() {
           </div>
           <DatePlanMap stops={result.stops} className="h-[400px]" />
           <div className="relative border-l-2 border-dashed border-sand ml-4 md:ml-8 space-y-4 py-2">
+            {/* Add stop at beginning button */}
+            <div className="relative pl-8 md:pl-12">
+              <button
+                onClick={() => openAddStopModal(-1)}
+                className="absolute -left-[17px] top-0 w-8 h-8 rounded-full bg-sand/50 hover:bg-brick hover:text-white text-stone flex items-center justify-center shadow-sm transition-colors group"
+                title="Add stop at beginning"
+              >
+                <PlusIcon className="w-4 h-4" />
+              </button>
+              <div className="h-4" />
+            </div>
             {result.stops.map((stop, i) => (
               <div key={i} className="relative pl-8 md:pl-12 space-y-4">
                 <div className="absolute -left-[17px] top-0 w-8 h-8 rounded-full bg-white border-2 border-brick text-brick font-bold flex items-center justify-center shadow-sm">{stop.order}</div>
@@ -194,6 +289,12 @@ export default function PlanDatePage() {
                     <span className="text-sm font-medium text-stone">~{stop.duration} min</span>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-1">{stop.event ? <Link to={`/events/${stop.event.id}`} className="hover:text-brick hover:underline">{stop.event.title}</Link> : (stop.venue?.name || stop.activity)}</h3>
+                  {stop.event?.start_datetime && (
+                    <p className="text-sm text-brick font-medium mb-2 flex items-center gap-1.5">
+                      <span>📅</span>
+                      {formatEventTime(stop.event.start_datetime, stop.event.end_datetime)}
+                    </p>
+                  )}
                   <p className="text-stone text-sm mb-3">{stop.notes}</p>
                   <div className="text-xs text-stone bg-sand/10 p-2 rounded inline-block mb-3">💰 Est. ${stop.cost}/person</div>
                   {stop.transitionTip && i < result.stops.length - 1 && <div className="pt-3 border-t border-sand text-xs text-stone italic flex items-center gap-2 mb-3"><span>🚶</span><span>{stop.transitionTip}</span></div>}
@@ -203,6 +304,17 @@ export default function PlanDatePage() {
                     {stop.venue?.website && <a href={stop.venue.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"><GlobeAltIcon className="w-3.5 h-3.5" />Website</a>}
                     {stop.event && <Link to={`/events/${stop.event.id}`} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"><TicketIcon className="w-3.5 h-3.5" />View Event</Link>}
                   </div>
+                </div>
+                {/* Add stop after this stop button */}
+                <div className="relative">
+                  <button
+                    onClick={() => openAddStopModal(i)}
+                    className="absolute -left-[49px] md:-left-[65px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-sand/50 hover:bg-brick hover:text-white text-stone flex items-center justify-center shadow-sm transition-colors group"
+                    title="Add stop here"
+                  >
+                    <PlusIcon className="w-4 h-4" />
+                  </button>
+                  <div className="h-2" />
                 </div>
               </div>
             ))}

@@ -14,6 +14,7 @@ export interface DatePreferences {
   activity_level?: number; // 1-5
   include_food?: boolean;
   include_drinks?: boolean;
+  has_military_access?: boolean; // Can access Fort Bragg/MWR venues
 }
 
 export interface DatePlan {
@@ -53,7 +54,31 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
   const venues = await DB.prepare(`
     SELECT * FROM venues WHERE (price_level <= ? OR price_level IS NULL) AND latitude IS NOT NULL
   `).bind(budgetTier).all();
-  const allVenues = (venues.results || []) as any[];
+
+  // Filter venues based on military access preference
+  // Venues on Fort Bragg/Liberty typically have "MWR" in name or source_id contains fort_liberty/fort_bragg
+  let allVenues = (venues.results || []) as any[];
+
+  if (!prefs.has_military_access) {
+    allVenues = allVenues.filter(v => {
+      const name = (v.name || '').toLowerCase();
+      const sourceId = (v.source_id || '').toLowerCase();
+      const address = (v.address || '').toLowerCase();
+
+      // Exclude venues that appear to require military access
+      const isMilitaryVenue =
+        name.includes('mwr') ||
+        name.includes('fort liberty') ||
+        name.includes('fort bragg') ||
+        sourceId.includes('fort_liberty') ||
+        sourceId.includes('fort_bragg') ||
+        sourceId.includes('mwr') ||
+        address.includes('fort liberty') ||
+        address.includes('fort bragg');
+
+      return !isMilitaryVenue;
+    });
+  }
 
   // 2. Fetch candidate events for the given day
   let events: any[] = [];
@@ -87,8 +112,8 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
 
 function buildTimeSlots(prefs: DatePreferences, anchorEvent: any): TimeSlot[] {
     const slots: TimeSlot[] = [];
-    const eventType = prefs.event_type;
-    
+    const durationMinutes = prefs.duration_hours * 60;
+
     // If there's a specific event, build the plan around it
     if (anchorEvent) {
         const eventStartHour = new Date(anchorEvent.start_datetime).getHours();
@@ -104,20 +129,43 @@ function buildTimeSlots(prefs: DatePreferences, anchorEvent: any): TimeSlot[] {
         return slots;
     }
 
-    // Default slot building based on time of day
+    // Build slots dynamically based on time of day and duration
+    // Use DIFFERENT categories for each activity slot to prevent duplicates
     switch (prefs.time_of_day) {
         case 'morning':
-            slots.push({ type: 'meal', activity: 'Breakfast/Coffee', categories: ['food'], duration: 45, defaultCost: 20, required: true });
-            slots.push({ type: 'activity', activity: 'Morning Activity', categories: ['nature', 'activity', 'culture'], duration: 90, defaultCost: 15, required: true });
+            slots.push({ type: 'meal', activity: 'Breakfast/Coffee', categories: ['food'], duration: 60, defaultCost: 20, required: true });
+            slots.push({ type: 'activity', activity: 'Morning Activity', categories: ['nature'], duration: 90, defaultCost: 15, required: true });
+            // Add more varied slots for longer durations
+            if (durationMinutes >= 240) { // 4+ hours
+                slots.push({ type: 'activity', activity: 'Mid-Morning Explore', categories: ['culture', 'shopping'], duration: 60, defaultCost: 15, required: false });
+            }
+            if (durationMinutes >= 360) { // 6+ hours
+                slots.push({ type: 'meal', activity: 'Lunch', categories: ['food'], duration: 60, defaultCost: 25, required: false });
+                slots.push({ type: 'activity', activity: 'Afternoon Fun', categories: ['entertainment', 'activity'], duration: 90, defaultCost: 20, required: false });
+            }
             break;
+
         case 'afternoon':
             slots.push({ type: 'meal', activity: 'Lunch', categories: ['food'], duration: 60, defaultCost: 25, required: true });
-            slots.push({ type: 'activity', activity: 'Afternoon Fun', categories: ['activity', 'culture', 'nature'], duration: 90, defaultCost: 20, required: true });
+            slots.push({ type: 'activity', activity: 'Afternoon Activity', categories: ['culture'], duration: 90, defaultCost: 20, required: true });
+            if (durationMinutes >= 240) {
+                slots.push({ type: 'activity', activity: 'Explore', categories: ['nature', 'shopping'], duration: 60, defaultCost: 15, required: false });
+            }
+            if (durationMinutes >= 360) {
+                slots.push({ type: 'dessert', activity: 'Sweet Treat', categories: ['food'], duration: 45, defaultCost: 12, required: false });
+                slots.push({ type: 'activity', activity: 'Late Afternoon Fun', categories: ['entertainment'], duration: 75, defaultCost: 20, required: false });
+            }
             break;
+
         default: // Evening
             slots.push({ type: 'meal', activity: 'Dinner', categories: ['food'], duration: 90, defaultCost: 45, required: true });
-            slots.push({ type: 'activity', activity: 'Evening Activity', categories: ['activity', 'culture', 'entertainment'], duration: 75, defaultCost: 25, required: false });
-            slots.push({ type: 'drinks', activity: 'Nightcap', categories: ['drink'], duration: 60, defaultCost: 20, required: false });
+            slots.push({ type: 'activity', activity: 'Evening Activity', categories: ['culture', 'entertainment'], duration: 75, defaultCost: 25, required: false });
+            if (durationMinutes >= 180) {
+                slots.push({ type: 'drinks', activity: 'Nightcap', categories: ['drink'], duration: 60, defaultCost: 20, required: false });
+            }
+            if (durationMinutes >= 300) {
+                slots.push({ type: 'activity', activity: 'Late Night Fun', categories: ['entertainment'], duration: 60, defaultCost: 20, required: false });
+            }
             break;
     }
     return slots;
@@ -139,7 +187,12 @@ async function fillSlots(
     if (slot.type === 'event' && anchorEvent) {
       stops.push({
         order: stops.length + 1,
-        event: { id: anchorEvent.id, title: anchorEvent.title },
+        event: {
+          id: anchorEvent.id,
+          title: anchorEvent.title,
+          start_datetime: anchorEvent.start_datetime,
+          end_datetime: anchorEvent.end_datetime
+        },
         venue: {
           id: anchorEvent.venue_id, name: anchorEvent.venue_name || anchorEvent.location_name,
           latitude: anchorEvent.venue_latitude, longitude: anchorEvent.venue_longitude, address: anchorEvent.venue_address
@@ -289,7 +342,12 @@ export async function getSwapSuggestion(
 
         return {
             ...stopToSwap,
-            event: { id: suggestion.id, title: suggestion.title },
+            event: {
+              id: suggestion.id,
+              title: suggestion.title,
+              start_datetime: suggestion.start_datetime,
+              end_datetime: suggestion.end_datetime
+            },
             venue: {
                 id: suggestion.venue_id, name: suggestion.venue_name || suggestion.location_name,
                 latitude: suggestion.venue_latitude, longitude: suggestion.venue_longitude, address: suggestion.venue_address

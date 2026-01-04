@@ -437,10 +437,12 @@ export async function getSwapSuggestion(
     if (stopToSwap.venue) {
         const category = stopToSwap.venue.category;
         const currentVenueId = stopToSwap.venue.id;
-        // Exclude current venue from used list (we're replacing it), but include others
-        const usedVenueIds = allStops
-          .map(s => s.venue?.id)
-          .filter(id => id && id !== currentVenueId);
+        // Include current venue ID so we don't select the same venue again
+        // Also include all other venues in the plan
+        const usedVenueIds = [
+          currentVenueId,
+          ...allStops.map(s => s.venue?.id).filter(id => id && id !== currentVenueId)
+        ].filter(Boolean) as string[];
         const context: ScoringContext = { vibes: prefs.vibes, budgetRange: prefs.budget_range, timeOfDay: prefs.time_of_day };
 
         // 1. Try same category first

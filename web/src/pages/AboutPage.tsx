@@ -4,6 +4,8 @@ import {
   DevicePhoneMobileIcon,
   BuildingStorefrontIcon,
   ArrowRightIcon,
+  SparklesIcon,
+  MapPinIcon,
 } from '@heroicons/react/24/outline'
 
 export default function AboutPage() {
@@ -37,6 +39,68 @@ export default function AboutPage() {
           <p className="text-lg text-stone-600 leading-relaxed max-w-3xl mx-auto">
             Fayetteville and the greater Cumberland County area are teeming with culture, commerce, and creativity. But too often, great opportunities are missed simply because the information is scattered across dozens of different websites, social media pages, and newsletters. We believe a vibrant community deserves a unified way to see the full picture.
           </p>
+        </section>
+
+        {/* Date Planner Feature */}
+        <section className="bg-gradient-to-br from-brick/5 via-dogwood/10 to-capefear/5 rounded-2xl p-8 md:p-12 border border-brick/10">
+          <div className="flex flex-col md:flex-row gap-8 items-center">
+            <div className="flex-1 space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-brick/10 text-brick rounded-full text-sm font-medium">
+                <SparklesIcon className="w-4 h-4" />
+                New Feature
+              </div>
+              <h2 className="font-display text-3xl font-bold text-gray-900">
+                Plan Your Perfect Outing
+              </h2>
+              <p className="text-stone-600 leading-relaxed">
+                Planning a date night, family outing, or day with friends in Fayetteville shouldn't require hours of research. We've partnered directly with downtown shop owners, restaurants, and venues to curate detailed information about each location—their vibes, best times to visit, what makes them special.
+              </p>
+              <p className="text-stone-600 leading-relaxed">
+                Our <strong>intelligent itinerary builder</strong> takes the cognitive load out of planning. Tell us the occasion, your mood, and when you're free—we'll craft a complete day from morning coffee to evening entertainment, with venues that actually work well together.
+              </p>
+              <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex items-center gap-2 text-sm text-stone-500">
+                  <MapPinIcon className="w-4 h-4 text-brick" />
+                  <span>70+ curated venues</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-stone-500">
+                  <CalendarDaysIcon className="w-4 h-4 text-brick" />
+                  <span>Day-specific events included</span>
+                </div>
+              </div>
+              <Link
+                to="/plan-date"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-brick text-white font-medium rounded-lg hover:bg-brick-600 transition-colors mt-4"
+              >
+                <SparklesIcon className="w-5 h-5" />
+                Try the Date Planner
+                <ArrowRightIcon className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="w-full md:w-80 flex-shrink-0">
+              <div className="bg-white rounded-xl shadow-lg border border-sand p-4 space-y-3">
+                <p className="text-xs font-medium text-stone-400 uppercase tracking-wide">Sample Itinerary</p>
+                <div className="space-y-2">
+                  {[
+                    { time: '9:00 AM', place: 'Morning coffee at a local roaster', icon: '☕' },
+                    { time: '10:30 AM', place: 'Explore downtown galleries', icon: '🎨' },
+                    { time: '12:30 PM', place: 'Lunch at a chef-owned spot', icon: '🍽️' },
+                    { time: '2:00 PM', place: 'Catch a matinee or live music', icon: '🎭' },
+                    { time: '6:00 PM', place: 'Dinner with a view', icon: '🌆' },
+                    { time: '8:00 PM', place: 'Nightcap at a speakeasy', icon: '🍸' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm">
+                      <span className="text-lg">{item.icon}</span>
+                      <div>
+                        <p className="font-medium text-gray-900">{item.time}</p>
+                        <p className="text-stone-500 text-xs">{item.place}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Partners & Sources */}

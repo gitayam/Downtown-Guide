@@ -337,17 +337,22 @@ export default function PlanDatePage() {
         planId={result?.id}
       />
       <Link to="/" className="inline-flex items-center text-stone hover:text-brick mb-6"><ArrowLeftIcon className="w-4 h-4 mr-1" />Back to Events</Link>
-      <div className="text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-2">
-          {weekendComparison ? 'Pick Your Day' : result && sharedId ? 'Shared Date Plan' : 'Plan Your Perfect Date'}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-3">
+          {weekendComparison ? 'Pick Your Day' : result && sharedId ? 'Shared Date Plan' : 'Plan Your Perfect Fayetteville Outing'}
         </h1>
-        <p className="text-lg text-stone">
+        <p className="text-lg text-stone max-w-2xl mx-auto">
           {weekendComparison
             ? "Choose your starting point, then swap or add stops to create your perfect itinerary."
             : result && sharedId
             ? 'A curated itinerary for a perfect outing in Fayetteville.'
-            : "Tell us what you're looking for, and we'll curate a custom itinerary."}
+            : "Skip the endless scrolling. We've worked directly with downtown venues to build itineraries that actually flow—from the first coffee to the last nightcap."}
         </p>
+        {!result && !weekendComparison && (
+          <p className="text-sm text-stone/70 mt-2 max-w-xl mx-auto">
+            70+ hand-curated venues • Real-time events • Swap any stop you don't like
+          </p>
+        )}
       </div>
 
       {/* Weekend Comparison View */}
@@ -367,21 +372,20 @@ export default function PlanDatePage() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Saturday Plan */}
-            <div className={`bg-white rounded-2xl border-2 ${weekendDay === 'saturday' ? 'border-brick shadow-lg' : 'border-sand'} p-6 transition-all hover:shadow-lg`}>
-              <div className="flex items-center justify-between mb-4">
+            <div className={`bg-white rounded-2xl border-2 ${weekendDay === 'saturday' ? 'border-brick shadow-lg' : 'border-sand'} p-4 sm:p-6 transition-all hover:shadow-lg`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">🌞</span>
+                  <span className="text-2xl sm:text-3xl">🌞</span>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">Saturday</h3>
-                    <p className="text-sm text-stone">{formatDateFull(new Date(weekendComparison.saturday.date + 'T12:00:00'))}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900">Saturday</h3>
+                    <p className="text-xs sm:text-sm text-stone">{formatDateFull(new Date(weekendComparison.saturday.date + 'T12:00:00'))}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => handleSelectWeekendPlan('saturday')}
-                  className="px-4 py-2.5 bg-brick hover:bg-brick-600 text-white rounded-lg font-medium transition-colors flex flex-col items-center"
+                  className="w-full sm:w-auto px-4 py-2.5 bg-brick hover:bg-brick-600 text-white rounded-lg font-medium transition-colors text-center"
                 >
-                  <span>Select & Customize</span>
-                  <span className="text-xs opacity-80 font-normal">Edit this itinerary</span>
+                  <span className="text-sm sm:text-base">Select & Customize →</span>
                 </button>
               </div>
 
@@ -510,21 +514,20 @@ export default function PlanDatePage() {
             </div>
 
             {/* Sunday Plan */}
-            <div className={`bg-white rounded-2xl border-2 ${weekendDay === 'sunday' ? 'border-brick shadow-lg' : 'border-sand'} p-6 transition-all hover:shadow-lg`}>
-              <div className="flex items-center justify-between mb-4">
+            <div className={`bg-white rounded-2xl border-2 ${weekendDay === 'sunday' ? 'border-brick shadow-lg' : 'border-sand'} p-4 sm:p-6 transition-all hover:shadow-lg`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">☀️</span>
+                  <span className="text-2xl sm:text-3xl">☀️</span>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">Sunday</h3>
-                    <p className="text-sm text-stone">{formatDateFull(new Date(weekendComparison.sunday.date + 'T12:00:00'))}</p>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900">Sunday</h3>
+                    <p className="text-xs sm:text-sm text-stone">{formatDateFull(new Date(weekendComparison.sunday.date + 'T12:00:00'))}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => handleSelectWeekendPlan('sunday')}
-                  className="px-4 py-2.5 bg-brick hover:bg-brick-600 text-white rounded-lg font-medium transition-colors flex flex-col items-center"
+                  className="w-full sm:w-auto px-4 py-2.5 bg-brick hover:bg-brick-600 text-white rounded-lg font-medium transition-colors text-center"
                 >
-                  <span>Select & Customize</span>
-                  <span className="text-xs opacity-80 font-normal">Edit this itinerary</span>
+                  <span className="text-sm sm:text-base">Select & Customize →</span>
                 </button>
               </div>
 
@@ -682,7 +685,7 @@ export default function PlanDatePage() {
             <label className="block text-sm font-medium text-gray-700 mb-3">When?</label>
 
             {/* Quick Date Options */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-3">
               <button
                 onClick={() => handleQuickDate('today')}
                 className={`p-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
@@ -692,7 +695,7 @@ export default function PlanDatePage() {
                 }`}
               >
                 <span className="text-lg">📅</span>
-                <span className="font-semibold">Today</span>
+                <span className="font-semibold text-xs sm:text-sm">Today</span>
                 <span className="text-xs opacity-75">{formatDateShort(getToday())}</span>
               </button>
 
@@ -705,7 +708,7 @@ export default function PlanDatePage() {
                 }`}
               >
                 <span className="text-lg">🌅</span>
-                <span className="font-semibold">Tomorrow</span>
+                <span className="font-semibold text-xs sm:text-sm">Tomorrow</span>
                 <span className="text-xs opacity-75">{formatDateShort(getTomorrow())}</span>
               </button>
 
@@ -718,20 +721,33 @@ export default function PlanDatePage() {
                 }`}
               >
                 <span className="text-lg">🎉</span>
-                <span className="font-semibold">This Weekend</span>
-                <span className="text-xs opacity-75">{formatDateShort(thisWeekend.saturday)} - {formatDateShort(thisWeekend.sunday)}</span>
+                <span className="font-semibold text-xs sm:text-sm">This Weekend</span>
+                <span className="text-xs opacity-75">{formatDateShort(thisWeekend.saturday)}</span>
+              </button>
+
+              <button
+                onClick={() => handleQuickDate('next_weekend')}
+                className={`p-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                  quickDateOption === 'next_weekend'
+                    ? 'bg-brick text-white shadow-md ring-2 ring-brick ring-offset-2'
+                    : 'bg-sand/20 text-stone hover:bg-sand/40'
+                }`}
+              >
+                <span className="text-lg">🗓️</span>
+                <span className="font-semibold text-xs sm:text-sm">Next Weekend</span>
+                <span className="text-xs opacity-75">{formatDateShort(nextWeekend.saturday)}</span>
               </button>
 
               <button
                 onClick={() => handleQuickDate('custom')}
-                className={`p-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                className={`p-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 col-span-2 sm:col-span-1 ${
                   quickDateOption === 'custom'
                     ? 'bg-brick text-white shadow-md ring-2 ring-brick ring-offset-2'
                     : 'bg-sand/20 text-stone hover:bg-sand/40'
                 }`}
               >
                 <CalendarIcon className="w-5 h-5" />
-                <span className="font-semibold">Pick Date</span>
+                <span className="font-semibold text-xs sm:text-sm">Pick Date</span>
                 <span className="text-xs opacity-75">Choose any</span>
               </button>
             </div>
@@ -793,12 +809,12 @@ export default function PlanDatePage() {
           {/* Time of Day Section */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Time of Day</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {suggestions?.time_of_day.map(time => (
                 <button
                   key={time.id}
                   onClick={() => setPrefs({ ...prefs, time_of_day: time.id as any })}
-                  className={`py-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                  className={`py-3 px-2 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
                     prefs.time_of_day === time.id
                       ? 'bg-brick text-white shadow-md ring-2 ring-brick ring-offset-2'
                       : 'bg-sand/20 text-stone hover:bg-sand/40'
@@ -852,16 +868,25 @@ export default function PlanDatePage() {
       )}
 
       {result && (
-        <div className="space-y-8 animate-fade-in">
-          <div className="bg-white p-6 rounded-xl border border-sand shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-            <div><h2 className="text-2xl font-bold text-gray-900">{result.title}</h2><p className="text-stone mt-1">Est. Cost: ${result.estimatedCost}/person • Duration: {result.totalDuration / 60}h</p></div>
-            <div className="flex gap-3">
-              <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-brick hover:bg-brick-600 rounded-lg transition-colors flex items-center gap-2">{saving ? 'Saving...' : <><ShareIcon className="w-4 h-4" />Share</>}</button>
-              <button onClick={handleEdit} className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20">Edit</button>
-              <button onClick={() => { setResult(null); window.history.pushState({}, '', '/plan-date'); }} className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20">Start Over</button>
+        <div className="space-y-6 sm:space-y-8 animate-fade-in pb-24 sm:pb-0">
+          <div className="bg-white p-4 sm:p-6 rounded-xl border border-sand shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{result.title}</h2>
+                <p className="text-stone text-sm sm:text-base mt-1">
+                  <span className="inline-block mr-3">💰 ${result.estimatedCost}/person</span>
+                  <span className="inline-block">⏱️ {Math.round(result.totalDuration / 60)}h</span>
+                </p>
+              </div>
+              {/* Desktop actions */}
+              <div className="hidden sm:flex gap-2">
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-brick hover:bg-brick-600 rounded-lg transition-colors flex items-center gap-2">{saving ? 'Saving...' : <><ShareIcon className="w-4 h-4" />Share</>}</button>
+                <button onClick={handleEdit} className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20">Edit</button>
+                <button onClick={() => { setResult(null); window.history.pushState({}, '', '/plan-date'); }} className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20">Start Over</button>
+              </div>
             </div>
           </div>
-          <DatePlanMap stops={result.stops} className="h-[400px]" />
+          <DatePlanMap stops={result.stops} className="h-[250px] sm:h-[400px] rounded-xl overflow-hidden" />
           <div className="relative border-l-2 border-dashed border-sand ml-4 md:ml-8 space-y-4 py-2">
             {/* Add stop at beginning button */}
             <div className="relative pl-8 md:pl-12">
@@ -893,10 +918,10 @@ export default function PlanDatePage() {
                   <div className="text-xs text-stone bg-sand/10 p-2 rounded inline-block mb-3">💰 Est. ${stop.cost}/person</div>
                   {stop.transitionTip && i < result.stops.length - 1 && <div className="pt-3 border-t border-sand text-xs text-stone italic flex items-center gap-2 mb-3"><span>🚶</span><span>{stop.transitionTip}</span></div>}
                   <div className="flex flex-wrap gap-2 pt-2">
-                    <button onClick={() => handleSwap(i)} disabled={swappingIndex !== null} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brick hover:bg-brick-600 disabled:opacity-50 rounded-lg transition-colors">{swappingIndex === i ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowPathIcon className="w-3.5 h-3.5" />}{swappingIndex === i ? 'Swapping...' : 'Swap'}</button>
-                    {stop.venue && <button onClick={() => handleDirections(stop.venue)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"><MapPinIcon className="w-3.5 h-3.5" />Directions</button>}
-                    {stop.venue?.website && <a href={stop.venue.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"><GlobeAltIcon className="w-3.5 h-3.5" />Website</a>}
-                    {stop.event && <Link to={`/events/${stop.event.id}`} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors"><TicketIcon className="w-3.5 h-3.5" />View Event</Link>}
+                    <button onClick={() => handleSwap(i)} disabled={swappingIndex !== null} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-brick hover:bg-brick-600 disabled:opacity-50 rounded-lg transition-colors min-h-[36px]">{swappingIndex === i ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowPathIcon className="w-3.5 h-3.5" />}{swappingIndex === i ? 'Swapping...' : 'Swap'}</button>
+                    {stop.venue && <button onClick={() => handleDirections(stop.venue)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors min-h-[36px]"><MapPinIcon className="w-3.5 h-3.5" />Directions</button>}
+                    {stop.venue?.website && <a href={stop.venue.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors min-h-[36px]"><GlobeAltIcon className="w-3.5 h-3.5" />Website</a>}
+                    {stop.event && <Link to={`/events/${stop.event.id}`} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-stone bg-white border border-sand rounded-lg hover:bg-sand/20 hover:text-brick transition-colors min-h-[36px]"><TicketIcon className="w-3.5 h-3.5" />Event</Link>}
                   </div>
                 </div>
                 {/* Add stop after this stop button */}
@@ -912,6 +937,31 @@ export default function PlanDatePage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Mobile sticky bottom CTA */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-sand p-3 sm:hidden z-50 safe-area-pb">
+            <div className="flex gap-2 max-w-lg mx-auto">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 py-3 text-sm font-medium text-white bg-brick hover:bg-brick-600 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {saving ? 'Saving...' : <><ShareIcon className="w-4 h-4" />Share</>}
+              </button>
+              <button
+                onClick={handleEdit}
+                className="px-4 py-3 text-sm font-medium text-stone border border-sand rounded-lg hover:bg-sand/20"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => { setResult(null); window.history.pushState({}, '', '/plan-date'); }}
+                className="px-4 py-3 text-sm font-medium text-stone border border-sand rounded-lg hover:bg-sand/20"
+              >
+                New
+              </button>
+            </div>
           </div>
         </div>
       )}

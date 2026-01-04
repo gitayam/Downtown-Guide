@@ -377,6 +377,8 @@ export async function generateDatePlan(preferences: {
   vibes: string[]
   duration_hours: number
   date?: string
+  time_of_day?: 'morning' | 'afternoon' | 'evening' | 'night' | 'full_day'
+  exclude_venue_ids?: string[]
 }): Promise<{ status: string; plan: DatePlan }> {
   // Don't cache generated plans by default as they should be fresh
   const response = await fetch('/api/date-planner/generate', {

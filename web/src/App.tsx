@@ -16,6 +16,7 @@ function App() {
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="plan-date" element={<PlanDatePage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="api" element={<ApiDocsPage />} />
         <Route path="api-docs" element={<ApiDocsPage />} />
       </Route>
     </Routes>

@@ -10,11 +10,14 @@ export interface DatePreferences {
   vibes: string[];
   duration_hours: number;
   date?: string;
-  time_of_day?: 'morning' | 'afternoon' | 'evening' | 'night';
+  time_of_day?: 'morning' | 'afternoon' | 'evening' | 'night' | 'full_day';
   activity_level?: number; // 1-5
   include_food?: boolean;
   include_drinks?: boolean;
   has_military_access?: boolean; // Can access Fort Bragg/MWR venues
+  is_21_plus?: boolean; // Can access 21+ venues (bars, breweries, etc.)
+  include_area_attractions?: boolean; // Include venues outside downtown (state parks, mall, airport area, etc.)
+  exclude_venue_ids?: string[]; // Venue IDs to exclude (for variety between days)
 }
 
 export interface DatePlan {
@@ -24,6 +27,11 @@ export interface DatePlan {
   estimatedCost: number;
   stops: DateStop[];
   tips: string[];
+  _debug?: {
+    slotsGenerated: number;
+    venuesByCategory: Record<string, number>;
+    is21Plus: boolean;
+  };
 }
 
 export interface DateStop {
@@ -35,6 +43,13 @@ export interface DateStop {
   cost: number;
   notes: string;
   transitionTip?: string;
+  venueEvents?: {  // Events happening at this venue during the date
+    id: string;
+    title: string;
+    start_datetime: string;
+    end_datetime: string;
+    categories: string[];
+  }[];
 }
 
 interface TimeSlot {
@@ -80,6 +95,27 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
     });
   }
 
+  // Filter venues based on 21+ age restriction
+  // If user is NOT 21+, exclude bars, breweries, wine bars, speakeasies, etc.
+  const TWENTY_ONE_PLUS_SUBCATEGORIES = [
+    'bar', 'speakeasy', 'wine_bar', 'dive_bar', 'brewery',
+    'cocktail_bar', 'lounge', 'kava_bar', 'pub'
+  ];
+
+  const is21Plus = prefs.is_21_plus === true;
+  if (!is21Plus) {
+    allVenues = allVenues.filter(v => {
+      const subcategory = (v.subcategory || '').toLowerCase();
+      return !TWENTY_ONE_PLUS_SUBCATEGORIES.includes(subcategory);
+    });
+  }
+
+  // Filter to downtown-only venues by default
+  // Unless include_area_attractions is explicitly true, only show downtown venues
+  if (!prefs.include_area_attractions) {
+    allVenues = allVenues.filter(v => v.is_downtown === 1);
+  }
+
   // 2. Fetch candidate events for the given day
   let events: any[] = [];
   if (prefs.date) {
@@ -91,8 +127,20 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
   // 3. Build a template of time slots
   const slots = buildTimeSlots(prefs, anchorEvent);
 
+  // Debug: count venues by category
+  const venuesByCategory: Record<string, number> = {};
+  for (const v of allVenues) {
+    venuesByCategory[v.category] = (venuesByCategory[v.category] || 0) + 1;
+  }
+
   // 4. Fill slots with best venues/event
   const stops = await fillSlots(slots, allVenues, prefs, anchorEvent);
+
+  // 4.5. Enrich stops with venue-specific events happening that day
+  if (prefs.date) {
+    const { from, to } = getTimeRange(prefs.date, prefs.time_of_day);
+    await enrichStopsWithVenueEvents(DB, stops, from, to);
+  }
 
   // 5. Calculate totals
   const totalDuration = stops.reduce((sum, s) => sum + s.duration, 0);
@@ -104,7 +152,12 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
     totalDuration,
     estimatedCost,
     stops,
-    tips: ["Check venue hours before going.", "Parking is usually free downtown after 5pm."]
+    tips: ["Check venue hours before going.", "Parking is usually free downtown after 5pm."],
+    _debug: {
+      slotsGenerated: slots.length,
+      venuesByCategory,
+      is21Plus: prefs.is_21_plus === true
+    }
   };
 }
 
@@ -114,8 +167,9 @@ function buildTimeSlots(prefs: DatePreferences, anchorEvent: any): TimeSlot[] {
     const slots: TimeSlot[] = [];
     const durationMinutes = prefs.duration_hours * 60;
 
-    // If there's a specific event, build the plan around it
-    if (anchorEvent) {
+    // If there's a specific event AND we're NOT in full_day mode, build the plan around it
+    // Full day mode should generate comprehensive itineraries regardless of anchor events
+    if (anchorEvent && prefs.time_of_day !== 'full_day') {
         const eventStartHour = new Date(anchorEvent.start_datetime).getHours();
         if (eventStartHour >= 18) { // Evening event
             slots.push({ type: 'meal', activity: 'Pre-Event Dinner', categories: ['food'], duration: 75, defaultCost: 40, required: true });
@@ -129,40 +183,58 @@ function buildTimeSlots(prefs: DatePreferences, anchorEvent: any): TimeSlot[] {
         return slots;
     }
 
-    // Build slots dynamically based on time of day and duration
-    // Use DIFFERENT categories for each activity slot to prevent duplicates
+    // Build slots dynamically based on time of day
+    // Generate rich itineraries so users have options to customize
     switch (prefs.time_of_day) {
         case 'morning':
-            slots.push({ type: 'meal', activity: 'Breakfast/Coffee', categories: ['food'], duration: 60, defaultCost: 20, required: true });
-            slots.push({ type: 'activity', activity: 'Morning Activity', categories: ['nature'], duration: 90, defaultCost: 15, required: true });
-            // Add more varied slots for longer durations
-            if (durationMinutes >= 240) { // 4+ hours
-                slots.push({ type: 'activity', activity: 'Mid-Morning Explore', categories: ['culture', 'shopping'], duration: 60, defaultCost: 15, required: false });
-            }
-            if (durationMinutes >= 360) { // 6+ hours
-                slots.push({ type: 'meal', activity: 'Lunch', categories: ['food'], duration: 60, defaultCost: 25, required: false });
-                slots.push({ type: 'activity', activity: 'Afternoon Fun', categories: ['entertainment', 'activity'], duration: 90, defaultCost: 20, required: false });
+            slots.push({ type: 'meal', activity: 'Breakfast/Coffee', categories: ['food'], duration: 45, defaultCost: 15, required: true });
+            slots.push({ type: 'activity', activity: 'Morning Stroll', categories: ['nature'], duration: 45, defaultCost: 0, required: true });
+            slots.push({ type: 'activity', activity: 'Culture Stop', categories: ['culture'], duration: 60, defaultCost: 15, required: true });
+            slots.push({ type: 'activity', activity: 'Shopping/Browse', categories: ['shopping'], duration: 45, defaultCost: 10, required: false });
+            if (durationMinutes >= 240) {
+                slots.push({ type: 'meal', activity: 'Brunch/Lunch', categories: ['food'], duration: 60, defaultCost: 25, required: false });
+                slots.push({ type: 'activity', activity: 'Afternoon Fun', categories: ['entertainment', 'activity'], duration: 60, defaultCost: 20, required: false });
             }
             break;
 
         case 'afternoon':
             slots.push({ type: 'meal', activity: 'Lunch', categories: ['food'], duration: 60, defaultCost: 25, required: true });
-            slots.push({ type: 'activity', activity: 'Afternoon Activity', categories: ['culture'], duration: 90, defaultCost: 20, required: true });
+            slots.push({ type: 'activity', activity: 'Explore', categories: ['culture'], duration: 60, defaultCost: 15, required: true });
+            slots.push({ type: 'activity', activity: 'Outdoor Time', categories: ['nature'], duration: 45, defaultCost: 0, required: true });
+            slots.push({ type: 'dessert', activity: 'Sweet Treat', categories: ['food'], duration: 30, defaultCost: 12, required: false });
             if (durationMinutes >= 240) {
-                slots.push({ type: 'activity', activity: 'Explore', categories: ['nature', 'shopping'], duration: 60, defaultCost: 15, required: false });
-            }
-            if (durationMinutes >= 360) {
-                slots.push({ type: 'dessert', activity: 'Sweet Treat', categories: ['food'], duration: 45, defaultCost: 12, required: false });
-                slots.push({ type: 'activity', activity: 'Late Afternoon Fun', categories: ['entertainment'], duration: 75, defaultCost: 20, required: false });
+                slots.push({ type: 'activity', activity: 'Entertainment', categories: ['entertainment'], duration: 60, defaultCost: 20, required: false });
+                slots.push({ type: 'drinks', activity: 'Happy Hour', categories: ['drink'], duration: 45, defaultCost: 18, required: false });
             }
             break;
 
+        case 'full_day':
+            // FULL DAY: Morning to Late Night (8-12 stops)
+            // Morning Block
+            slots.push({ type: 'meal', activity: 'Breakfast/Coffee', categories: ['food'], duration: 45, defaultCost: 15, required: true });
+            slots.push({ type: 'activity', activity: 'Morning Walk', categories: ['nature'], duration: 40, defaultCost: 0, required: true });
+            slots.push({ type: 'activity', activity: 'Morning Activity', categories: ['culture', 'activity'], duration: 60, defaultCost: 15, required: true });
+            // Midday Block
+            slots.push({ type: 'meal', activity: 'Lunch', categories: ['food'], duration: 60, defaultCost: 25, required: true });
+            slots.push({ type: 'activity', activity: 'Afternoon Explore', categories: ['shopping', 'culture'], duration: 60, defaultCost: 15, required: true });
+            slots.push({ type: 'activity', activity: 'Afternoon Fun', categories: ['entertainment', 'activity'], duration: 60, defaultCost: 20, required: false });
+            // Late Afternoon
+            slots.push({ type: 'dessert', activity: 'Afternoon Treat', categories: ['food'], duration: 30, defaultCost: 12, required: false });
+            slots.push({ type: 'activity', activity: 'Golden Hour', categories: ['nature'], duration: 45, defaultCost: 0, required: false });
+            // Evening Block
+            slots.push({ type: 'meal', activity: 'Dinner', categories: ['food'], duration: 75, defaultCost: 40, required: true });
+            slots.push({ type: 'activity', activity: 'Evening Entertainment', categories: ['culture', 'entertainment'], duration: 60, defaultCost: 25, required: true });
+            // Night Block
+            slots.push({ type: 'dessert', activity: 'Dessert', categories: ['food'], duration: 30, defaultCost: 12, required: false });
+            slots.push({ type: 'drinks', activity: 'Nightcap', categories: ['drink'], duration: 45, defaultCost: 20, required: false });
+            break;
+
         default: // Evening
-            slots.push({ type: 'meal', activity: 'Dinner', categories: ['food'], duration: 90, defaultCost: 45, required: true });
-            slots.push({ type: 'activity', activity: 'Evening Activity', categories: ['culture', 'entertainment'], duration: 75, defaultCost: 25, required: false });
-            if (durationMinutes >= 180) {
-                slots.push({ type: 'drinks', activity: 'Nightcap', categories: ['drink'], duration: 60, defaultCost: 20, required: false });
-            }
+            slots.push({ type: 'activity', activity: 'Pre-Dinner Walk', categories: ['nature'], duration: 30, defaultCost: 0, required: true });
+            slots.push({ type: 'meal', activity: 'Dinner', categories: ['food'], duration: 75, defaultCost: 40, required: true });
+            slots.push({ type: 'activity', activity: 'Evening Entertainment', categories: ['culture', 'entertainment'], duration: 60, defaultCost: 20, required: true });
+            slots.push({ type: 'dessert', activity: 'Dessert Stop', categories: ['food'], duration: 30, defaultCost: 12, required: false });
+            slots.push({ type: 'drinks', activity: 'Nightcap', categories: ['drink'], duration: 45, defaultCost: 18, required: false });
             if (durationMinutes >= 300) {
                 slots.push({ type: 'activity', activity: 'Late Night Fun', categories: ['entertainment'], duration: 60, defaultCost: 20, required: false });
             }
@@ -178,11 +250,15 @@ async function fillSlots(
   anchorEvent: any
 ): Promise<DateStop[]> {
   const stops: DateStop[] = [];
-  const usedVenueIds: string[] = [];
-  let remainingDuration = prefs.duration_hours * 60;
+  // Start with excluded venue IDs (for variety between days) + track used within this plan
+  const usedVenueIds: string[] = [...(prefs.exclude_venue_ids || [])];
+  let totalDuration = 0;
+  const targetDuration = prefs.duration_hours * 60;
 
   for (const slot of slots) {
-    if (!slot.required && remainingDuration < slot.duration) continue;
+    // For non-required slots, only skip if we're significantly over time
+    // This ensures we generate rich itineraries with options to remove
+    if (!slot.required && totalDuration > targetDuration + 60) continue;
 
     if (slot.type === 'event' && anchorEvent) {
       stops.push({
@@ -202,7 +278,7 @@ async function fillSlots(
         cost: anchorEvent.price || slot.defaultCost,
         notes: anchorEvent.description?.slice(0, 150) || anchorEvent.title,
       });
-      remainingDuration -= slot.duration;
+      totalDuration += slot.duration;
       continue;
     }
 
@@ -220,7 +296,7 @@ async function fillSlots(
         notes: selected.description || `Enjoy ${selected.name}!`,
       });
       usedVenueIds.push(selected.id);
-      remainingDuration -= slot.duration;
+      totalDuration += slot.duration;
     }
   }
   return stops;
@@ -276,6 +352,82 @@ function getActivityLabel(category: string): string {
   return labels[category] || 'Stop';
 }
 
+// 21+ venue subcategories
+const TWENTY_ONE_PLUS_SUBCATEGORIES = [
+  'bar', 'speakeasy', 'wine_bar', 'dive_bar', 'brewery',
+  'cocktail_bar', 'lounge', 'kava_bar', 'pub'
+];
+
+// Helper to filter venues by user preferences (21+, downtown, military)
+function filterVenuesByPrefs(venues: any[], prefs: DatePreferences): any[] {
+  let filtered = venues;
+
+  // Filter by military access
+  if (!prefs.has_military_access) {
+    filtered = filtered.filter(v => {
+      const name = (v.name || '').toLowerCase();
+      const sourceId = (v.source_id || '').toLowerCase();
+      const address = (v.address || '').toLowerCase();
+      const isMilitaryVenue =
+        name.includes('mwr') || name.includes('fort liberty') || name.includes('fort bragg') ||
+        sourceId.includes('fort_liberty') || sourceId.includes('fort_bragg') || sourceId.includes('mwr') ||
+        address.includes('fort liberty') || address.includes('fort bragg');
+      return !isMilitaryVenue;
+    });
+  }
+
+  // Filter by 21+ age restriction
+  if (prefs.is_21_plus !== true) {
+    filtered = filtered.filter(v => {
+      const subcategory = (v.subcategory || '').toLowerCase();
+      return !TWENTY_ONE_PLUS_SUBCATEGORIES.includes(subcategory);
+    });
+  }
+
+  // Filter to downtown-only venues by default
+  if (!prefs.include_area_attractions) {
+    filtered = filtered.filter(v => v.is_downtown === 1);
+  }
+
+  return filtered;
+}
+
+// Enrich stops with any venue-specific events happening during the date
+async function enrichStopsWithVenueEvents(
+  DB: D1Database,
+  stops: DateStop[],
+  from: string,
+  to: string
+): Promise<void> {
+  for (const stop of stops) {
+    if (!stop.venue?.id) continue;
+
+    // Fetch venue-only events for this venue on this day
+    const venueEvents = await fetchEvents(DB, {
+      venue_id: stop.venue.id,
+      from,
+      to,
+      limit: 5,
+      include_venue_only: true,  // Include venue-specific events
+    });
+
+    if (venueEvents.length > 0) {
+      // Add venue events to the stop
+      stop.venueEvents = venueEvents.map((e: any) => ({
+        id: e.id,
+        title: e.title,
+        start_datetime: e.start_datetime,
+        end_datetime: e.end_datetime,
+        categories: e.categories ? safeParseArray(e.categories) : [],
+      }));
+
+      // Update the notes to highlight there's an event
+      const eventTitles = venueEvents.map((e: any) => e.title).join(', ');
+      stop.notes = `${stop.notes} 🎉 Events tonight: ${eventTitles}`;
+    }
+  }
+}
+
 export async function getSwapSuggestion(
   DB: D1Database,
   prefs: DatePreferences,
@@ -284,12 +436,16 @@ export async function getSwapSuggestion(
 ): Promise<DateStop | null> {
     if (stopToSwap.venue) {
         const category = stopToSwap.venue.category;
-        const usedVenueIds = allStops.map(s => s.venue?.id).filter(Boolean);
+        const currentVenueId = stopToSwap.venue.id;
+        // Exclude current venue from used list (we're replacing it), but include others
+        const usedVenueIds = allStops
+          .map(s => s.venue?.id)
+          .filter(id => id && id !== currentVenueId);
         const context: ScoringContext = { vibes: prefs.vibes, budgetRange: prefs.budget_range, timeOfDay: prefs.time_of_day };
 
         // 1. Try same category first
         let venues = await DB.prepare(`SELECT * FROM venues WHERE category = ? AND latitude IS NOT NULL`).bind(category).all();
-        let candidates = (venues.results || []) as any[];
+        let candidates = filterVenuesByPrefs((venues.results || []) as any[], prefs);
         let selected = selectBestVenue(candidates, context, usedVenueIds);
 
         // 2. If no alternatives in same category, try related categories
@@ -307,16 +463,38 @@ export async function getSwapSuggestion(
             for (const relatedCat of related) {
                 if (selected) break;
                 venues = await DB.prepare(`SELECT * FROM venues WHERE category = ? AND latitude IS NOT NULL`).bind(relatedCat).all();
-                candidates = (venues.results || []) as any[];
+                candidates = filterVenuesByPrefs((venues.results || []) as any[], prefs);
                 selected = selectBestVenue(candidates, context, usedVenueIds);
             }
         }
 
-        // 3. If still nothing, try ANY venue
+        // 3. If still nothing, try ANY venue with preferences applied
         if (!selected) {
             venues = await DB.prepare(`SELECT * FROM venues WHERE latitude IS NOT NULL`).all();
-            candidates = (venues.results || []) as any[];
+            candidates = filterVenuesByPrefs((venues.results || []) as any[], prefs);
             selected = selectBestVenue(candidates, context, usedVenueIds);
+        }
+
+        // 4. Last resort: try with relaxed downtown filter
+        if (!selected) {
+            const relaxedPrefs = { ...prefs, include_area_attractions: true };
+            venues = await DB.prepare(`SELECT * FROM venues WHERE category = ? AND latitude IS NOT NULL`).bind(category).all();
+            candidates = filterVenuesByPrefs((venues.results || []) as any[], relaxedPrefs);
+            selected = selectBestVenue(candidates, context, usedVenueIds);
+        }
+
+        // 5. Absolute last resort: any venue, no filters except 21+
+        if (!selected) {
+            venues = await DB.prepare(`SELECT * FROM venues WHERE latitude IS NOT NULL`).all();
+            // Only apply 21+ filter, allow all locations
+            let allVenues = (venues.results || []) as any[];
+            if (prefs.is_21_plus !== true) {
+                allVenues = allVenues.filter(v => {
+                    const subcategory = (v.subcategory || '').toLowerCase();
+                    return !TWENTY_ONE_PLUS_SUBCATEGORIES.includes(subcategory);
+                });
+            }
+            selected = selectBestVenue(allVenues, context, usedVenueIds);
         }
 
         if (!selected) return null;
@@ -332,13 +510,42 @@ export async function getSwapSuggestion(
     }
 
     if (stopToSwap.event && prefs.date) {
-        const usedEventIds = allStops.map(s => s.event?.id).filter(Boolean);
+        const currentEventId = stopToSwap.event.id;
+        // Exclude current event from used list (we're replacing it), but include others
+        const usedEventIds = allStops
+          .map(s => s.event?.id)
+          .filter(id => id && id !== currentEventId);
+
         const { from, to } = getTimeRange(prefs.date, prefs.time_of_day);
-        const events = await fetchEvents(DB, { from, to, limit: 20 });
-        const alternateEvents = events.filter(e => !usedEventIds.includes(e.id));
-        const suggestion = findBestEvent(alternateEvents, prefs.vibes);
+
+        // 1. Try to find events in the same time range
+        let events = await fetchEvents(DB, { from, to, limit: 50 });
+        let alternateEvents = events.filter(e => !usedEventIds.includes(e.id));
+        let suggestion = findBestEvent(alternateEvents, prefs.vibes);
+
+        // 2. If no alternatives, try fetching events for the full day
+        if (!suggestion) {
+            const dayStart = prefs.date + 'T00:00:00.000Z';
+            const dayEnd = prefs.date + 'T23:59:59.999Z';
+            events = await fetchEvents(DB, { from: dayStart, to: dayEnd, limit: 50 });
+            alternateEvents = events.filter(e => !usedEventIds.includes(e.id));
+            suggestion = findBestEvent(alternateEvents, prefs.vibes);
+        }
+
+        // 3. If still no alternatives, try upcoming events in next 7 days
+        if (!suggestion) {
+            const now = new Date().toISOString();
+            const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            events = await fetchEvents(DB, { from: now, to: nextWeek, limit: 50 });
+            alternateEvents = events.filter(e => !usedEventIds.includes(e.id));
+            suggestion = findBestEvent(alternateEvents, prefs.vibes);
+        }
 
         if (!suggestion) return null;
+
+        const description = suggestion.description
+            ? suggestion.description.slice(0, 100) + (suggestion.description.length > 100 ? '...' : '')
+            : suggestion.title;
 
         return {
             ...stopToSwap,
@@ -349,11 +556,14 @@ export async function getSwapSuggestion(
               end_datetime: suggestion.end_datetime
             },
             venue: {
-                id: suggestion.venue_id, name: suggestion.venue_name || suggestion.location_name,
-                latitude: suggestion.venue_latitude, longitude: suggestion.venue_longitude, address: suggestion.venue_address
+                id: suggestion.venue_id || null,
+                name: suggestion.venue_name || suggestion.location_name || 'TBD',
+                latitude: suggestion.venue_latitude || null,
+                longitude: suggestion.venue_longitude || null,
+                address: suggestion.venue_address || null
             },
             activity: suggestion.title,
-            notes: suggestion.description?.slice(0, 100) + '...',
+            notes: description,
         };
     }
     return null;
@@ -398,13 +608,14 @@ export async function getAddSuggestion(
     SELECT * FROM venues WHERE category IN (${placeholders}) AND latitude IS NOT NULL
   `).bind(...suggestCategories).all();
 
-  const candidates = (venues.results || []) as any[];
+  let candidates = filterVenuesByPrefs((venues.results || []) as any[], prefs);
   let selected = selectBestVenue(candidates, context, usedVenueIds);
 
-  // Fallback: try any venue
+  // Fallback: try any venue with preferences applied
   if (!selected) {
     const allVenues = await DB.prepare(`SELECT * FROM venues WHERE latitude IS NOT NULL`).all();
-    selected = selectBestVenue((allVenues.results || []) as any[], context, usedVenueIds);
+    candidates = filterVenuesByPrefs((allVenues.results || []) as any[], prefs);
+    selected = selectBestVenue(candidates, context, usedVenueIds);
   }
 
   if (!selected) return null;

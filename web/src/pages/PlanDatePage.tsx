@@ -1,14 +1,71 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon, ArrowPathIcon, PlusIcon } from '@heroicons/react/24/outline'
-import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, type DatePlan, type DateSuggestions, type DateStop } from '../lib/api'
+import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon, ArrowPathIcon, PlusIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, fetchEvents, type DatePlan, type DateSuggestions, type DateStop } from '../lib/api'
+import type { Event } from '../lib/types'
 import DatePlanMap from '../components/date-planner/DatePlanMap'
 import ShareModal from '../components/share/ShareModal'
 import DirectionsModal from '../components/DirectionsModal'
 import AddStopModal from '../components/date-planner/AddStopModal'
 
-// This is the merged and resolved file content.
-// I have adopted the more advanced UI and re-integrated the swap and edit features.
+// Helper functions for date calculations - use local dates to avoid timezone issues
+const getToday = () => {
+  const d = new Date()
+  d.setHours(12, 0, 0, 0) // Noon to avoid timezone edge cases
+  return d
+}
+const getTomorrow = () => {
+  const d = getToday()
+  d.setDate(d.getDate() + 1)
+  return d
+}
+const getThisWeekend = () => {
+  const today = getToday()
+  const dayOfWeek = today.getDay()
+  // If it's Sunday (0), this weekend's Saturday was yesterday - show next weekend
+  // If it's Saturday (6), this weekend is today
+  let daysUntilSaturday: number
+  if (dayOfWeek === 0) {
+    // Sunday - next Saturday is 6 days away
+    daysUntilSaturday = 6
+  } else if (dayOfWeek === 6) {
+    // Saturday - today is Saturday
+    daysUntilSaturday = 0
+  } else {
+    // Mon-Fri - calculate days until Saturday
+    daysUntilSaturday = 6 - dayOfWeek
+  }
+  const saturday = new Date(today)
+  saturday.setDate(today.getDate() + daysUntilSaturday)
+  const sunday = new Date(saturday)
+  sunday.setDate(saturday.getDate() + 1)
+  return { saturday, sunday }
+}
+const getNextWeekend = () => {
+  const { saturday } = getThisWeekend()
+  const nextSaturday = new Date(saturday)
+  nextSaturday.setDate(saturday.getDate() + 7)
+  const nextSunday = new Date(nextSaturday)
+  nextSunday.setDate(nextSaturday.getDate() + 1)
+  return { saturday: nextSaturday, sunday: nextSunday }
+}
+const formatDateShort = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+const formatDateFull = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+// Use local date string to avoid UTC timezone shift
+const toDateString = (d: Date) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+type QuickDateOption = 'today' | 'tomorrow' | 'this_weekend' | 'next_weekend' | 'custom'
+
+// Weekend comparison types
+interface WeekendComparison {
+  saturday: { date: string; plan: DatePlan | null; events: Event[] }
+  sunday: { date: string; plan: DatePlan | null; events: Event[] }
+}
 
 export default function PlanDatePage() {
   const [loading, setLoading] = useState(true)
@@ -21,9 +78,16 @@ export default function PlanDatePage() {
   const [directionsModalOpen, setDirectionsModalOpen] = useState(false)
   const [selectedVenue, setSelectedVenue] = useState<any>(null)
   const [shareUrl, setShareUrl] = useState('')
-  
+  const [quickDateOption, setQuickDateOption] = useState<QuickDateOption>('today')
+  const [weekendDay, setWeekendDay] = useState<'saturday' | 'sunday'>('saturday')
+  const [weekendComparison, setWeekendComparison] = useState<WeekendComparison | null>(null)
+
   const urlParams = new URLSearchParams(window.location.search)
   const sharedId = urlParams.get('id')
+
+  // Calculate weekend dates
+  const thisWeekend = useMemo(() => getThisWeekend(), [])
+  const nextWeekend = useMemo(() => getNextWeekend(), [])
 
   const [suggestions, setSuggestions] = useState<DateSuggestions | null>(null)
 
@@ -40,6 +104,8 @@ export default function PlanDatePage() {
     include_dessert: false,
     include_outdoors: false,
     has_military_access: false,
+    is_21_plus: false,
+    include_area_attractions: false,
     notes: ''
   })
 
@@ -55,14 +121,63 @@ export default function PlanDatePage() {
 
   const handleGenerate = async () => {
     setGenerating(true)
+    setWeekendComparison(null)
+
     try {
-      const res = await generateDatePlan(prefs)
-      setResult(res.plan)
+      // If weekend mode, generate plans for BOTH days with VARIETY
+      if (quickDateOption === 'this_weekend' || quickDateOption === 'next_weekend') {
+        const weekend = quickDateOption === 'next_weekend' ? nextWeekend : thisWeekend
+        const saturdayDate = toDateString(weekend.saturday)
+        const sundayDate = toDateString(weekend.sunday)
+
+        // Use full_day mode for comprehensive itineraries
+        const fullDayPrefs = { ...prefs, time_of_day: 'full_day' as const, duration_hours: 12 }
+
+        // Step 1: Generate Saturday's plan + fetch events in parallel
+        const [satRes, satEvents, sunEvents] = await Promise.all([
+          generateDatePlan({ ...fullDayPrefs, date: saturdayDate }),
+          fetchEvents({ from: saturdayDate + 'T00:00:00', to: saturdayDate + 'T23:59:59', limit: 10 }),
+          fetchEvents({ from: sundayDate + 'T00:00:00', to: sundayDate + 'T23:59:59', limit: 10 })
+        ])
+
+        // Step 2: Extract Saturday's venue IDs to exclude from Sunday for VARIETY
+        const saturdayVenueIds = satRes.plan?.stops
+          ?.map((s: any) => s.venue?.id)
+          .filter(Boolean) || []
+
+        // Step 3: Generate Sunday's plan excluding Saturday's venues
+        const sunRes = await generateDatePlan({
+          ...fullDayPrefs,
+          date: sundayDate,
+          exclude_venue_ids: saturdayVenueIds
+        })
+
+        setWeekendComparison({
+          saturday: { date: saturdayDate, plan: satRes.plan, events: satEvents.data || [] },
+          sunday: { date: sundayDate, plan: sunRes.plan, events: sunEvents.data || [] }
+        })
+        setResult(null) // Clear single result, show comparison instead
+      } else {
+        // Single day mode
+        const res = await generateDatePlan(prefs)
+        setResult(res.plan)
+      }
       setShareUrl('')
     } catch (e) {
       console.error(e); alert('Failed to generate plan.')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  // Select a plan from weekend comparison
+  const handleSelectWeekendPlan = (day: 'saturday' | 'sunday') => {
+    if (!weekendComparison) return
+    const selected = day === 'saturday' ? weekendComparison.saturday : weekendComparison.sunday
+    if (selected.plan) {
+      setResult(selected.plan)
+      setPrefs(p => ({ ...p, date: selected.date }))
+      setWeekendComparison(null)
     }
   }
 
@@ -160,6 +275,35 @@ export default function PlanDatePage() {
 
   const toggleVibe = (vibe: string) => setPrefs(p => ({ ...p, vibes: p.vibes.includes(vibe) ? p.vibes.filter(v => v !== vibe) : [...p.vibes, vibe] }))
 
+  // Handle quick date selection
+  const handleQuickDate = (option: QuickDateOption, day?: 'saturday' | 'sunday') => {
+    setQuickDateOption(option)
+    let newDate: string
+
+    switch (option) {
+      case 'today':
+        newDate = toDateString(getToday())
+        break
+      case 'tomorrow':
+        newDate = toDateString(getTomorrow())
+        break
+      case 'this_weekend':
+        setWeekendDay(day || 'saturday')
+        newDate = toDateString(day === 'sunday' ? thisWeekend.sunday : thisWeekend.saturday)
+        break
+      case 'next_weekend':
+        setWeekendDay(day || 'saturday')
+        newDate = toDateString(day === 'sunday' ? nextWeekend.sunday : nextWeekend.saturday)
+        break
+      case 'custom':
+      default:
+        return // Don't change date for custom, user will pick
+    }
+
+    setPrefs(p => ({ ...p, date: newDate }))
+  }
+
+
   const formatEventTime = (startDatetime?: string, endDatetime?: string) => {
     if (!startDatetime) return null
     try {
@@ -194,11 +338,334 @@ export default function PlanDatePage() {
       />
       <Link to="/" className="inline-flex items-center text-stone hover:text-brick mb-6"><ArrowLeftIcon className="w-4 h-4 mr-1" />Back to Events</Link>
       <div className="text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-2">{result && sharedId ? 'Shared Date Plan' : 'Plan Your Perfect Date'}</h1>
-        <p className="text-lg text-stone">{result && sharedId ? 'A curated itinerary for a perfect outing in Fayetteville.' : "Tell us what you're looking for, and we'll curate a custom itinerary."}</p>
+        <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-2">
+          {weekendComparison ? 'Pick Your Day' : result && sharedId ? 'Shared Date Plan' : 'Plan Your Perfect Date'}
+        </h1>
+        <p className="text-lg text-stone">
+          {weekendComparison
+            ? "Choose your starting point, then swap or add stops to create your perfect itinerary."
+            : result && sharedId
+            ? 'A curated itinerary for a perfect outing in Fayetteville.'
+            : "Tell us what you're looking for, and we'll curate a custom itinerary."}
+        </p>
       </div>
 
-      {!result ? (
+      {/* Weekend Comparison View */}
+      {weekendComparison && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Help tip */}
+          <div className="bg-gradient-to-r from-capefear/10 to-brick/10 rounded-xl p-4 border border-capefear/20">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">💡</span>
+              <div>
+                <p className="font-medium text-gray-900">How it works</p>
+                <p className="text-sm text-stone mt-1">
+                  Each day has different venue suggestions. Select a day to start, then <strong>swap</strong> any stops you don't like or <strong>add</strong> new ones to build your perfect itinerary.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Saturday Plan */}
+            <div className={`bg-white rounded-2xl border-2 ${weekendDay === 'saturday' ? 'border-brick shadow-lg' : 'border-sand'} p-6 transition-all hover:shadow-lg`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🌞</span>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Saturday</h3>
+                    <p className="text-sm text-stone">{formatDateFull(new Date(weekendComparison.saturday.date + 'T12:00:00'))}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleSelectWeekendPlan('saturday')}
+                  className="px-4 py-2.5 bg-brick hover:bg-brick-600 text-white rounded-lg font-medium transition-colors flex flex-col items-center"
+                >
+                  <span>Select & Customize</span>
+                  <span className="text-xs opacity-80 font-normal">Edit this itinerary</span>
+                </button>
+              </div>
+
+              {weekendComparison.saturday.plan && (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-stone border-b border-sand pb-3">
+                    <span>💰 ~${weekendComparison.saturday.plan.estimatedCost}/person</span>
+                    <span>📍 {weekendComparison.saturday.plan.stops.length} stops</span>
+                  </div>
+
+                  {/* Full Day Itinerary grouped by time */}
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                    {/* Morning */}
+                    {weekendComparison.saturday.plan.stops.filter((_, i) => i < 3).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <span>🌅</span> Morning
+                        </p>
+                        <div className="space-y-1">
+                          {weekendComparison.saturday.plan.stops.filter((_, i) => i < 3).map((stop, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg text-sm">
+                              <div className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                {i + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{stop.venue?.name || stop.event?.title || stop.activity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Afternoon */}
+                    {weekendComparison.saturday.plan.stops.filter((_, i) => i >= 3 && i < 6).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <span>☀️</span> Afternoon
+                        </p>
+                        <div className="space-y-1">
+                          {weekendComparison.saturday.plan.stops.filter((_, i) => i >= 3 && i < 6).map((stop, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg text-sm">
+                              <div className="w-5 h-5 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                {i + 4}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{stop.venue?.name || stop.event?.title || stop.activity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Evening */}
+                    {weekendComparison.saturday.plan.stops.filter((_, i) => i >= 6 && i < 9).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <span>🌆</span> Evening
+                        </p>
+                        <div className="space-y-1">
+                          {weekendComparison.saturday.plan.stops.filter((_, i) => i >= 6 && i < 9).map((stop, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg text-sm">
+                              <div className="w-5 h-5 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                {i + 7}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{stop.venue?.name || stop.event?.title || stop.activity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Night */}
+                    {weekendComparison.saturday.plan.stops.filter((_, i) => i >= 9).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <span>🌙</span> Night
+                        </p>
+                        <div className="space-y-1">
+                          {weekendComparison.saturday.plan.stops.filter((_, i) => i >= 9).map((stop, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg text-sm">
+                              <div className="w-5 h-5 rounded-full bg-indigo-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                {i + 10}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{stop.venue?.name || stop.event?.title || stop.activity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Events happening this day */}
+              {weekendComparison.saturday.events.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-sand">
+                  <p className="text-xs font-semibold text-capefear uppercase tracking-wide mb-2 flex items-center gap-1">
+                    <TicketIcon className="w-3.5 h-3.5" />
+                    Events on Saturday ({weekendComparison.saturday.events.length})
+                  </p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {weekendComparison.saturday.events.slice(0, 5).map((event) => (
+                      <Link
+                        key={event.id}
+                        to={`/events/${event.id}`}
+                        className="block p-2 bg-capefear/5 hover:bg-capefear/10 rounded-lg transition-colors"
+                      >
+                        <p className="font-medium text-sm text-gray-900 truncate">{event.title}</p>
+                        <p className="text-xs text-stone">
+                          {new Date(event.start_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          {event.location_name && ` • ${event.location_name}`}
+                        </p>
+                      </Link>
+                    ))}
+                    {weekendComparison.saturday.events.length > 5 && (
+                      <p className="text-xs text-stone text-center pt-1">
+                        +{weekendComparison.saturday.events.length - 5} more events
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sunday Plan */}
+            <div className={`bg-white rounded-2xl border-2 ${weekendDay === 'sunday' ? 'border-brick shadow-lg' : 'border-sand'} p-6 transition-all hover:shadow-lg`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">☀️</span>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Sunday</h3>
+                    <p className="text-sm text-stone">{formatDateFull(new Date(weekendComparison.sunday.date + 'T12:00:00'))}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleSelectWeekendPlan('sunday')}
+                  className="px-4 py-2.5 bg-brick hover:bg-brick-600 text-white rounded-lg font-medium transition-colors flex flex-col items-center"
+                >
+                  <span>Select & Customize</span>
+                  <span className="text-xs opacity-80 font-normal">Edit this itinerary</span>
+                </button>
+              </div>
+
+              {weekendComparison.sunday.plan && (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-stone border-b border-sand pb-3">
+                    <span>💰 ~${weekendComparison.sunday.plan.estimatedCost}/person</span>
+                    <span>📍 {weekendComparison.sunday.plan.stops.length} stops</span>
+                  </div>
+
+                  {/* Full Day Itinerary grouped by time */}
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                    {/* Morning */}
+                    {weekendComparison.sunday.plan.stops.filter((_, i) => i < 3).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <span>🌅</span> Morning
+                        </p>
+                        <div className="space-y-1">
+                          {weekendComparison.sunday.plan.stops.filter((_, i) => i < 3).map((stop, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg text-sm">
+                              <div className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                {i + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{stop.venue?.name || stop.event?.title || stop.activity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Afternoon */}
+                    {weekendComparison.sunday.plan.stops.filter((_, i) => i >= 3 && i < 6).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <span>☀️</span> Afternoon
+                        </p>
+                        <div className="space-y-1">
+                          {weekendComparison.sunday.plan.stops.filter((_, i) => i >= 3 && i < 6).map((stop, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg text-sm">
+                              <div className="w-5 h-5 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                {i + 4}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{stop.venue?.name || stop.event?.title || stop.activity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Evening */}
+                    {weekendComparison.sunday.plan.stops.filter((_, i) => i >= 6 && i < 9).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <span>🌆</span> Evening
+                        </p>
+                        <div className="space-y-1">
+                          {weekendComparison.sunday.plan.stops.filter((_, i) => i >= 6 && i < 9).map((stop, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg text-sm">
+                              <div className="w-5 h-5 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                {i + 7}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{stop.venue?.name || stop.event?.title || stop.activity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Night */}
+                    {weekendComparison.sunday.plan.stops.filter((_, i) => i >= 9).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <span>🌙</span> Night
+                        </p>
+                        <div className="space-y-1">
+                          {weekendComparison.sunday.plan.stops.filter((_, i) => i >= 9).map((stop, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg text-sm">
+                              <div className="w-5 h-5 rounded-full bg-indigo-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                {i + 10}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 truncate">{stop.venue?.name || stop.event?.title || stop.activity}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Events happening this day */}
+              {weekendComparison.sunday.events.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-sand">
+                  <p className="text-xs font-semibold text-capefear uppercase tracking-wide mb-2 flex items-center gap-1">
+                    <TicketIcon className="w-3.5 h-3.5" />
+                    Events on Sunday ({weekendComparison.sunday.events.length})
+                  </p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {weekendComparison.sunday.events.slice(0, 5).map((event) => (
+                      <Link
+                        key={event.id}
+                        to={`/events/${event.id}`}
+                        className="block p-2 bg-capefear/5 hover:bg-capefear/10 rounded-lg transition-colors"
+                      >
+                        <p className="font-medium text-sm text-gray-900 truncate">{event.title}</p>
+                        <p className="text-xs text-stone">
+                          {new Date(event.start_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          {event.location_name && ` • ${event.location_name}`}
+                        </p>
+                      </Link>
+                    ))}
+                    {weekendComparison.sunday.events.length > 5 && (
+                      <p className="text-xs text-stone text-center pt-1">
+                        +{weekendComparison.sunday.events.length - 5} more events
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Back to Edit */}
+          <div className="text-center">
+            <button
+              onClick={() => { setWeekendComparison(null); }}
+              className="text-stone hover:text-brick underline text-sm"
+            >
+              ← Back to edit preferences
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!result && !weekendComparison && (
         <div className="bg-white rounded-2xl shadow-sm border border-sand p-6 md:p-8 space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">What's the occasion?</label>
@@ -210,20 +677,137 @@ export default function PlanDatePage() {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">When?</label>
-              <input type="date" value={prefs.date} min={new Date().toISOString().split('T')[0]} onChange={(e) => setPrefs({ ...prefs, date: e.target.value })} className="w-full px-4 py-2 rounded-lg border border-sand focus:border-brick focus:ring-1 focus:ring-brick outline-none text-gray-900 bg-white" />
+          {/* When Section - Quick Date Buttons */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">When?</label>
+
+            {/* Quick Date Options */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+              <button
+                onClick={() => handleQuickDate('today')}
+                className={`p-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                  quickDateOption === 'today'
+                    ? 'bg-brick text-white shadow-md ring-2 ring-brick ring-offset-2'
+                    : 'bg-sand/20 text-stone hover:bg-sand/40'
+                }`}
+              >
+                <span className="text-lg">📅</span>
+                <span className="font-semibold">Today</span>
+                <span className="text-xs opacity-75">{formatDateShort(getToday())}</span>
+              </button>
+
+              <button
+                onClick={() => handleQuickDate('tomorrow')}
+                className={`p-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                  quickDateOption === 'tomorrow'
+                    ? 'bg-brick text-white shadow-md ring-2 ring-brick ring-offset-2'
+                    : 'bg-sand/20 text-stone hover:bg-sand/40'
+                }`}
+              >
+                <span className="text-lg">🌅</span>
+                <span className="font-semibold">Tomorrow</span>
+                <span className="text-xs opacity-75">{formatDateShort(getTomorrow())}</span>
+              </button>
+
+              <button
+                onClick={() => handleQuickDate('this_weekend')}
+                className={`p-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                  quickDateOption === 'this_weekend'
+                    ? 'bg-brick text-white shadow-md ring-2 ring-brick ring-offset-2'
+                    : 'bg-sand/20 text-stone hover:bg-sand/40'
+                }`}
+              >
+                <span className="text-lg">🎉</span>
+                <span className="font-semibold">This Weekend</span>
+                <span className="text-xs opacity-75">{formatDateShort(thisWeekend.saturday)} - {formatDateShort(thisWeekend.sunday)}</span>
+              </button>
+
+              <button
+                onClick={() => handleQuickDate('custom')}
+                className={`p-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                  quickDateOption === 'custom'
+                    ? 'bg-brick text-white shadow-md ring-2 ring-brick ring-offset-2'
+                    : 'bg-sand/20 text-stone hover:bg-sand/40'
+                }`}
+              >
+                <CalendarIcon className="w-5 h-5" />
+                <span className="font-semibold">Pick Date</span>
+                <span className="text-xs opacity-75">Choose any</span>
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">Time of Day</label>
-              <div className="flex gap-2">
-                {suggestions?.time_of_day.map(time => (
-                  <button key={time.id} onClick={() => setPrefs({ ...prefs, time_of_day: time.id as any })} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex flex-col items-center gap-1 ${prefs.time_of_day === time.id ? 'bg-brick text-white' : 'bg-sand/20 text-stone hover:bg-sand/40'}`}>
-                    <span>{time.icon}</span><span className="text-xs">{time.label}</span>
-                  </button>
-                ))}
+
+            {/* Weekend Info - shows when This Weekend is selected */}
+            {(quickDateOption === 'this_weekend' || quickDateOption === 'next_weekend') && (
+              <div className="bg-gradient-to-r from-brick/5 to-capefear/5 rounded-xl p-4 mb-3 animate-fade-in border border-brick/10">
+                <div className="flex items-center justify-center gap-2 text-brick">
+                  <SparklesIcon className="w-5 h-5" />
+                  <p className="text-sm font-medium">We'll create plans for both days so you can compare!</p>
+                </div>
+                <div className="flex justify-center gap-6 mt-3">
+                  <div className="text-center">
+                    <span className="text-2xl">🌞</span>
+                    <p className="text-xs text-stone mt-1">
+                      {formatDateShort(quickDateOption === 'next_weekend' ? nextWeekend.saturday : thisWeekend.saturday)}
+                    </p>
+                  </div>
+                  <div className="text-stone text-xl">vs</div>
+                  <div className="text-center">
+                    <span className="text-2xl">☀️</span>
+                    <p className="text-xs text-stone mt-1">
+                      {formatDateShort(quickDateOption === 'next_weekend' ? nextWeekend.sunday : thisWeekend.sunday)}
+                    </p>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {/* Custom Date Picker - shows when Pick Date is selected */}
+            {quickDateOption === 'custom' && (
+              <div className="bg-sand/10 rounded-xl p-4 mb-3 animate-fade-in">
+                <input
+                  type="date"
+                  value={prefs.date}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setPrefs({ ...prefs, date: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border border-sand focus:border-brick focus:ring-2 focus:ring-brick/20 outline-none text-gray-900 bg-white text-center text-lg font-medium"
+                />
+                {prefs.date && (
+                  <p className="text-center text-sm text-stone mt-2">
+                    {formatDateFull(new Date(prefs.date + 'T12:00:00'))}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Selected Date Confirmation - hide for weekend mode */}
+            {quickDateOption !== 'this_weekend' && quickDateOption !== 'next_weekend' && (
+              <div className="text-center py-2 px-4 bg-brick/5 rounded-lg">
+                <span className="text-sm text-stone">Planning for: </span>
+                <span className="text-sm font-semibold text-brick">
+                  {formatDateFull(new Date(prefs.date + 'T12:00:00'))}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Time of Day Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Time of Day</label>
+            <div className="grid grid-cols-4 gap-2">
+              {suggestions?.time_of_day.map(time => (
+                <button
+                  key={time.id}
+                  onClick={() => setPrefs({ ...prefs, time_of_day: time.id as any })}
+                  className={`py-3 rounded-xl text-sm font-medium transition-all flex flex-col items-center gap-1 ${
+                    prefs.time_of_day === time.id
+                      ? 'bg-brick text-white shadow-md ring-2 ring-brick ring-offset-2'
+                      : 'bg-sand/20 text-stone hover:bg-sand/40'
+                  }`}
+                >
+                  <span className="text-xl">{time.icon}</span>
+                  <span className="text-xs font-medium">{time.label}</span>
+                </button>
+              ))}
             </div>
           </div>
           <div>
@@ -238,10 +822,18 @@ export default function PlanDatePage() {
                   <label key={option.id} className="flex items-start gap-3 p-3 rounded-lg bg-sand/10 hover:bg-sand/20 cursor-pointer transition-colors">
                     <input
                       type="checkbox"
-                      checked={option.id === 'has_military_access' ? prefs.has_military_access : false}
+                      checked={
+                        option.id === 'has_military_access' ? prefs.has_military_access :
+                        option.id === 'is_21_plus' ? prefs.is_21_plus :
+                        option.id === 'include_area_attractions' ? prefs.include_area_attractions : false
+                      }
                       onChange={(e) => {
                         if (option.id === 'has_military_access') {
                           setPrefs({ ...prefs, has_military_access: e.target.checked })
+                        } else if (option.id === 'is_21_plus') {
+                          setPrefs({ ...prefs, is_21_plus: e.target.checked })
+                        } else if (option.id === 'include_area_attractions') {
+                          setPrefs({ ...prefs, include_area_attractions: e.target.checked })
                         }
                       }}
                       className="mt-0.5 w-4 h-4 rounded border-sand text-brick focus:ring-brick"
@@ -257,7 +849,9 @@ export default function PlanDatePage() {
           )}
           <div className="pt-4"><button onClick={handleGenerate} disabled={generating} className="w-full py-4 bg-brick hover:bg-brick-600 disabled:opacity-70 text-white rounded-xl font-bold text-lg shadow-lg shadow-brick/20 transition-all flex items-center justify-center gap-2">{generating ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><SparklesIcon className="w-6 h-6" />Generate Itinerary</>}</button></div>
         </div>
-      ) : (
+      )}
+
+      {result && (
         <div className="space-y-8 animate-fade-in">
           <div className="bg-white p-6 rounded-xl border border-sand shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
             <div><h2 className="text-2xl font-bold text-gray-900">{result.title}</h2><p className="text-stone mt-1">Est. Cost: ${result.estimatedCost}/person • Duration: {result.totalDuration / 60}h</p></div>

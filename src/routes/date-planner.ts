@@ -112,12 +112,24 @@ datePlanner.get('/suggestions', async (c) => {
       { id: "include_outdoors", label: "Include Outdoors", default: false }
     ],
 
-    // Military base access (Fort Bragg/Liberty venues often require military ID)
+    // Access options for venue filtering
     access_options: [
       {
         id: "has_military_access",
         label: "I have military base access",
         description: "Include Fort Bragg/Fort Liberty venues (requires military ID or star on license)",
+        default: false
+      },
+      {
+        id: "is_21_plus",
+        label: "I'm 21 or older",
+        description: "Include bars, breweries, wine bars, speakeasies, and other 21+ venues",
+        default: false
+      },
+      {
+        id: "include_area_attractions",
+        label: "Include area attractions",
+        description: "Include venues outside downtown (state parks, Crown Complex, Cross Creek Mall, etc.)",
         default: false
       }
     ]

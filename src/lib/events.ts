@@ -13,6 +13,8 @@ export async function fetchEvents(DB: D1Database, params: {
   featured?: string;
   limit?: number;
   offset?: number;
+  venue_id?: string;  // Filter by specific venue
+  include_venue_only?: boolean;  // Include venue-only events (default: false)
 }) {
   const conditions: string[] = [];
   const queryParams: any[] = [];
@@ -75,8 +77,19 @@ export async function fetchEvents(DB: D1Database, params: {
     conditions.push('(e.featured = 0 OR e.featured IS NULL)');
   }
 
+  // Filter by venue_id
+  if (params.venue_id) {
+    conditions.push('e.venue_id = ?');
+    queryParams.push(params.venue_id);
+  }
+
+  // By default, exclude venue-only events from main feed
+  if (!params.include_venue_only) {
+    conditions.push('(e.venue_only = 0 OR e.venue_only IS NULL)');
+  }
+
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  
+
   // Count total (if needed, but for list we just fetch)
   // We can return total if we do a separate query, but for now we stick to the original signature
   // which returned result.results. 
@@ -88,9 +101,10 @@ export async function fetchEvents(DB: D1Database, params: {
   
   const result = await DB.prepare(`
     SELECT
-      e.id, e.title, e.start_datetime, e.end_datetime, 
+      e.id, e.title, e.start_datetime, e.end_datetime,
       e.location_name, e.categories, e.image_url, e.description,
       e.source_id, e.external_id, e.url, e.ticket_url, e.section, e.status, e.featured,
+      e.venue_id, e.venue_only,
       v.name as venue_name, v.address as venue_address,
       v.image_url as venue_image_url,
       v.latitude as venue_latitude, v.longitude as venue_longitude,
@@ -116,6 +130,8 @@ export async function countEvents(DB: D1Database, params: {
   category?: string;
   categories?: string;
   featured?: string;
+  venue_id?: string;
+  include_venue_only?: boolean;
 }) {
   const conditions: string[] = [];
   const queryParams: any[] = [];
@@ -169,6 +185,17 @@ export async function countEvents(DB: D1Database, params: {
     conditions.push('e.featured = 1');
   } else if (params.featured === 'false') {
     conditions.push('(e.featured = 0 OR e.featured IS NULL)');
+  }
+
+  // Filter by venue_id
+  if (params.venue_id) {
+    conditions.push('e.venue_id = ?');
+    queryParams.push(params.venue_id);
+  }
+
+  // By default, exclude venue-only events from main feed
+  if (!params.include_venue_only) {
+    conditions.push('(e.venue_only = 0 OR e.venue_only IS NULL)');
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

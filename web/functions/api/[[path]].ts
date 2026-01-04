@@ -9,7 +9,7 @@
 
 const WORKER_URL = 'https://downtown-guide.wemea-5ahhf.workers.dev'
 
-export const onRequest: PagesFunction = async (context) => {
+async function handleRequest(context: EventContext<unknown, string, unknown>): Promise<Response> {
   const { request, params, next } = context
 
   // Build the path from the catch-all parameter
@@ -25,17 +25,35 @@ export const onRequest: PagesFunction = async (context) => {
   const url = new URL(request.url)
   const workerUrl = `${WORKER_URL}/api/${path}${url.search}`
 
-  // Forward the request to the worker
-  const response = await fetch(workerUrl, {
+  // Clone request to properly forward body for POST/PUT/PATCH
+  const init: RequestInit = {
     method: request.method,
     headers: request.headers,
-    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-  })
+  }
 
-  // Return the response
+  // Forward body for methods that support it
+  if (!['GET', 'HEAD'].includes(request.method)) {
+    init.body = request.body
+    init.duplex = 'half' as any // Required for streaming body
+  }
+
+  // Forward the request to the worker
+  const response = await fetch(workerUrl, init)
+
+  // Return the response with proper headers
+  const responseHeaders = new Headers(response.headers)
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: response.headers,
+    headers: responseHeaders,
   })
 }
+
+// Export handlers for all HTTP methods
+export const onRequestGet: PagesFunction = handleRequest
+export const onRequestPost: PagesFunction = handleRequest
+export const onRequestPut: PagesFunction = handleRequest
+export const onRequestPatch: PagesFunction = handleRequest
+export const onRequestDelete: PagesFunction = handleRequest
+export const onRequestOptions: PagesFunction = handleRequest

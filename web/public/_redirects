@@ -1,1 +1,3 @@
+/api/* https://downtown-guide.wemea-5ahhf.workers.dev/api/:splat 200
+/cal/* https://downtown-guide.wemea-5ahhf.workers.dev/cal/:splat 200
 /* /index.html 200

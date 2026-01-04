@@ -1,463 +1,315 @@
 /**
- * Scrape venues for Perfect Date planning
+ * Curated Venues for Perfect Date Planning
  * 
- * Sources:
- * - Local Blogs/Guides (Simulated/Hardcoded for now due to anti-bot/redirects)
- * - Search Results Curated Data
- * 
- * Usage:
- *   npx tsx scripts/scrape-date-venues.ts
+ * This file contains a hand-curated list of venues in and around Fayetteville, NC,
+ * enriched with metadata to power the "Perfect Date" planner.
  */
-
-import * as fs from 'fs';
-import * as path from 'path';
 
 // --- Interfaces ---
 
 interface EnrichedVenue {
   name: string;
   address?: string;
-  category: string; // 'food', 'drink', 'activity', 'nature', 'culture'
-  subcategory?: string; // 'italian', 'hiking_trail', 'museum'
+  category: string;
+  subcategory?: string;
   description?: string;
-  url?: string; // Source URL or official URL
+  url?: string;
   source: string;
-  // Estimated/Scraped fields
   price_level?: number;
   romantic_score?: number;
   vibe?: string[];
   good_for?: string[];
-  features?: string[]; // 'outdoor_seating', 'live_music'
+  features?: string[];
   best_time?: string[];
 }
 
 // --- Data ---
 
-const CURATED_VENUES: EnrichedVenue[] = [
+export const CURATED_VENUES: EnrichedVenue[] = [
   // --- HIKING / NATURE ---
   {
     name: 'Cape Fear River Trail',
     category: 'nature',
     subcategory: 'hiking_trail',
-    description: 'A 7-mile paved path suitable for walkers, runners, and bicyclists, with scenic views of trees, plants, wildlife, and the river through marshes, wetlands, and woodlands. Features a covered bridge.',
+    description: 'A 7-mile paved path for walkers and bicyclists with scenic views of the river and a covered bridge.',
     source: 'Distinctly Fayetteville',
     romantic_score: 4,
-    good_for: ['active', 'day_date', 'walking'],
-    features: ['paved', 'scenic_views'],
-    vibe: ['outdoors', 'scenic', 'peaceful'],
+    good_for: ['active', 'day_date', 'walking', 'sunset'],
+    vibe: ['outdoors', 'scenic', 'peaceful', 'active'],
     best_time: ['morning', 'afternoon', 'sunset']
   },
   {
     name: 'Carvers Creek State Park',
+    address: '2505 Long Valley Rd, Spring Lake, NC 28390',
     category: 'nature',
     subcategory: 'state_park',
-    description: 'Known for its easy, flat, and wide trails through pine forests at the Long Valley Farm Access, offering beautiful views of a millpond and historical Rockefeller estate.',
+    description: 'Easy, flat trails through pine forests, with views of a millpond and the historic Rockefeller estate.',
     source: 'The Katie Show Blog',
     romantic_score: 4,
     good_for: ['picnic', 'history_buffs', 'quiet_walk'],
-    features: ['picnic_area', 'historic_site'],
     vibe: ['outdoors', 'peaceful', 'historic'],
     best_time: ['morning', 'afternoon']
   },
   {
-    name: 'Raven Rock State Park',
-    category: 'nature',
-    subcategory: 'state_park',
-    description: 'Renowned for its dramatic rock formations and the challenging Raven Rock Trail (3 miles). Culminates in a breathtaking overlook of the Cape Fear River.',
-    source: 'The Katie Show Blog',
-    romantic_score: 5,
-    good_for: ['adventure', 'views', 'hiking'],
-    features: ['scenic_overlook', 'challenging_hike'],
-    vibe: ['outdoors', 'adventurous', 'scenic'],
-    best_time: ['morning', 'afternoon']
-  },
-  {
     name: 'Cape Fear Botanical Garden',
+    address: '536 N Eastern Blvd, Fayetteville, NC 28301',
     category: 'nature',
     subcategory: 'botanical_garden',
-    description: 'Spanning 80 acres overlooking the Cape Fear River, featuring themed gardens, serene waterways, an 1800s farmhouse, and a tobacco barn. Perfect for romantic strolls.',
+    description: '80 acres of themed gardens and serene waterways. Perfect for romantic strolls.',
     source: 'Wanderlog',
     romantic_score: 5,
     good_for: ['walking', 'photos', 'quiet_conversation', 'first_date'],
-    features: ['gardens', 'historic_buildings'],
     vibe: ['romantic', 'peaceful', 'scenic'],
     best_time: ['morning', 'afternoon']
-  },
-  {
-    name: 'J. Bayard Clark Park & Nature Center',
-    category: 'nature',
-    subcategory: 'nature_center',
-    description: 'Features nature trails along the Cape Fear River, a small waterfall (Clark Park Falls), and live animal exhibits.',
-    source: 'Distinctly Fayetteville',
-    romantic_score: 3,
-    good_for: ['casual_walk', 'learning', 'family_fun'],
-    features: ['waterfall', 'trails'],
-    vibe: ['outdoors', 'educational'],
-    best_time: ['afternoon']
   },
   {
     name: 'Fayetteville Rose Garden',
     category: 'nature',
     subcategory: 'garden',
-    description: 'Located at FTCC, this 23-acre garden features over 1,000 rose bushes, gazebos, and fountains. Perfect for a tranquil stroll.',
+    description: 'Features over 1,000 rose bushes, gazebos, and fountains. A beautiful and tranquil spot.',
     source: 'Dale Lets Travel',
     romantic_score: 5,
     good_for: ['walking', 'photos', 'quiet_conversation', 'romantic'],
-    features: ['gardens'],
     vibe: ['romantic', 'peaceful', 'scenic'],
     best_time: ['afternoon', 'sunset']
   },
-  {
-    name: 'Cross Creek Park',
-    category: 'nature',
-    subcategory: 'park',
-    description: 'A lovely park in Downtown Fayetteville with a beautiful fountain and a statue of Marquis de Lafayette, ideal for a picnic.',
-    source: 'Sometimes Home',
-    romantic_score: 4,
-    good_for: ['picnic', 'walking', 'casual_stroll'],
-    features: ['fountain', 'downtown'],
-    vibe: ['relaxed', 'downtown'],
-    best_time: ['afternoon', 'evening']
-  },
-  
-  // --- ACTIVITIES ---
-  {
-    name: 'ZipQuest Waterfall & Treetop Adventure',
-    category: 'activity',
-    subcategory: 'zipline',
-    description: 'Ziplining tours with breathtaking views of waterfalls and treetops. "NightQuest" available for evening dates under the stars.',
-    source: 'Wanderlog',
-    romantic_score: 4,
-    good_for: ['adventure', 'thrill_seekers', 'memorable_date'],
-    features: ['night_tours', 'waterfall_views'],
-    vibe: ['adventurous', 'exciting'],
-    best_time: ['afternoon', 'evening']
-  },
-  {
-    name: 'The Climbing Place',
-    category: 'activity',
-    subcategory: 'climbing',
-    description: 'Indoor rock climbing facility for an active and challenging date.',
-    source: 'Wordpress Blog',
-    price_level: 2,
-    romantic_score: 3,
-    good_for: ['adventure', 'active', 'trust_building', 'first_date'],
-    features: ['indoor'],
-    vibe: ['active', 'challenging'],
-    best_time: ['afternoon', 'evening']
-  },
-  {
-    name: 'DEFY Extreme Air Sports Park',
-    category: 'activity',
-    subcategory: 'trampoline_park',
-    description: 'For a thrilling and active date, soar high and enjoy various activities like trampolines, foam pits, and obstacle courses.',
-    source: 'ENC Explorer',
-    price_level: 2,
-    romantic_score: 2,
-    good_for: ['fun', 'playful', 'active'],
-    features: ['indoor'],
-    vibe: ['lively', 'energetic'],
-    best_time: ['afternoon', 'evening']
-  },
+
+  // --- ACTIVITIES & ENTERTAINMENT ---
   {
     name: "Greg's Pottery",
     address: '122 Maxwell St, Fayetteville, NC 28301',
     category: 'activity',
     subcategory: 'creative_class',
-    description: 'A vibrant and inviting creative haven offering an exceptional pottery painting experience for all ages. Known for chill vibes and fair pricing.',
+    description: 'A vibrant and inviting pottery painting experience with chill vibes and fair pricing.',
     url: 'https://www.facebook.com/gregspottery/',
     source: 'Wanderlog',
     price_level: 2,
     romantic_score: 4,
     good_for: ['creative_date', 'hands-on', 'relaxed', 'first_date'],
     vibe: ['creative', 'relaxed', 'cozy'],
-    best_time: ['afternoon', 'evening'],
-    features: ['art_class']
+    best_time: ['afternoon', 'evening']
   },
   {
-    name: 'Sky Zone Trampoline Park',
-    address: '361 Westwood Shopping Center, Fayetteville, NC 28314',
+    name: 'Putt-Putt Fun Center',
+    address: '3311 Footbridge Ln, Fayetteville, NC 28306',
+    category: 'activity',
+    subcategory: 'entertainment_center',
+    description: 'Classic fun with mini-golf, go-karts, laser tag, and an arcade.',
+    url: 'https://puttputt.com/fayetteville-nc/',
+    source: 'User Request',
+    price_level: 2,
+    romantic_score: 3,
+    good_for: ['playful', 'fun', 'first_date', 'groups', 'family_fun'],
+    vibe: ['casual', 'fun', 'lively', 'nostalgic'],
+    best_time: ['afternoon', 'evening']
+  },
+  {
+    name: 'Main Event Fayetteville',
+    address: '580 Cross Creek Mall, Fayetteville, NC 28303',
+    category: 'activity',
+    subcategory: 'entertainment_center',
+    description: 'Modern entertainment complex with bowling, laser tag, arcade games, and a full restaurant/bar.',
+    url: 'https://www.mainevent.com/fayetteville/',
+    source: 'User Request',
+    price_level: 2,
+    romantic_score: 3,
+    good_for: ['groups', 'fun', 'playful', 'rainy_day', 'boys_night_out', 'family_fun'],
+    vibe: ['lively', 'modern', 'energetic'],
+    best_time: ['evening', 'weekend']
+  },
+  {
+    name: 'Escapology',
+    address: '2770 Freedom Parkway Dr, Suite #4, Fayetteville, NC 28314',
+    category: 'activity',
+    subcategory: 'escape_room',
+    description: 'Immersive private escape rooms. Work together to find clues, crack codes, and solve puzzles in 60 minutes.',
+    url: 'https://www.escapology.com/en/fayetteville-nc',
+    source: 'User Request',
+    price_level: 3,
+    romantic_score: 4,
+    good_for: ['team-building', 'groups', 'adventure', 'problem_solving'],
+    vibe: ['challenging', 'immersive', 'interactive'],
+    best_time: ['afternoon', 'evening']
+  },
+  {
+    name: 'Epic Fun Park',
+    address: '1400 Walter Reed Rd, Fayetteville, NC 28304',
+    category: 'activity',
+    subcategory: 'amusement_center',
+    description: 'Indoor park with a massive inflatable, ropes course, climbing walls, and arcade games.',
+    url: 'https://epicfunpark.com/',
+    source: 'User Request',
+    price_level: 2,
+    romantic_score: 2,
+    good_for: ['fun', 'family_fun', 'active', 'playful'],
+    vibe: ['energetic', 'lively'],
+    best_time: ['afternoon', 'weekend']
+  },
+  {
+    name: 'Urban Air Adventure Park',
+    address: '2051 Skibo Rd, Fayetteville, NC 28314',
     category: 'activity',
     subcategory: 'trampoline_park',
-    description: 'Indoor trampoline park offering freestyle bouncing, dodgeball, and other aerial activities.',
-    url: 'https://www.skyzone.com/fayetteville',
-    source: 'Google Search',
+    description: 'Ultimate indoor playground with trampolines, warrior courses, and other aerial adventures.',
+    url: 'https://www.urbanair.com/north-carolina-fayetteville/',
+    source: 'User Request',
     price_level: 2,
     romantic_score: 2,
-    good_for: ['fun', 'playful', 'active'],
-    features: ['indoor'],
-    vibe: ['lively', 'energetic'],
-    best_time: ['afternoon', 'evening']
+    good_for: ['fun', 'family_fun', 'active'],
+    vibe: ['energetic', 'lively'],
+    best_time: ['afternoon', 'weekend']
   },
   {
-    name: 'Cross Creek Mall',
-    address: '419 Cross Creek Mall, Fayetteville, NC 28303',
+    name: 'Game Show Live!',
+    address: '3637 Sycamore Dairy Road, Fayetteville, NC 28303',
     category: 'activity',
-    subcategory: 'shopping',
-    description: 'The main shopping mall in Fayetteville, featuring a variety of retail stores, a food court, and a cinema.',
-    url: 'https://crosscreekmall.com/',
-    source: 'Google Search',
+    subcategory: 'entertainment_center',
+    description: 'An interactive, live-hosted game show experience suitable for families, friends, and coworkers.',
+    source: 'User Request',
     price_level: 2,
-    romantic_score: 1,
-    good_for: ['shopping', 'browsing', 'rainy_day'],
-    features: ['food_court', 'cinema'],
-    vibe: ['busy', 'casual'],
-    best_time: ['afternoon']
-  },
-  
-  // --- CULTURE & MUSEUMS ---
-  {
-    name: 'Fascinate-U Children\'s Museum',
-    category: 'culture',
-    subcategory: 'museum',
-    description: 'Hands-on museum allowing interaction through creative role-playing. Great for playful dates or parents.',
-    source: 'Wanderlog',
-    romantic_score: 2,
-    good_for: ['family_date', 'playful'],
-    features: ['interactive'],
-    vibe: ['playful', 'educational'],
-    best_time: ['morning', 'afternoon']
-  },
-  {
-    name: 'Sweet Tea Shakespeare',
-    category: 'culture',
-    subcategory: 'theatre',
-    description: 'Performs Shakespearean plays and other productions, often outdoors with live music and a festive atmosphere.',
-    source: 'Wanderlog',
-    romantic_score: 5,
-    good_for: ['culture', 'theatre', 'outdoor_performance', 'romantic'],
-    features: ['live_music', 'outdoor_seating'],
-    vibe: ['cultural', 'romantic', 'lively'],
-    best_time: ['evening']
-  },
-  {
-    name: 'U.S. Army Airborne & Special Operations Museum',
-    address: '100 Bragg Boulevard, Fayetteville, NC 28301',
-    category: 'culture',
-    subcategory: 'museum',
-    description: 'Free-admission museum detailing the history of the U.S. Army Airborne and Special Operations forces.',
-    url: 'https://www.asomf.org/',
-    source: 'Google Search',
-    price_level: 1, // Free admission
     romantic_score: 3,
-    good_for: ['history_buffs', 'learning', 'day_date'],
-    features: ['free_admission'],
-    vibe: ['educational', 'historic'],
-    best_time: ['morning', 'afternoon']
+    good_for: ['fun', 'groups', 'team-building', 'unique_experience'],
+    vibe: ['interactive', 'lively', 'competitive'],
+    best_time: ['evening']
   },
 
-  // --- FOOD & DRINK ---
+  // --- BARS & NIGHTLIFE ---
   {
-    name: 'Circa 1800',
-    category: 'food',
-    subcategory: 'southern',
-    description: 'Locally focused new Southern cuisine in a cozy and unpretentious setting downtown.',
-    source: 'Wanderlog',
-    price_level: 3,
-    romantic_score: 5,
-    good_for: ['dinner', 'anniversary', 'foodies', 'romantic'],
-    features: ['local_food', 'cozy', 'outdoor_seating'],
-    vibe: ['intimate', 'cozy', 'upscale'],
-    best_time: ['evening', 'dinner']
-  },
-  {
-    name: 'The Wine Café',
+    name: 'The Sip Room',
+    address: '106 Hay Street, Fayetteville, NC 28301',
     category: 'drink',
     subcategory: 'wine_bar',
-    description: 'Downtown spot with live jazz and a selection of wines, ideal for a relaxed and sophisticated evening.',
-    source: 'Wanderlog',
-    price_level: 2,
-    romantic_score: 4,
-    good_for: ['drinks', 'live_music', 'conversation', 'first_date'],
-    features: ['live_music', 'wine_selection'],
-    vibe: ['sophisticated', 'relaxed', 'intimate'],
-    best_time: ['evening']
-  },
-  {
-    name: 'Antonella\'s Italian Ristorante',
-    category: 'food',
-    subcategory: 'italian',
-    description: 'Cozy Italian spot downtown known for intimate atmosphere and classic dishes.',
-    source: 'Local Knowledge',
-    price_level: 2,
-    romantic_score: 4,
-    good_for: ['dinner', 'first_date', 'romantic'],
-    features: ['indoor_seating', 'intimate'],
-    vibe: ['cozy', 'romantic'],
-    best_time: ['dinner']
-  },
-  {
-    name: 'Luigi\'s Italian Chophouse',
-    category: 'food',
-    subcategory: 'italian',
-    description: 'Upscale Italian dining and steakhouse, popular for anniversaries and special occasions.',
-    source: 'Local Knowledge',
+    description: 'Stylish bar with great reviews, quality cocktails, a diverse selection of wines, and live jazz music.',
+    url: 'https://www.thesiproomnc.com/',
+    source: 'User Request',
     price_level: 3,
-    romantic_score: 4,
-    good_for: ['anniversary', 'fine_dining'],
-    features: ['outdoor_patio', 'full_bar'],
-    vibe: ['upscale', 'traditional'],
-    best_time: ['dinner']
+    romantic_score: 5,
+    good_for: ['girls_night_out', 'romantic', 'cocktails', 'wine_lovers'],
+    vibe: ['stylish', 'sophisticated', 'intimate', 'cozy'],
+    best_time: ['evening', 'late_night']
   },
   {
-    name: 'Gaston Brewing Company',
+    name: 'Dad Bod Dive Bar',
+    address: '444 W Russell St, Ste 102, Fayetteville, NC 28301',
     category: 'drink',
-    subcategory: 'brewery',
-    description: 'Downtown brewery with a great food menu and lively atmosphere.',
-    source: 'Local Knowledge',
-    price_level: 2,
-    romantic_score: 3,
-    good_for: ['casual_date', 'beer_lovers'],
-    features: ['craft_beer', 'outdoor_seating'],
-    vibe: ['casual', 'lively', 'social'],
+    subcategory: 'dive_bar',
+    description: 'Chill dive bar with a great patio, food truck, and friendly bartenders. Kid and pet friendly.',
+    source: 'User Request',
+    price_level: 1,
+    romantic_score: 2,
+    good_for: ['casual_drinks', 'boys_night_out', 'pet_friendly'],
+    vibe: ['casual', 'relaxed', 'divey', 'friendly'],
     best_time: ['afternoon', 'evening']
   },
   {
-    name: 'Blue Moon Café',
-    category: 'food',
-    subcategory: 'cafe',
-    description: 'Eclectic downtown cafe with outdoor patio, great for lunch or casual dinner.',
-    source: 'Local Knowledge',
+    name: 'Charlie Mike’s Pub',
+    address: '195 Starpoint Drive, Fayetteville, NC 28303',
+    category: 'drink',
+    subcategory: 'pub',
+    description: 'Military-themed pub with a welcoming atmosphere, food, pool tables, and live music or karaoke.',
+    source: 'User Request',
+    price_level: 1,
+    romantic_score: 2,
+    good_for: ['casual_drinks', 'live_music', 'military', 'boys_night_out'],
+    vibe: ['casual', 'social', 'military-friendly'],
+    best_time: ['evening', 'late_night']
+  },
+  {
+    name: 'Dirtbag Ales Brewery & Taproom',
+    address: '5435 Corporation Dr, Hope Mills, NC 28348',
+    category: 'drink',
+    subcategory: 'brewery',
+    description: 'Large brewery with a communal atmosphere, restaurant, huge outdoor space, and regular events.',
+    url: 'https://www.dirtbagales.com/',
+    source: 'User Request',
     price_level: 2,
     romantic_score: 3,
-    good_for: ['lunch_date', 'casual'],
-    features: ['outdoor_patio'],
-    vibe: ['casual', 'artsy'],
-    best_time: ['lunch', 'brunch']
+    good_for: ['beer_lovers', 'groups', 'family_fun', 'outdoor'],
+    vibe: ['lively', 'casual', 'family_friendly', 'social'],
+    best_time: ['afternoon', 'weekend']
   },
   {
-    name: 'The Melting Pot',
-    category: 'food',
-    subcategory: 'fondue',
-    description: 'A classic fondue restaurant providing a fun, interactive, and romantic dining experience.',
-    source: 'Melting Pot Website',
-    price_level: 3,
-    romantic_score: 5,
-    good_for: ['anniversary', 'interactive', 'romantic', 'special_occasion'],
-    features: ['private_booths'],
-    vibe: ['romantic', 'intimate', 'interactive'],
-    best_time: ['dinner']
-  },
-  {
-    name: 'Wana Navu Kava Bar',
+    name: 'Heckler Brewing Company',
+    address: '5780 Ramsey Street, Suite #110, Fayetteville, NC 28311',
     category: 'drink',
-    subcategory: 'kava_bar',
-    description: 'Fayetteville\'s first and only alcohol-alternative bar, offering a friendly atmosphere and unique kava-based drinks.',
-    source: 'Reddit',
-    price_level: 1,
+    subcategory: 'brewery',
+    description: 'Family-owned brewery focusing on high-quality, small-batch European-style craft beers and also offers food like pizza.',
+    url: 'https://www.toasttab.com/heckler-brewing-company/v3',
+    source: 'User Request',
+    price_level: 2,
     romantic_score: 3,
-    good_for: ['relaxed', 'conversation', 'unique_experience'],
-    features: ['alcohol_free'],
-    vibe: ['chill', 'bohemian', 'social'],
-    best_time: ['evening', 'late_night']
+    good_for: ['beer_lovers', 'casual_drinks', 'family_fun'],
+    vibe: ['casual', 'local', 'family_friendly', 'community'],
+    best_time: ['afternoon', 'evening']
   },
   {
-    name: 'Archives',
+    name: 'Dirty Whiskey Craft Cocktail Bar',
+    address: '5431 Corporation Drive, Hope Mills, NC 28348',
     category: 'drink',
-    subcategory: 'speakeasy',
-    description: 'A new speakeasy on Rowan Street with a sophisticated and intimate atmosphere for craft cocktails.',
-    source: 'Reddit',
+    subcategory: 'cocktail_bar',
+    description: 'Craft cocktail bar with a massive outdoor patio, focusing on in-house fusions and locally sourced North Carolina spirits.',
+    url: 'https://dirtywhiskeyinc.com/',
+    source: 'User Request',
     price_level: 3,
-    romantic_score: 5,
-    good_for: ['romantic', 'cocktails', 'intimate', 'special_occasion'],
-    features: ['craft_cocktails'],
-    vibe: ['intimate', 'sophisticated', 'hidden_gem'],
+    romantic_score: 4,
+    good_for: ['cocktails', 'girls_night_out', 'sophisticated_drinks'],
+    vibe: ['stylish', 'sophisticated', 'lively', 'outdoor'],
     best_time: ['evening', 'late_night']
   },
   {
-    name: 'The White Rabbit',
+    name: 'CRU Lounge Fayetteville',
+    address: '114 Gillespie Street, Fayetteville, NC 28301',
     category: 'drink',
-    subcategory: 'dive_bar',
-    description: 'A dive bar on Fort Bragg Road for a very casual, laid-back night out.',
-    source: 'Reddit',
-    price_level: 1,
-    romantic_score: 1,
-    good_for: ['casual_drinks', 'dive_bar_vibe'],
-    vibe: ['divey', 'casual'],
+    subcategory: 'lounge',
+    description: 'Vibrant nightclub and lounge with live music, drink specials, craft cocktails, elevated bar plates, and hookah options.',
+    source: 'User Request',
+    price_level: 3,
+    romantic_score: 4,
+    good_for: ['girls_night_out', 'nightlife', 'dancing'],
+    vibe: ['lively', 'upscale', 'modern'],
     best_time: ['late_night']
   },
   {
-    name: 'District House of Taps',
+    name: 'Legends Pub',
+    address: '4624 Bragg Blvd suite #1, Fayetteville, NC 28303',
     category: 'drink',
-    subcategory: 'bar',
-    description: 'Bar with a wide selection of beers on tap.',
-    source: 'Reddit',
-    price_level: 2,
-    romantic_score: 2,
-    good_for: ['casual_drinks', 'beer_lovers'],
-    vibe: ['casual', 'social'],
-    best_time: ['evening']
-  },
-  {
-    name: 'Muse & Co',
-    address: '311 Hay St, Fayetteville, NC 28301',
-    category: 'drink',
-    subcategory: 'teahouse',
-    description: 'Fayetteville\'s Artist Lounge and Teahouse in downtown. Great tea selection, LGBTQ+ friendly, and women-owned.',
-    url: 'https://ncmuse.co/',
+    subcategory: 'dive_bar',
+    description: 'The oldest biker bar in town, offering a welcoming, laid-back atmosphere with pool tables and music bingo.',
     source: 'User Request',
-    price_level: 2,
-    romantic_score: 4,
-    good_for: ['relaxed', 'conversation', 'first_date', 'creative'],
-    features: ['gender-neutral_restroom', 'wheelchair_accessible'],
-    vibe: ['artsy', 'cozy', 'relaxed'],
-    best_time: ['afternoon', 'evening']
-  },
-  {
-    name: 'Winterbloom Tea',
-    address: '238 Hay Street, Fayetteville, NC 28301',
-    category: 'drink',
-    subcategory: 'teahouse',
-    description: 'Cozy and elegant teahouse on Hay Street, perfect for a quiet and sophisticated date.',
-    url: 'https://winterbloomtea.wixsite.com/wbtea',
-    source: 'Google Search',
-    price_level: 2,
-    romantic_score: 4,
-    good_for: ['relaxed', 'conversation', 'first_date'],
-    vibe: ['elegant', 'cozy', 'quiet'],
-    best_time: ['afternoon']
-  },
-  {
-    name: 'Rude Awakening Coffee House',
-    address: '227 Hay Street, Fayetteville, NC 28301',
-    category: 'drink',
-    subcategory: 'coffee_shop',
-    description: 'Long-standing local coffee shop with a charming courtyard garden.',
-    url: 'https://www.rudeawakening.coffee/',
-    source: 'Google Search',
     price_level: 1,
-    romantic_score: 3,
-    good_for: ['casual_date', 'morning', 'coffee'],
-    features: ['outdoor_seating'],
-    vibe: ['casual', 'local_favorite'],
-    best_time: ['morning', 'afternoon']
+    romantic_score: 2,
+    good_for: ['casual_drinks', 'boys_night_out', 'bikers'],
+    vibe: ['divey', 'casual', 'community'],
+    best_time: ['evening', 'late_night']
   },
+
+  // --- FOOD ---
   {
     name: 'Ichikaku Japanese Restaurant',
     address: '350 North Eastern Boulevard, Suite 200, Fayetteville, NC 28301',
     category: 'food',
     subcategory: 'japanese',
-    description: 'Japanese restaurant, likely serving ramen and other classic dishes.',
+    description: 'Authentic Japanese restaurant praised for its homemade ramen and tranquil, welcoming atmosphere.',
     url: 'https://ichikaku.com/',
     source: 'Google Search',
     price_level: 2,
     romantic_score: 3,
-    good_for: ['dinner', 'casual_date'],
-    vibe: ['casual'],
-    best_time: ['dinner']
+    good_for: ['dinner', 'casual_date', 'lunch'],
+    vibe: ['authentic', 'calm', 'cozy'],
+    best_time: ['lunch', 'dinner']
   },
   {
     name: "Mai's Kitchen",
     address: '329 Person St, Fayetteville, NC 28301',
     category: 'food',
     subcategory: 'thai',
-    description: 'Authentic Thai cuisine in downtown Fayetteville.',
+    description: 'Authentic Thai cuisine in a cozy, quiet, and clean setting with warm hospitality.',
     url: 'https://maiskitchenthaicuisine.com/',
     source: 'Google Search',
     price_level: 2,
     romantic_score: 3,
-    good_for: ['dinner', 'adventurous_eaters'],
-    vibe: ['casual', 'authentic'],
+    good_for: ['dinner', 'adventurous_eaters', 'casual_date'],
+    vibe: ['cozy', 'authentic', 'quiet'],
     best_time: ['dinner']
   },
   {
@@ -465,117 +317,13 @@ const CURATED_VENUES: EnrichedVenue[] = [
     address: '1401 Morganton Rd, Fayetteville, NC 28305',
     category: 'drink',
     subcategory: 'coffee_shop',
-    description: 'Local coffee shop with a mission, part of the Miller\'s Crew non-profit.',
+    description: 'A heartwarming, community-focused coffee shop with a mission to employ individuals with disabilities.',
     url: 'https://www.millerscrew.com/millers-brew-coffee-shop',
     source: 'Google Search',
     price_level: 1,
     romantic_score: 3,
-    good_for: ['casual_date', 'morning', 'supporting_local'],
-    vibe: ['community', 'casual'],
+    good_for: ['casual_date', 'morning', 'supporting_local', 'coffee'],
+    vibe: ['community', 'welcoming', 'cozy'],
     best_time: ['morning', 'afternoon']
-  },
-  {
-    name: 'Anchor Allie\'s',
-    address: '1204 Bragg Blvd, Fayetteville, NC 28301',
-    category: 'food',
-    subcategory: 'american',
-    description: 'A local favorite, especially for brunch. Features the elegant Sirens Flamingo Lounge for cocktails.',
-    url: 'https://anchorallies.com/',
-    source: 'Google Search',
-    price_level: 2,
-    romantic_score: 4,
-    good_for: ['brunch', 'lunch', 'cocktails'],
-    vibe: ['nautical', 'lively'],
-    best_time: ['brunch', 'lunch']
-  },
-  {
-    name: "Sol's Arcade and Taproom",
-    address: '421 Maiden Lane, Fayetteville, NC 28301',
-    category: 'activity',
-    subcategory: 'arcade_bar',
-    description: 'Retro arcade bar with a great selection of craft beer and classic games.',
-    url: 'https://solsarcade-taproom.com/',
-    source: 'Google Search',
-    price_level: 2,
-    romantic_score: 4,
-    good_for: ['fun', 'interactive', 'playful', 'casual_drinks', 'first_date'],
-    features: ['craft_beer', 'games'],
-    vibe: ['fun', 'nostalgic', 'lively'],
-    best_time: ['evening', 'late_night']
-  },
-  {
-    name: 'Bound and Vine',
-    address: '134 Person Street, Fayetteville, NC 28301',
-    category: 'culture',
-    subcategory: 'bookstore',
-    description: 'A bookstore combined with a wine bar, offering a unique and relaxed atmosphere for conversation and connection.',
-    url: 'https://boundandvine.com/',
-    source: 'Google Search',
-    price_level: 2,
-    romantic_score: 5,
-    good_for: ['relaxed', 'conversation', 'wine_lovers', 'book_lovers', 'first_date', 'romantic'],
-    vibe: ['cozy', 'relaxed', 'quiet', 'sophisticated', 'intimate'],
-    best_time: ['afternoon', 'evening'],
-    features: ['wine_selection']
-  },
-  {
-    name: "Fuller's Old Fashioned BBQ",
-    address: '113 North Eastern Boulevard, Fayetteville, NC 28301',
-    category: 'food',
-    subcategory: 'bbq',
-    description: 'A cherished culinary gem in Fayetteville, NC, known for its authentic Southern comfort food and warm, inviting atmosphere.',
-    source: 'Google Search',
-    price_level: 1,
-    romantic_score: 2,
-    good_for: ['casual_lunch', 'comfort_food', 'family_meal'],
-    vibe: ['casual', 'traditional', 'family_friendly'],
-    best_time: ['lunch', 'dinner'],
-    features: ['buffet']
-  },
-  {
-    name: "Mac's Speed Shop",
-    address: '482 N McPherson Church Rd, Fayetteville, NC 28303',
-    category: 'food',
-    subcategory: 'bbq',
-    description: 'Hickory-smoked BBQ, a wide selection of draft beers, and a lively, biker-friendly atmosphere.',
-    url: 'https://macspeedshop.com/',
-    source: 'Google Search',
-    price_level: 2,
-    romantic_score: 3,
-    good_for: ['casual_dinner', 'beer_lovers', 'lively', 'groups'],
-    features: ['craft_beer', 'outdoor_seating'],
-    vibe: ['lively', 'casual', 'social'],
-    best_time: ['dinner', 'evening']
   }
 ];
-
-
-// --- Main Execution ---
-
-async function main() {
-  console.log('Starting venue aggregation...');
-  
-  // In a real scenario, we would merge these with scraped results
-  // For now, we use the curated list based on our research
-  const allVenues = [...CURATED_VENUES];
-
-  // Deduplicate by name
-  const uniqueVenues = new Map<string, EnrichedVenue>();
-  for (const v of allVenues) {
-    // Simple normalization for the key
-    const key = v.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (!uniqueVenues.has(key)) {
-      uniqueVenues.set(key, v);
-    }
-  }
-
-  const results = Array.from(uniqueVenues.values());
-  console.log(`\nTotal Unique Venues: ${results.length}`);
-
-  // Save to JSON
-  const outputPath = path.join(__dirname, 'scraped_venues_blogs.json');
-  fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
-  console.log(`Saved data to ${outputPath}`);
-}
-
-main().catch(console.error);

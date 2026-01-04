@@ -21,12 +21,13 @@ export interface Venue {
   typical_duration?: number;
   rating?: number;
   review_count?: number;
+  description?: string; // Venue description
 }
 
 export interface ScoringContext {
   vibes: string[];
   budgetRange: string;          // '$', '$$', '$$$'
-  timeOfDay?: 'morning' | 'afternoon' | 'evening';
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
   eventType?: string;           // 'first_date', 'anniversary', etc.
   previousStop?: Coordinates;   // For proximity scoring
 }
@@ -85,14 +86,24 @@ function calculateVibeScore(venue: Venue, userVibes: string[]): number {
       continue;
     }
 
-    // Semantic/partial matches
+    // Semantic/partial matches - expanded for new vibes
     const semanticMatches: Record<string, string[]> = {
-      'romantic': ['intimate', 'cozy', 'upscale', 'quiet', 'candlelit'],
-      'adventurous': ['adventurous', 'thrilling', 'unique', 'active', 'outdoor'],
-      'cultural': ['cultural', 'artsy', 'historic', 'educational', 'theatre'],
-      'fun': ['fun', 'lively', 'playful', 'energetic', 'games'],
-      'relaxed': ['relaxed', 'casual', 'chill', 'peaceful', 'quiet'],
-      'budget-friendly': ['casual', 'budget']
+      // Original vibes
+      'romantic': ['intimate', 'cozy', 'upscale', 'quiet', 'candlelit', 'date_night'],
+      'adventurous': ['adventurous', 'thrilling', 'unique', 'active', 'outdoor', 'exciting'],
+      'cultural': ['cultural', 'artsy', 'historic', 'educational', 'theatre', 'museum'],
+      'fun': ['fun', 'lively', 'playful', 'energetic', 'games', 'entertainment'],
+      'relaxed': ['relaxed', 'casual', 'chill', 'peaceful', 'quiet', 'laid_back'],
+      'budget-friendly': ['casual', 'budget', 'affordable', 'cheap'],
+
+      // New vibes
+      'outdoors': ['outdoor', 'nature', 'hiking', 'park', 'trail', 'fresh_air', 'scenic'],
+      'foodie': ['foodie', 'culinary', 'gourmet', 'farm_to_table', 'local', 'chef', 'tasting'],
+      'artsy': ['artsy', 'art', 'creative', 'gallery', 'artistic', 'craft', 'studio'],
+      'sporty': ['sporty', 'sports', 'athletic', 'active', 'fitness', 'games', 'competition'],
+      'cozy': ['cozy', 'intimate', 'warm', 'comfortable', 'snug', 'homey', 'fireplace'],
+      'upscale': ['upscale', 'fine_dining', 'elegant', 'sophisticated', 'luxury', 'premium'],
+      'budget_friendly': ['casual', 'budget', 'affordable', 'cheap', 'free', 'low_cost']
     };
 
     const synonyms = semanticMatches[vibe] || [];
@@ -187,12 +198,26 @@ function calculateEventTypeScore(venue: Venue, eventType?: string): number {
   const goodFor = safeParseArray(venue.good_for);
   if (goodFor.length === 0) return 5;
 
+  // Map event type IDs to matching terms in venue good_for
   const eventTypeMap: Record<string, string[]> = {
+    // Legacy formats (for backwards compatibility)
     'Date Night': ['date_night', 'dinner', 'romantic', 'drinks'],
     'First Date': ['first_date', 'casual', 'conversation', 'coffee'],
     'Anniversary': ['anniversary', 'special_occasion', 'romantic', 'fine_dining'],
     'Friends Night': ['friends', 'fun', 'drinks', 'games'],
-    'Family': ['family', 'kid_friendly', 'casual']
+    'Family': ['family', 'kid_friendly', 'casual'],
+
+    // New event type IDs
+    'date_night': ['date_night', 'dinner', 'romantic', 'drinks', 'intimate'],
+    'first_date': ['first_date', 'casual', 'conversation', 'coffee', 'relaxed'],
+    'anniversary': ['anniversary', 'special_occasion', 'romantic', 'fine_dining', 'upscale'],
+    'friends_night': ['friends', 'fun', 'drinks', 'games', 'group', 'social'],
+    'family_outing': ['family', 'kid_friendly', 'casual', 'all_ages', 'outdoor'],
+    'solo_adventure': ['solo', 'exploration', 'self_care', 'meditation', 'nature'],
+    'casual_hangout': ['casual', 'coffee', 'relaxed', 'chill', 'laid_back'],
+    'special_occasion': ['special_occasion', 'celebration', 'birthday', 'milestone', 'fine_dining'],
+    'active_day': ['active', 'outdoor', 'sports', 'hiking', 'adventure', 'fitness'],
+    'chill_day': ['chill', 'relaxed', 'spa', 'quiet', 'peaceful', 'low_key']
   };
 
   const matchTerms = eventTypeMap[eventType] || [];

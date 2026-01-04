@@ -170,6 +170,37 @@ events.get('/image', async (c) => {
   });
 });
 
+// GET /api/events/venue/:venueId - Events for a specific venue (includes venue-only events)
+events.get('/venue/:venueId', async (c) => {
+  const { DB } = c.env;
+  const venueId = c.req.param('venueId');
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  const limit = Math.min(parseInt(c.req.query('limit') || '50'), 200);
+
+  // Fetch events for this venue, including venue-only events
+  const data = await fetchEvents(DB, {
+    venue_id: venueId,
+    from,
+    to,
+    limit,
+    include_venue_only: true,  // Include events that only appear for this venue
+  });
+
+  // Also fetch venue details
+  const venue = await DB.prepare(`
+    SELECT id, name, address, city, state, phone, website, image_url,
+           latitude, longitude, hours_of_operation, category, subcategory
+    FROM venues WHERE id = ?
+  `).bind(venueId).first();
+
+  return c.json({
+    venue,
+    events: data,
+    count: data.length,
+  });
+});
+
 // GET /api/events/:id - Single event
 events.get('/:id', async (c) => {
   const { DB } = c.env;

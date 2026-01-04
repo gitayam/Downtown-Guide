@@ -84,13 +84,22 @@ export default function MapView({ events }: MapViewProps) {
   const mapRef = useRef<MapRef>(null)
   const [popupInfo, setPopupInfo] = useState<Event | null>(null)
 
-  // Convert events to GeoJSON
+  // Convert events to GeoJSON - filter out events with null/undefined coordinates
   const eventsGeoJSON = useMemo(() => {
+    const validEvents = events.filter(e => {
+      // Check for valid numeric coordinates (not null, undefined, or NaN)
+      const lat = e.venue_latitude ?? e.venue_coordinates?.lat
+      const lng = e.venue_longitude ?? e.venue_coordinates?.lng
+      return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)
+    })
+
     return {
       type: 'FeatureCollection',
-      features: events
-        .filter(e => (e.venue_latitude && e.venue_longitude) || (e.venue_coordinates?.lat && e.venue_coordinates?.lng))
-        .map(event => ({
+      features: validEvents.map(event => {
+        const lat = event.venue_latitude ?? event.venue_coordinates?.lat ?? 0
+        const lng = event.venue_longitude ?? event.venue_coordinates?.lng ?? 0
+
+        return {
           type: 'Feature',
           properties: {
             id: event.id,
@@ -100,17 +109,13 @@ export default function MapView({ events }: MapViewProps) {
             end_datetime: event.end_datetime,
             venue_name: event.venue_name || event.location_name,
             featured: event.featured ? true : false,
-            // We need to pass the whole event object for the popup logic to be simple, 
-            // or just the ID and find it. Storing minimal props in GeoJSON is better for perf.
           },
           geometry: {
             type: 'Point',
-            coordinates: [
-              event.venue_longitude || event.venue_coordinates!.lng, 
-              event.venue_latitude || event.venue_coordinates!.lat
-            ]
+            coordinates: [lng, lat]
           }
-        }))
+        }
+      })
     }
   }, [events])
 
@@ -172,11 +177,11 @@ export default function MapView({ events }: MapViewProps) {
           <Layer {...unclusteredPointLayer} />
         </Source>
 
-        {popupInfo && (
+        {popupInfo && (popupInfo.venue_latitude || popupInfo.venue_coordinates?.lat) && (
           <Popup
             anchor="top"
-            longitude={popupInfo.venue_longitude || popupInfo.venue_coordinates!.lng}
-            latitude={popupInfo.venue_latitude || popupInfo.venue_coordinates!.lat}
+            longitude={popupInfo.venue_longitude ?? popupInfo.venue_coordinates?.lng ?? 0}
+            latitude={popupInfo.venue_latitude ?? popupInfo.venue_coordinates?.lat ?? 0}
             onClose={() => setPopupInfo(null)}
             className="min-w-[250px]"
           >

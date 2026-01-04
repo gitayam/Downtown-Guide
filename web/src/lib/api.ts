@@ -278,6 +278,8 @@ export interface DateStop {
   event?: {
     id: string
     title: string
+    start_datetime?: string
+    end_datetime?: string
   }
 }
 
@@ -290,16 +292,83 @@ export interface DatePlan {
   tips: string[]
 }
 
-export async function fetchDateSuggestions(): Promise<{
-  event_types: string[]
+// Rich suggestion types
+export interface EventType {
+  id: string
+  label: string
+  icon: string
+  description: string
+}
+
+export interface Vibe {
+  id: string
+  label: string
+  icon: string
+}
+
+export interface BudgetRange {
+  id: string
+  label: string
+  description: string
+  maxBudget: number
+}
+
+export interface ActivityLevel {
+  id: number
+  label: string
+  description: string
+}
+
+export interface QuickPreset {
+  id: string
+  label: string
+  duration: number
+  event_type: string
   vibes: string[]
-  budget_ranges: string[]
-}> {
-  return resilientFetch<{
-    event_types: string[]
-    vibes: string[]
-    budget_ranges: string[]
-  }>('/api/date-planner/suggestions', 'date_planner_suggestions')
+  budget: string
+}
+
+export interface WhenOption {
+  id: string
+  label: string
+}
+
+export interface TimeOfDay {
+  id: string
+  label: string
+  startHour: number
+  endHour: number
+  icon: string
+}
+
+export interface DurationOption {
+  hours: number
+  label: string
+}
+
+export interface AccessOption {
+  id: string
+  label: string
+  description: string
+  default: boolean
+}
+
+export interface DateSuggestions {
+  event_types: EventType[]
+  vibes: Vibe[]
+  budget_ranges: BudgetRange[]
+  activity_levels: ActivityLevel[]
+  quick_presets: QuickPreset[]
+  when_options: WhenOption[]
+  time_of_day: TimeOfDay[]
+  duration_options: DurationOption[]
+  food_preferences: { id: string; label: string }[]
+  activity_preferences: { id: string; label: string; default: boolean }[]
+  access_options?: AccessOption[]
+}
+
+export async function fetchDateSuggestions(): Promise<DateSuggestions> {
+  return resilientFetch<DateSuggestions>('/api/date-planner/suggestions', 'date_planner_suggestions')
 }
 
 export async function generateDatePlan(preferences: {
@@ -308,6 +377,8 @@ export async function generateDatePlan(preferences: {
   vibes: string[]
   duration_hours: number
   date?: string
+  time_of_day?: 'morning' | 'afternoon' | 'evening' | 'night' | 'full_day'
+  exclude_venue_ids?: string[]
 }): Promise<{ status: string; plan: DatePlan }> {
   // Don't cache generated plans by default as they should be fresh
   const response = await fetch('/api/date-planner/generate', {
@@ -363,6 +434,103 @@ export async function swapDateStop(payload: {
     throw new Error('Failed to swap stop')
   }
 
+  return response.json()
+}
+
+export async function addDateStop(payload: {
+  insertAfterIndex: number
+  allStops: DateStop[]
+  preferences: any
+}): Promise<{ status: string; newStop: DateStop }> {
+  const response = await fetch('/api/date-planner/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to add stop')
+  }
+
+  return response.json()
+}
+
+// Venue Categories for Add Stop feature
+export interface VenueCategory {
+  id: string
+  label: string
+  icon: string
+  description: string
+}
+
+export async function fetchVenueCategories(): Promise<{ categories: VenueCategory[] }> {
+  const response = await fetch('/api/date-planner/venue-categories')
+  if (!response.ok) {
+    throw new Error('Failed to fetch venue categories')
+  }
+  return response.json()
+}
+
+export async function fetchVenuesByCategory(category: string, limit: number = 10): Promise<{
+  status: string
+  venues: any[]
+  count: number
+}> {
+  const response = await fetch(`/api/date-planner/venues-by-category/${category}?limit=${limit}`)
+  if (!response.ok) {
+    throw new Error('Failed to fetch venues')
+  }
+  return response.json()
+}
+
+export interface ScrapedVenue {
+  name?: string
+  address?: string
+  latitude?: number
+  longitude?: number
+  google_maps_url?: string
+  apple_maps_url?: string
+  source_type?: string
+}
+
+export async function scrapeMapUrl(url: string): Promise<{ status: string; venue: ScrapedVenue }> {
+  const response = await fetch('/api/date-planner/scrape-maps-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to scrape URL')
+  }
+  return response.json()
+}
+
+export async function addCustomVenue(payload: {
+  venue: {
+    name: string
+    address?: string
+    city?: string
+    state?: string
+    latitude?: number
+    longitude?: number
+    google_maps_url?: string
+    apple_maps_url?: string
+    suggested_category?: string
+    suggested_vibe?: string
+    notes?: string
+  }
+  planContext?: any
+  planId?: string
+}): Promise<{ status: string; message: string; venueRequestId?: string; isExisting: boolean }> {
+  const response = await fetch('/api/date-planner/add-custom-venue', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  if (!response.ok) {
+    throw new Error('Failed to add custom venue')
+  }
   return response.json()
 }
 

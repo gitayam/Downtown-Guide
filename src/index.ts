@@ -85,15 +85,19 @@ app.use('/api/*', async (c, next) => {
   await next();
 });
 
-// Cache GET API responses for 5 minutes (exclude POST/date-planner)
-app.use('/api/events/*', cache({
-  cacheName: 'downtown-events-api',
-  cacheControl: 'public, max-age=300',
-}));
-app.use('/api/sources', cache({
-  cacheName: 'downtown-events-api',
-  cacheControl: 'public, max-age=300',
-}));
+// Cache GET API responses for 5 minutes (POST requests should NOT be cached)
+app.use('/api/*', async (c, next) => {
+  // Only cache GET requests, skip POST/PUT/DELETE
+  if (c.req.method !== 'GET') {
+    await next();
+    return;
+  }
+  // Apply cache for GET requests
+  return cache({
+    cacheName: 'downtown-events-api',
+    cacheControl: 'public, max-age=300',
+  })(c, next);
+});
 
 // Global error handler with CORS
 app.onError((err, c) => {

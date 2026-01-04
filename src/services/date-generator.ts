@@ -18,6 +18,12 @@ export interface DatePreferences {
   is_21_plus?: boolean; // Can access 21+ venues (bars, breweries, etc.)
   include_area_attractions?: boolean; // Include venues outside downtown (state parks, mall, airport area, etc.)
   exclude_venue_ids?: string[]; // Venue IDs to exclude (for variety between days)
+  anchor_event_id?: string; // Specific event ID to build the plan around (from event page)
+  has_dog?: boolean; // Traveling with a dog - prefer pet-friendly venues
+  has_young_children?: boolean; // Traveling with children under 5 - prefer kid-friendly venues
+  needs_wifi?: boolean; // Need WiFi for remote work
+  needs_wheelchair_access?: boolean; // Need wheelchair accessible venues
+  avoid_stairs?: boolean; // Avoid venues with stairs
 }
 
 export interface DatePlan {
@@ -116,13 +122,37 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
     allVenues = allVenues.filter(v => v.is_downtown === 1);
   }
 
-  // 2. Fetch candidate events for the given day
-  let events: any[] = [];
-  if (prefs.date) {
-    const { from, to } = getTimeRange(prefs.date, prefs.time_of_day);
-    events = await fetchEvents(DB, { from, to, limit: 20 });
+  // Filter out event_only venues (theaters, stadiums, arenas)
+  // These venues should only be recommended when there's an event happening
+  // They will be included via the event slot mechanism, not as standalone venues
+  allVenues = allVenues.filter(v => v.event_only !== 1);
+
+  // 2. Fetch anchor event or candidate events
+  let anchorEvent: any = null;
+
+  // If a specific event ID is provided (from "Plan day around this" feature), use it
+  if (prefs.anchor_event_id) {
+    const anchorResult = await DB.prepare(`
+      SELECT e.*,
+        v.id as venue_id, v.name as venue_name, v.address as venue_address,
+        v.city as venue_city, v.state as venue_state, v.zip as venue_zip,
+        v.latitude as venue_latitude, v.longitude as venue_longitude
+      FROM events e
+      LEFT JOIN venues v ON e.venue_id = v.id
+      WHERE e.id = ?
+    `).bind(prefs.anchor_event_id).first();
+
+    if (anchorResult) {
+      anchorEvent = anchorResult;
+    }
   }
-  const anchorEvent = findBestEvent(events, prefs.vibes);
+
+  // If no anchor event specified or found, fetch events for the day and pick best
+  if (!anchorEvent && prefs.date) {
+    const { from, to } = getTimeRange(prefs.date, prefs.time_of_day);
+    const events = await fetchEvents(DB, { from, to, limit: 20 });
+    anchorEvent = findBestEvent(events, prefs.vibes);
+  }
 
   // 3. Build a template of time slots
   const slots = buildTimeSlots(prefs, anchorEvent);
@@ -146,9 +176,23 @@ export async function generateDatePlan(DB: D1Database, prefs: DatePreferences): 
   const totalDuration = stops.reduce((sum, s) => sum + s.duration, 0);
   const estimatedCost = stops.reduce((sum, s) => sum + s.cost, 0);
 
+  // Generate a descriptive title
+  let planTitle: string;
+  if (anchorEvent) {
+    // When building around a specific event, reference it in the title
+    planTitle = `Day Around "${anchorEvent.title}"`;
+  } else {
+    const timeLabel = prefs.time_of_day
+      ? prefs.time_of_day === 'full_day'
+        ? 'Full Day'
+        : prefs.time_of_day.charAt(0).toUpperCase() + prefs.time_of_day.slice(1)
+      : 'Perfect';
+    planTitle = `${timeLabel} ${prefs.event_type}`;
+  }
+
   return {
     id: crypto.randomUUID(),
-    title: `${prefs.time_of_day ? (prefs.time_of_day.charAt(0).toUpperCase() + prefs.time_of_day.slice(1)) : 'Perfect'} ${prefs.event_type}`,
+    title: planTitle,
     totalDuration,
     estimatedCost,
     stops,
@@ -170,15 +214,27 @@ function buildTimeSlots(prefs: DatePreferences, anchorEvent: any): TimeSlot[] {
     // If there's a specific event AND we're NOT in full_day mode, build the plan around it
     // Full day mode should generate comprehensive itineraries regardless of anchor events
     if (anchorEvent && prefs.time_of_day !== 'full_day') {
-        const eventStartHour = new Date(anchorEvent.start_datetime).getHours();
-        if (eventStartHour >= 18) { // Evening event
+        // Use prefs.time_of_day (computed correctly on frontend with user's timezone)
+        // instead of re-parsing start_datetime (which causes UTC/local timezone issues)
+        const isEveningOrNight = prefs.time_of_day === 'evening' || prefs.time_of_day === 'night';
+
+        if (isEveningOrNight) {
+            // Evening/Night event: Dinner → Event → Nightcap
             slots.push({ type: 'meal', activity: 'Pre-Event Dinner', categories: ['food'], duration: 75, defaultCost: 40, required: true });
             slots.push({ type: 'event', activity: anchorEvent.title, categories: [], duration: 120, defaultCost: 30, required: true });
             slots.push({ type: 'drinks', activity: 'Nightcap', categories: ['drink'], duration: 45, defaultCost: 20, required: false });
-        } else { // Day event
+        } else if (prefs.time_of_day === 'morning') {
+            // Morning event: Coffee → Event → Lunch → Activity
+            slots.push({ type: 'meal', activity: 'Pre-Event Coffee', categories: ['food'], duration: 30, defaultCost: 12, required: true });
             slots.push({ type: 'event', activity: anchorEvent.title, categories: [], duration: 120, defaultCost: 30, required: true });
-            slots.push({ type: 'meal', activity: 'Post-Event Lunch/Dinner', categories: ['food'], duration: 75, defaultCost: 40, required: true });
+            slots.push({ type: 'meal', activity: 'Post-Event Lunch', categories: ['food'], duration: 60, defaultCost: 25, required: true });
             slots.push({ type: 'activity', activity: 'Afternoon Activity', categories: ['nature', 'culture'], duration: 60, defaultCost: 15, required: false });
+        } else {
+            // Afternoon event: Lunch → Event → Activity → Dinner
+            slots.push({ type: 'meal', activity: 'Pre-Event Lunch', categories: ['food'], duration: 60, defaultCost: 25, required: true });
+            slots.push({ type: 'event', activity: anchorEvent.title, categories: [], duration: 120, defaultCost: 30, required: true });
+            slots.push({ type: 'activity', activity: 'Post-Event Activity', categories: ['nature', 'culture', 'shopping'], duration: 45, defaultCost: 10, required: false });
+            slots.push({ type: 'meal', activity: 'Evening Dinner', categories: ['food'], duration: 75, defaultCost: 35, required: false });
         }
         return slots;
     }
@@ -282,7 +338,96 @@ async function fillSlots(
       continue;
     }
 
-    const candidates = allVenues.filter(v => slot.categories.includes(v.category));
+    // Filter by category first
+    let candidates = allVenues.filter(v => slot.categories.includes(v.category));
+
+    // Filter by pet-friendly if traveling with a dog
+    if (prefs.has_dog) {
+      const petFriendlyCandidates = candidates.filter(v => v.pet_friendly === 1);
+      // If we have pet-friendly options, use them; otherwise fall back to all candidates
+      if (petFriendlyCandidates.length > 0) {
+        candidates = petFriendlyCandidates;
+      }
+    }
+
+    // Filter by kid-friendly if traveling with young children
+    if (prefs.has_young_children) {
+      const kidFriendlyCandidates = candidates.filter(v => v.kid_friendly === 1);
+      // If we have kid-friendly options, use them; otherwise fall back to all candidates
+      if (kidFriendlyCandidates.length > 0) {
+        candidates = kidFriendlyCandidates;
+      }
+      // Also exclude bars and 21+ venues when with young children
+      candidates = candidates.filter(v =>
+        v.subcategory !== 'bar' &&
+        v.subcategory !== 'dive_bar' &&
+        v.subcategory !== 'speakeasy' &&
+        v.subcategory !== 'brewery' &&
+        v.subcategory !== 'wine_bar'
+      );
+    }
+
+    // Filter by wheelchair accessibility if needed
+    if (prefs.needs_wheelchair_access) {
+      const wheelchairAccessibleCandidates = candidates.filter(v => v.wheelchair_accessible === 1);
+      // If we have wheelchair accessible options, use them; otherwise fall back to all candidates
+      if (wheelchairAccessibleCandidates.length > 0) {
+        candidates = wheelchairAccessibleCandidates;
+      }
+    }
+
+    // Filter out venues with stairs if user wants to avoid them
+    if (prefs.avoid_stairs) {
+      // Exclude venues with stairs UNLESS they have an elevator
+      const noStairsCandidates = candidates.filter(v =>
+        v.has_stairs !== 1 || v.has_elevator === 1
+      );
+      // If we have options without stairs, use them; otherwise fall back to all candidates
+      if (noStairsCandidates.length > 0) {
+        candidates = noStairsCandidates;
+      }
+    }
+
+    // Filter by WiFi availability if user needs it
+    if (prefs.needs_wifi) {
+      const wifiCandidates = candidates.filter(v => v.has_wifi === 1);
+      // If we have WiFi options, use them; otherwise fall back to all candidates
+      if (wifiCandidates.length > 0) {
+        candidates = wifiCandidates;
+      }
+    }
+
+    // For evening/night slots (especially drinks/nightcap), filter by best_time to exclude daytime-only venues
+    if (prefs.time_of_day === 'evening' || prefs.time_of_day === 'night') {
+      if (slot.type === 'drinks' || slot.activity.toLowerCase().includes('nightcap')) {
+        // For nightcap, strongly prefer venues open late (with 'night' or 'evening' in best_time)
+        // Exclude coffee shops and other daytime-only places
+        candidates = candidates.filter(v => {
+          const bestTime = v.best_time ? safeParseArray(v.best_time) : [];
+          // If no best_time set, allow it (don't exclude due to missing data)
+          if (bestTime.length === 0) return true;
+          // Exclude if best_time only has morning/afternoon (e.g., coffee shops that close at 5pm)
+          const hasLateHours = bestTime.includes('evening') || bestTime.includes('night');
+          const onlyEarlyHours = bestTime.every(t => t === 'morning' || t === 'afternoon');
+          return hasLateHours || !onlyEarlyHours;
+        });
+      }
+    }
+
+    // For morning slots, prefer venues with morning in best_time
+    if (prefs.time_of_day === 'morning') {
+      // Boost morning-appropriate venues but don't exclude others
+      candidates = candidates.sort((a, b) => {
+        const aTime = a.best_time ? safeParseArray(a.best_time) : [];
+        const bTime = b.best_time ? safeParseArray(b.best_time) : [];
+        const aHasMorning = aTime.includes('morning');
+        const bHasMorning = bTime.includes('morning');
+        if (aHasMorning && !bHasMorning) return -1;
+        if (!aHasMorning && bHasMorning) return 1;
+        return 0;
+      });
+    }
+
     const context: ScoringContext = { vibes: prefs.vibes, budgetRange: prefs.budget_range, timeOfDay: prefs.time_of_day };
     const selected = selectBestVenue(candidates, context, usedVenueIds);
 
@@ -388,6 +533,10 @@ function filterVenuesByPrefs(venues: any[], prefs: DatePreferences): any[] {
   if (!prefs.include_area_attractions) {
     filtered = filtered.filter(v => v.is_downtown === 1);
   }
+
+  // Filter out event_only venues (theaters, stadiums, arenas)
+  // These should only be recommended when there's an event happening
+  filtered = filtered.filter(v => v.event_only !== 1);
 
   return filtered;
 }

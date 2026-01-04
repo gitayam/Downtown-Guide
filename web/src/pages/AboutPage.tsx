@@ -58,6 +58,9 @@ export default function AboutPage() {
               <p className="text-stone-600 leading-relaxed">
                 Our <strong>intelligent itinerary builder</strong> takes the cognitive load out of planning. Tell us the occasion, your mood, and when you're free—we'll craft a complete day from morning coffee to evening entertainment, with venues that actually work well together.
               </p>
+              <p className="text-stone-600 leading-relaxed">
+                <strong>Found an event you want to attend?</strong> Click "Plan Day Around This Event" on any event page, and we'll automatically build a full itinerary with the perfect spots to visit before and after—dinner reservations, pre-show drinks, or a nightcap to end the evening.
+              </p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <div className="flex items-center gap-2 text-sm text-stone-500">
                   <MapPinIcon className="w-4 h-4 text-brick" />
@@ -65,7 +68,7 @@ export default function AboutPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-stone-500">
                   <CalendarDaysIcon className="w-4 h-4 text-brick" />
-                  <span>Day-specific events included</span>
+                  <span>Event-anchored itineraries</span>
                 </div>
               </div>
               <Link

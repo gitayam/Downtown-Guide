@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeftIcon, SparklesIcon, ShareIcon, MapPinIcon, GlobeAltIcon, TicketIcon, ArrowPathIcon, PlusIcon, CalendarIcon } from '@heroicons/react/24/outline'
-import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, fetchEvents, type DatePlan, type DateSuggestions, type DateStop } from '../lib/api'
+import { fetchDateSuggestions, generateDatePlan, saveDatePlan, getDatePlan, swapDateStop, fetchEvents, fetchEvent, type DatePlan, type DateSuggestions, type DateStop } from '../lib/api'
 import type { Event } from '../lib/types'
 import DatePlanMap from '../components/date-planner/DatePlanMap'
 import ShareModal from '../components/share/ShareModal'
@@ -84,6 +84,11 @@ export default function PlanDatePage() {
 
   const urlParams = new URLSearchParams(window.location.search)
   const sharedId = urlParams.get('id')
+  const anchorEventId = urlParams.get('event')
+
+  // State for event-anchored planning
+  const [anchorEvent, setAnchorEvent] = useState<Event | null>(null)
+  const [loadingAnchor, setLoadingAnchor] = useState(false)
 
   // Calculate weekend dates
   const thisWeekend = useMemo(() => getThisWeekend(), [])
@@ -106,6 +111,11 @@ export default function PlanDatePage() {
     has_military_access: false,
     is_21_plus: false,
     include_area_attractions: false,
+    has_dog: false,
+    has_young_children: false,
+    needs_wifi: false,
+    needs_wheelchair_access: false,
+    avoid_stairs: false,
     notes: ''
   })
 
@@ -118,6 +128,54 @@ export default function PlanDatePage() {
       fetchDateSuggestions().then(setSuggestions).finally(() => setLoading(false))
     }
   }, [sharedId])
+
+  // Handle anchor event from URL parameter - auto-generate itinerary
+  useEffect(() => {
+    if (!anchorEventId || sharedId) return
+
+    setLoadingAnchor(true)
+    fetchEvent(anchorEventId)
+      .then(async ({ data }) => {
+        setAnchorEvent(data)
+
+        // Auto-set preferences based on event
+        const eventDate = new Date(data.start_datetime)
+        const eventHour = eventDate.getHours()
+        const dateStr = toDateString(eventDate)
+
+        // Determine time_of_day based on event start time
+        let timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night' = 'evening'
+        if (eventHour < 12) timeOfDay = 'morning'
+        else if (eventHour < 17) timeOfDay = 'afternoon'
+        else if (eventHour < 21) timeOfDay = 'evening'
+        else timeOfDay = 'night'
+
+        const eventPrefs = {
+          ...prefs,
+          date: dateStr,
+          time_of_day: timeOfDay,
+          duration_hours: timeOfDay === 'morning' ? 4 : timeOfDay === 'afternoon' ? 5 : 4
+        }
+        setPrefs(eventPrefs)
+        setQuickDateOption('custom')
+
+        // Auto-generate the itinerary immediately
+        setGenerating(true)
+        try {
+          const res = await generateDatePlan({ ...eventPrefs, anchor_event_id: data.id })
+          setResult(res.plan)
+        } catch (e) {
+          console.error('Auto-generate failed:', e)
+          // If auto-generate fails, user can still manually generate
+        } finally {
+          setGenerating(false)
+        }
+      })
+      .catch(() => {
+        console.error('Failed to load anchor event')
+      })
+      .finally(() => setLoadingAnchor(false))
+  }, [anchorEventId, sharedId])
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -158,8 +216,11 @@ export default function PlanDatePage() {
         })
         setResult(null) // Clear single result, show comparison instead
       } else {
-        // Single day mode
-        const res = await generateDatePlan(prefs)
+        // Single day mode - include anchor event if present
+        const planPrefs = anchorEvent
+          ? { ...prefs, anchor_event_id: anchorEvent.id }
+          : prefs
+        const res = await generateDatePlan(planPrefs)
         setResult(res.plan)
       }
       setShareUrl('')
@@ -322,7 +383,21 @@ export default function PlanDatePage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>
+  if (loading || loadingAnchor || (generating && anchorEventId && !result)) return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-3 border-brick border-t-transparent mx-auto mb-4" />
+        <p className="text-lg font-medium text-gray-900 mb-2">
+          {generating ? 'Building your perfect day...' : loadingAnchor ? 'Loading event...' : 'Loading...'}
+        </p>
+        {generating && (
+          <p className="text-sm text-stone max-w-xs mx-auto">
+            Finding the best spots before and after your event
+          </p>
+        )}
+      </div>
+    </div>
+  )
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -339,16 +414,24 @@ export default function PlanDatePage() {
       <Link to="/" className="inline-flex items-center text-stone hover:text-brick mb-6"><ArrowLeftIcon className="w-4 h-4 mr-1" />Back to Events</Link>
       <div className="text-center mb-8">
         <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-3">
-          {weekendComparison ? 'Pick Your Day' : result && sharedId ? 'Shared Date Plan' : 'Plan Your Perfect Fayetteville Outing'}
+          {weekendComparison
+            ? 'Pick Your Day'
+            : result && sharedId
+            ? 'Shared Date Plan'
+            : anchorEvent
+            ? 'Make It a Full Day'
+            : 'Plan Your Perfect Fayetteville Outing'}
         </h1>
         <p className="text-lg text-stone max-w-2xl mx-auto">
           {weekendComparison
             ? "Choose your starting point, then swap or add stops to create your perfect itinerary."
             : result && sharedId
             ? 'A curated itinerary for a perfect outing in Fayetteville.'
+            : anchorEvent
+            ? "We'll build a full itinerary around your event with great spots before and after."
             : "Skip the endless scrolling. We've worked directly with downtown venues to build itineraries that actually flow—from the first coffee to the last nightcap."}
         </p>
-        {!result && !weekendComparison && (
+        {!result && !weekendComparison && !anchorEvent && (
           <p className="text-sm text-stone/70 mt-2 max-w-xl mx-auto">
             70+ hand-curated venues • Real-time events • Swap any stop you don't like
           </p>
@@ -668,6 +751,35 @@ export default function PlanDatePage() {
         </div>
       )}
 
+      {/* Anchor Event Banner - shows when coming from event page */}
+      {anchorEvent && !result && !weekendComparison && (
+        <div className="bg-gradient-to-r from-brick/10 to-capefear/10 rounded-2xl border border-brick/20 p-5 mb-6 animate-fade-in">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-brick/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <SparklesIcon className="w-6 h-6 text-brick" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-brick font-medium mb-1">Building your day around</p>
+              <h3 className="text-lg font-bold text-gray-900 truncate">{anchorEvent.title}</h3>
+              <p className="text-sm text-stone mt-1">
+                {formatDateFull(new Date(anchorEvent.start_datetime))} at{' '}
+                {new Date(anchorEvent.start_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                {anchorEvent.venue_name && <span className="ml-2">• {anchorEvent.venue_name}</span>}
+              </p>
+            </div>
+            <Link
+              to={`/events/${anchorEvent.id}`}
+              className="text-xs text-stone hover:text-brick underline flex-shrink-0"
+            >
+              View Event
+            </Link>
+          </div>
+          <p className="text-sm text-stone mt-3 ml-16">
+            We'll suggest great spots for before and after your event. Customize below and hit generate!
+          </p>
+        </div>
+      )}
+
       {!result && !weekendComparison && (
         <div className="bg-white rounded-2xl shadow-sm border border-sand p-6 md:p-8 space-y-6">
           <div>
@@ -863,6 +975,90 @@ export default function PlanDatePage() {
               </div>
             </div>
           )}
+
+          {/* Traveling With section */}
+          <div className="pt-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Traveling With</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label className="flex items-start gap-3 p-3 rounded-lg bg-sand/10 hover:bg-sand/20 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={prefs.has_dog}
+                  onChange={(e) => setPrefs({ ...prefs, has_dog: e.target.checked })}
+                  className="mt-0.5 w-4 h-4 rounded border-sand text-brick focus:ring-brick"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    🐕 Dog
+                  </span>
+                  <p className="text-xs text-stone mt-0.5">Prefer pet-friendly patios & venues</p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-3 rounded-lg bg-sand/10 hover:bg-sand/20 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={prefs.has_young_children}
+                  onChange={(e) => setPrefs({ ...prefs, has_young_children: e.target.checked })}
+                  className="mt-0.5 w-4 h-4 rounded border-sand text-brick focus:ring-brick"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    👶 Young Children (under 5)
+                  </span>
+                  <p className="text-xs text-stone mt-0.5">Kid-friendly spots, skip bars & lounges</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Accessibility Needs section */}
+          <div className="pt-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Accessibility Needs</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <label className="flex items-start gap-3 p-3 rounded-lg bg-sand/10 hover:bg-sand/20 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={prefs.needs_wheelchair_access}
+                  onChange={(e) => setPrefs({ ...prefs, needs_wheelchair_access: e.target.checked })}
+                  className="mt-0.5 w-4 h-4 rounded border-sand text-brick focus:ring-brick"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    ♿ Wheelchair Accessible
+                  </span>
+                  <p className="text-xs text-stone mt-0.5">ADA-compliant venues</p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-3 rounded-lg bg-sand/10 hover:bg-sand/20 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={prefs.avoid_stairs}
+                  onChange={(e) => setPrefs({ ...prefs, avoid_stairs: e.target.checked })}
+                  className="mt-0.5 w-4 h-4 rounded border-sand text-brick focus:ring-brick"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    🚷 Avoid Stairs
+                  </span>
+                  <p className="text-xs text-stone mt-0.5">Ground floor or elevator access</p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 p-3 rounded-lg bg-sand/10 hover:bg-sand/20 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={prefs.needs_wifi}
+                  onChange={(e) => setPrefs({ ...prefs, needs_wifi: e.target.checked })}
+                  className="mt-0.5 w-4 h-4 rounded border-sand text-brick focus:ring-brick"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    📶 WiFi Needed
+                  </span>
+                  <p className="text-xs text-stone mt-0.5">For remote work or browsing</p>
+                </div>
+              </label>
+            </div>
+          </div>
           <div className="pt-4"><button onClick={handleGenerate} disabled={generating} className="w-full py-4 bg-brick hover:bg-brick-600 disabled:opacity-70 text-white rounded-xl font-bold text-lg shadow-lg shadow-brick/20 transition-all flex items-center justify-center gap-2">{generating ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><SparklesIcon className="w-6 h-6" />Generate Itinerary</>}</button></div>
         </div>
       )}
@@ -882,7 +1078,7 @@ export default function PlanDatePage() {
               <div className="hidden sm:flex gap-2">
                 <button onClick={handleSave} disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-brick hover:bg-brick-600 rounded-lg transition-colors flex items-center gap-2">{saving ? 'Saving...' : <><ShareIcon className="w-4 h-4" />Share</>}</button>
                 <button onClick={handleEdit} className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20">Edit</button>
-                <button onClick={() => { setResult(null); window.history.pushState({}, '', '/plan-date'); }} className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20">Start Over</button>
+                <button onClick={() => { setResult(null); setAnchorEvent(null); window.history.pushState({}, '', '/plan-date'); }} className="px-4 py-2 text-sm font-medium text-stone hover:text-brick border border-sand rounded-lg hover:bg-sand/20">Start Over</button>
               </div>
             </div>
           </div>
@@ -913,6 +1109,29 @@ export default function PlanDatePage() {
                       <span>📅</span>
                       {formatEventTime(stop.event.start_datetime, stop.event.end_datetime)}
                     </p>
+                  )}
+                  {/* Venue details: address, hours, website */}
+                  {stop.venue && (
+                    <div className="text-sm text-stone space-y-1 mb-3 bg-sand/10 rounded-lg p-3">
+                      {stop.venue.address && (
+                        <p className="flex items-start gap-2">
+                          <MapPinIcon className="w-4 h-4 flex-shrink-0 mt-0.5 text-brick" />
+                          <span>{stop.venue.address}{stop.venue.city && `, ${stop.venue.city}`}{stop.venue.state && `, ${stop.venue.state}`} {stop.venue.zip}</span>
+                        </p>
+                      )}
+                      {stop.venue.hours_of_operation && (
+                        <p className="flex items-start gap-2">
+                          <span className="flex-shrink-0 mt-0.5">🕐</span>
+                          <span>{stop.venue.hours_of_operation}</span>
+                        </p>
+                      )}
+                      {stop.venue.website && (
+                        <p className="flex items-start gap-2">
+                          <GlobeAltIcon className="w-4 h-4 flex-shrink-0 mt-0.5 text-brick" />
+                          <a href={stop.venue.website} target="_blank" rel="noopener noreferrer" className="text-brick hover:underline truncate">{stop.venue.website.replace(/^https?:\/\/(www\.)?/, '')}</a>
+                        </p>
+                      )}
+                    </div>
                   )}
                   <p className="text-stone text-sm mb-3">{stop.notes}</p>
                   <div className="text-xs text-stone bg-sand/10 p-2 rounded inline-block mb-3">💰 Est. ${stop.cost}/person</div>
@@ -956,7 +1175,7 @@ export default function PlanDatePage() {
                 Edit
               </button>
               <button
-                onClick={() => { setResult(null); window.history.pushState({}, '', '/plan-date'); }}
+                onClick={() => { setResult(null); setAnchorEvent(null); window.history.pushState({}, '', '/plan-date'); }}
                 className="px-4 py-3 text-sm font-medium text-stone border border-sand rounded-lg hover:bg-sand/20"
               >
                 New

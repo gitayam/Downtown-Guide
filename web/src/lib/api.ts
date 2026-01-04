@@ -274,6 +274,8 @@ export interface DateStop {
     longitude?: number
     website?: string
     google_maps_url?: string
+    hours_of_operation?: string
+    phone?: string
   }
   event?: {
     id: string
@@ -379,6 +381,7 @@ export async function generateDatePlan(preferences: {
   date?: string
   time_of_day?: 'morning' | 'afternoon' | 'evening' | 'night' | 'full_day'
   exclude_venue_ids?: string[]
+  anchor_event_id?: string // Event ID to build the plan around
 }): Promise<{ status: string; plan: DatePlan }> {
   // Don't cache generated plans by default as they should be fresh
   const response = await fetch('/api/date-planner/generate', {

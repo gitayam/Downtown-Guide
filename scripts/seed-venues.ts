@@ -26,6 +26,7 @@ interface Venue {
   apple_maps_url?: string;
   image_url?: string;
   hours_of_operation?: string;
+  best_time?: string[];
   aliases?: string[];
 }
 
@@ -49,6 +50,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Segra+Stadium+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=460%20Hay%20St,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Box Office: Mon-Fri 10am-6pm; Game Days: Varies',
+    best_time: ['afternoon', 'evening'],
     aliases: ['Segra', 'Woodpeckers Stadium', 'SEGRA Stadium']
   },
   {
@@ -69,6 +71,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Crown+Coliseum+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=1960%20Coliseum%20Dr,%20Fayetteville,%20NC%20%2028306,%20United%20States',
     hours_of_operation: 'Box Office: Mon-Fri 10am-6pm, Sat 10am-4pm',
+    best_time: ['evening', 'night'],
     aliases: ['Crown', 'The Crown', 'Crown Arena', 'Crown Center']
   },
   {
@@ -89,6 +92,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Crown+Expo+Center+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=1960%20Coliseum%20Dr,%20Fayetteville,%20NC%20%2028306,%20United%20States',
     hours_of_operation: 'Box Office: Mon-Fri 10am-6pm, Sat 10am-4pm',
+    best_time: ['morning', 'afternoon'],
     aliases: ['Crown Expo', 'Expo Center']
   },
   {
@@ -109,6 +113,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Crown+Theatre+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=1960%20Coliseum%20Dr,%20Fayetteville,%20NC%20%2028306,%20United%20States',
     hours_of_operation: 'Box Office: Mon-Fri 10am-6pm, Sat 10am-4pm',
+    best_time: ['evening'],
     aliases: []
   },
 
@@ -129,6 +134,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Festival+Park+Fayetteville+NC',
     apple_maps_url: 'http://maps.apple.com/?address=335%20Ray%20Ave,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Hours vary by event',
+    best_time: ['afternoon', 'evening'],
     aliases: ['Dogwood Festival Park']
   },
   {
@@ -145,6 +151,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     venue_type: 'district',
     google_maps_url: 'https://maps.google.com/?q=Downtown+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=222%20Hay%20St,%20Fayetteville,%20NC%20%2028301,%20United%20States',
+    best_time: ['afternoon', 'evening'],
     aliases: ['Downtown', 'Hay Street', 'Fayetteville Downtown']
   },
   {
@@ -165,6 +172,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Cameo+Art+House+Theatre+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=225%20Hay%20St,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Showtimes vary',
+    best_time: ['evening', 'night'],
     aliases: ['Cameo Theatre', 'Cameo', 'Cameo Art House']
   },
   {
@@ -184,7 +192,88 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Arts+Center+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=301%20Hay%20St,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Mon-Thu 9am-5pm, Fri 9am-12pm, Sat 12pm-6pm, Sun 2pm-6pm',
+    best_time: ['morning', 'afternoon'],
     aliases: ['Arts Council', 'Fayetteville Arts Center']
+  },
+  {
+    id: 'us_army_airborne_special_operations_museum',
+    name: 'U.S. Army Airborne & Special Operations Museum',
+    short_name: 'ASOM',
+    description: 'Museum dedicated to the history of the US Army Airborne and Special Operations forces.',
+    address: '100 Bragg Blvd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 35.0558,
+    longitude: -78.8825,
+    phone: '(910) 643-2778',
+    website: 'https://www.asomf.org',
+    venue_type: 'museum',
+    google_maps_url: 'https://maps.google.com/?q=US+Army+Airborne+Special+Operations+Museum',
+    apple_maps_url: 'https://maps.apple.com/?address=100%20Bragg%20Blvd,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Tue-Sat 10am-4pm, Sun 12pm-4pm, Mon: Closed',
+    best_time: ['morning', 'afternoon'],
+    aliases: ['ASOM', 'Airborne Museum']
+  },
+  {
+    id: 'cape_fear_botanical_garden',
+    name: 'Cape Fear Botanical Garden',
+    short_name: 'Botanical Garden',
+    description: '80-acre botanical garden with nature trails and themed gardens.',
+    address: '536 N Eastern Blvd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 35.0458,
+    longitude: -78.8506,
+    phone: '(910) 486-0221',
+    website: 'https://www.capefearbg.org',
+    venue_type: 'park',
+    google_maps_url: 'https://maps.google.com/?q=Cape+Fear+Botanical+Garden',
+    apple_maps_url: 'https://maps.apple.com/?address=536%20N%20Eastern%20Blvd,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Mon-Sat 9am-5pm, Sun 12pm-5pm',
+    best_time: ['morning', 'afternoon'],
+    aliases: ['Botanical Garden', 'CFBG']
+  },
+  {
+    id: 'zipquest_waterfall_treetop_adventure',
+    name: 'ZipQuest Waterfall & Treetop Adventure',
+    short_name: 'ZipQuest',
+    description: 'Zipline course and nature adventure park.',
+    address: '533 Carvers Falls Rd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28311',
+    latitude: 35.1458,
+    longitude: -78.8464,
+    phone: '(910) 488-8787',
+    website: 'https://www.zipquest.com',
+    venue_type: 'park',
+    google_maps_url: 'https://maps.google.com/?q=ZipQuest+Waterfall+Treetop+Adventure',
+    apple_maps_url: 'https://maps.apple.com/?address=533%20Carvers%20Falls%20Rd,%20Fayetteville,%20NC%2028311',
+    hours_of_operation: 'Mon, Fri, Sat: 9am-5pm, Sun: 10am-5pm, Tue-Thu: Closed',
+    best_time: ['morning', 'afternoon'],
+    aliases: ['ZipQuest']
+  },
+  {
+    id: 'the_climbing_place',
+    name: 'The Climbing Place',
+    short_name: 'Climbing Place',
+    description: 'Indoor rock climbing gym.',
+    address: '436 W Russell St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 35.0519,
+    longitude: -78.8828,
+    phone: '(910) 486-9638',
+    website: 'https://www.theclimbingplace.com',
+    venue_type: 'sports_complex',
+    google_maps_url: 'https://maps.google.com/?q=The+Climbing+Place',
+    apple_maps_url: 'https://maps.apple.com/?address=436%20W%20Russell%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Mon-Sat: 10am-9pm, Sun: Closed',
+    best_time: ['morning', 'afternoon', 'evening'],
+    aliases: ['The Climbing Place']
   },
 
   // University Venues
@@ -206,6 +295,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Capel+Arena+FSU+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=713%20Langdon%20St,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Varies by event',
+    best_time: ['evening'],
     aliases: ['FSU Capel Arena', 'Fayetteville State Capel Arena']
   },
   {
@@ -226,6 +316,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Seabrook+Auditorium+FSU+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=1200%20Murchison%20Rd,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Varies by event',
+    best_time: ['evening'],
     aliases: ['FSU Seabrook', 'Seabrook Auditorium (Fayetteville State University)']
   },
   {
@@ -246,6 +337,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Jeralds+Stadium+FSU+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=1200%20Murchison%20Rd,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Varies by event',
+    best_time: ['afternoon', 'evening'],
     aliases: ['FSU Stadium', 'FSU Football Stadium', 'Jeralds']
   },
   {
@@ -265,6 +357,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Huff+Concert+Hall+Methodist+University+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=5400%20Ramsey%20St,%20Fayetteville,%20NC%20%2028311,%20United%20States',
     hours_of_operation: 'Varies by event',
+    best_time: ['evening'],
     aliases: ['Huff Concert Hall (Methodist University)', 'Methodist University Huff Hall']
   },
 
@@ -286,6 +379,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Headquarters+Library+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=300%20Maiden%20Ln,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Mon-Tue, Thu 9am-7pm; Wed, Fri-Sat 9am-6pm; Sun 2pm-6pm',
+    best_time: ['morning', 'afternoon'],
     aliases: ['Cumberland County Library', 'Main Library']
   },
 
@@ -306,7 +400,9 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     venue_type: 'museum',
     google_maps_url: 'https://www.google.com/maps/search/?api=1&query=116+Green+St+Fayetteville+NC+28301',
     apple_maps_url: 'https://maps.apple.com/?address=116+Green+St,+Fayetteville,+NC+28301',
-    aliases: ["Fascinate-U Children's Museum", 'Fascinate-U', 'Fascinate U']
+    hours_of_operation: 'Tue-Fri: 9am-5pm, Sat: 10am-5pm, Sun: 12pm-5pm, Mon: Closed',
+    best_time: ['morning', 'afternoon'],
+    aliases: ["Fascinate-U Children's Museum", 'Fascinate-U', 'Fascinate U', 'fascinate-u_childrens_museum']
   },
 
   // Fort Bragg
@@ -347,6 +443,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Fayetteville+Motor+Speedway+NC',
     apple_maps_url: 'https://maps.apple.com/?address=3407%20Doc%20Bennett%20Rd,%20Fayetteville,%20NC%2028306',
     hours_of_operation: 'Sat: Races; Office: Mon-Sun 9am-5pm',
+    best_time: ['afternoon', 'evening'],
     aliases: ['Speedway', 'Fay Motor Speedway', 'Fayetteville Speedway']
   },
 
@@ -367,6 +464,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Muse+and+Co+311+Hay+St+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=311%20Hay%20St,%20Fayetteville,%20NC%20%2028301,%20United%20States',
     hours_of_operation: 'Tue-Fri 11am-7pm, Sat-Sun 11am-8pm',
+    best_time: ['afternoon', 'evening'],
     aliases: ['Muse', 'Muse and Co']
   },
   {
@@ -388,6 +486,200 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     hours_of_operation: 'By appointment',
     aliases: ['226 The Warehouse', 'The Warehouse at 226', '226 Donaldson St']
   },
+  {
+    id: 'blue_moon_caf',
+    name: 'Blue Moon Café',
+    short_name: 'Blue Moon',
+    description: 'Eclectic cafe featuring specialty coffees, sandwiches & more in a relaxed, arty atmosphere.',
+    address: '310 Hay St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 35.0523,
+    longitude: -78.8786,
+    phone: '(910) 860-4700',
+    website: 'https://www.310bluemooncafe.com',
+    venue_type: 'cafe',
+    google_maps_url: 'https://maps.google.com/?q=Blue+Moon+Cafe+Fayetteville+NC',
+    apple_maps_url: 'https://maps.apple.com/?address=310%20Hay%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Mon: 11am-5pm, Tue-Thu: 11am-9pm, Fri-Sat: 11am-10pm, Sun: 11am-3pm',
+    best_time: ['afternoon', 'evening'],
+    aliases: ['Blue Moon Cafe', 'Blue Moon']
+  },
+  {
+    id: 'rude_awakening_coffee_house',
+    name: 'Rude Awakening Coffee House',
+    short_name: 'Rude Awakening',
+    description: 'Long-standing coffee shop in a converted 1920s building with a courtyard.',
+    address: '227 Hay St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 35.0514,
+    longitude: -78.8790,
+    phone: '(910) 223-7833',
+    website: 'http://www.rudeawakening.net',
+    venue_type: 'cafe',
+    google_maps_url: 'https://maps.google.com/?q=Rude+Awakening+Coffee+House',
+    apple_maps_url: 'https://maps.apple.com/?address=227%20Hay%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Mon-Thu: 7:30am-10pm, Fri-Sat: 7:30am-12am, Sun: 9am-10pm',
+    best_time: ['morning', 'afternoon', 'evening', 'night'],
+    aliases: ['Rude Awakening']
+  },
+  {
+    id: 'walkers_hookah_cafe',
+    name: "Walker's Hookah Cafe",
+    short_name: "Walker's",
+    description: "Speakeasy-style hookah lounge in downtown Fayetteville offering handcrafted blends and a relaxing atmosphere.",
+    address: '116 Gillespie St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 35.0515,
+    longitude: -78.8778,
+    phone: '(910) 339-2019',
+    website: 'https://www.walkershookahcafe.com',
+    venue_type: 'bar',
+    google_maps_url: "https://maps.google.com/?q=Walker's+Hookah+Cafe+Fayetteville+NC",
+    apple_maps_url: 'https://maps.apple.com/?address=116%20Gillespie%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Mon: Closed, Tue-Thu: 5pm-12am, Fri-Sat: 5pm-2am, Sun: 5pm-12am',
+    best_time: ['evening', 'night'],
+    aliases: ["Walker's Hookah Lounge", "Walker's"]
+  },
+  {
+    id: 'gregs_pottery',
+    name: "Greg's Pottery",
+    short_name: "Greg's Pottery",
+    description: 'Paint-your-own pottery studio.',
+    address: '132 Hay St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 35.0532,
+    longitude: -78.8791,
+    phone: '(910) 483-8355',
+    website: 'http://www.gregspottery.com',
+    venue_type: 'retail',
+    google_maps_url: 'https://maps.google.com/?q=Gregs+Pottery',
+    apple_maps_url: 'https://maps.apple.com/?address=132%20Hay%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Mon-Sat: 11am-4pm, Sun: Closed',
+    best_time: ['afternoon'],
+    aliases: ['Gregs Pottery']
+  },
+  {
+    id: 'macs_speed_shop',
+    name: "Mac's Speed Shop",
+    short_name: "Mac's",
+    description: 'Biker-friendly BBQ restaurant and bar.',
+    address: '482 N McPherson Church Rd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28303',
+    latitude: 35.0699,
+    longitude: -78.9392,
+    phone: '(910) 920-1234',
+    website: 'https://macspeedshop.com',
+    venue_type: 'restaurant',
+    google_maps_url: 'https://maps.google.com/?q=Macs+Speed+Shop+Fayetteville',
+    apple_maps_url: 'https://maps.apple.com/?address=482%20N%20McPherson%20Church%20Rd,%20Fayetteville,%20NC%2028303',
+    hours_of_operation: 'Mon-Wed: 11am-10pm, Thu-Sat: 11am-11pm, Sun: 11am-10pm',
+    best_time: ['afternoon', 'evening'],
+    aliases: ['Macs Speed Shop']
+  },
+  {
+    id: 'luigis_italian_chophouse',
+    name: "Luigi's Italian Chophouse",
+    short_name: "Luigi's",
+    description: 'Upscale Italian restaurant and bar with a large patio.',
+    address: '528 N McPherson Church Rd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28303',
+    latitude: 35.0705,
+    longitude: -78.9395,
+    phone: '(910) 864-1810',
+    website: 'http://luigisnc.com',
+    venue_type: 'restaurant',
+    google_maps_url: 'https://maps.google.com/?q=Luigis+Italian+Chophouse',
+    apple_maps_url: 'https://maps.apple.com/?address=528%20N%20McPherson%20Church%20Rd,%20Fayetteville,%20NC%2028303',
+    hours_of_operation: 'Mon-Thu: 11:30am-9pm, Fri: 5pm-10pm, Sat: 12pm-10pm, Sun: 12pm-9pm',
+    best_time: ['afternoon', 'evening'],
+    aliases: ['Luigis', 'Luigis Italian Restaurant']
+  },
+  {
+    id: 'bound_and_vine',
+    name: 'Bound and Vine',
+    short_name: 'Bound and Vine',
+    description: 'Bookstore and wine bar.',
+    address: '134 Person St',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 35.0522,
+    longitude: -78.8776,
+    phone: '(472) 263-8731',
+    website: 'https://www.boundandvine.com',
+    venue_type: 'retail',
+    google_maps_url: 'https://maps.google.com/?q=Bound+and+Vine',
+    apple_maps_url: 'https://maps.apple.com/?address=134%20Person%20St,%20Fayetteville,%20NC%2028301',
+    hours_of_operation: 'Tue-Wed: 11am-6pm, Thu-Sat: 11am-9pm, Sun: 12pm-5pm, Mon: Closed',
+    best_time: ['afternoon', 'evening'],
+    aliases: ['Bound & Vine']
+  },
+  {
+    id: 'the_salad_box',
+    name: 'The Salad Box & Some',
+    short_name: 'The Salad Box',
+    description: 'Health food restaurant offering salads and wraps.',
+    address: 'Wait for address',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28301',
+    latitude: 0,
+    longitude: 0,
+    phone: '',
+    website: '',
+    venue_type: 'restaurant',
+    hours_of_operation: 'Mon-Sat: 10am-2:40pm, Sun: Closed',
+    best_time: ['afternoon'],
+    aliases: ['The Salad Box']
+  },
+  {
+    id: 'wana_navu_kava_bar',
+    name: 'Wana Navu Kava Bar',
+    short_name: 'Wana Navu',
+    description: 'Kava bar and lounge.',
+    address: '500 N McPherson Church Rd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28303',
+    latitude: 35.0700,
+    longitude: -78.9390,
+    phone: '',
+    website: '',
+    venue_type: 'bar',
+    hours_of_operation: 'Mon-Thu: 12:15pm-10:30pm, Fri: 12:15pm-12am, Sat: 12:15pm-12:30am, Sun: 12:15pm-10:30pm',
+    best_time: ['afternoon', 'evening', 'night'],
+    aliases: ['Wana Navu']
+  },
+  {
+    id: 'district_house_of_taps',
+    name: 'District House of Taps',
+    short_name: 'District House',
+    description: 'Self-pour taproom and social house.',
+    address: '1240 Fort Bragg Rd',
+    city: 'Fayetteville',
+    state: 'NC',
+    zip: '28305',
+    latitude: 35.0560,
+    longitude: -78.9000,
+    phone: '',
+    website: '',
+    venue_type: 'bar',
+    hours_of_operation: 'Tue-Thu: 4pm-10pm, Fri: 4pm-12am, Sat: 12pm-12am, Sun: 12pm-8pm, Mon: Closed',
+    best_time: ['afternoon', 'evening', 'night'],
+    aliases: ['District House']
+  },
 
   // Bars & Entertainment
   {
@@ -406,7 +698,8 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     venue_type: 'bar',
     google_maps_url: "https://maps.google.com/?q=Paddy's+Irish+Public+House+Fayetteville+NC",
     apple_maps_url: 'https://maps.apple.com/?address=2606%20Raeford%20Rd,%20Fayetteville,%20NC%2028303',
-    hours_of_operation: 'Wed-Sat 6pm-2am',
+    hours_of_operation: 'Wed-Sat 6pm-2am, Sun-Tue: Closed',
+    best_time: ['evening', 'night'],
     aliases: ["Paddys Irish Public House", "Paddys Irish Pub", "Paddy's"]
   },
   {
@@ -425,7 +718,8 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     venue_type: 'restaurant',
     google_maps_url: 'https://maps.google.com/?q=Latitude+35+Bar+Grill+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=1217%20Hay%20St,%20Fayetteville,%20NC%2028305',
-    hours_of_operation: 'Tue-Thu 11:30am-10pm, Fri-Sat 11:30am-12am, Sun 9am-9pm',
+    hours_of_operation: 'Tue-Thu 11:30am-10pm, Fri: 11:30am-12am, Sat: 9am-12am, Sun: 9am-9pm, Mon: Closed',
+    best_time: ['afternoon', 'evening', 'night'],
     aliases: ['Latitude 35 Bar & Grill', 'Latitude 35']
   },
   {
@@ -445,6 +739,7 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     google_maps_url: 'https://maps.google.com/?q=Taste+of+West+Africa+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=116%20Person%20St,%20Fayetteville,%20NC%2028301',
     hours_of_operation: 'Wed-Sat 11am-8pm, Sun 11am-5pm',
+    best_time: ['afternoon', 'evening'],
     aliases: ['TOWA', 'A Taste of West Africa']
   },
 
@@ -465,7 +760,8 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     venue_type: 'gallery',
     google_maps_url: 'https://maps.google.com/?q=City+Center+Gallery+Books+Fayetteville+NC',
     apple_maps_url: 'https://maps.apple.com/?address=112%20Hay%20St,%20Fayetteville,%20NC%2028301',
-    hours_of_operation: 'Mon-Thu 10am-6pm, Fri-Sat 10am-8pm',
+    hours_of_operation: 'Mon-Sat 10am-6pm, Sun: Closed',
+    best_time: ['morning', 'afternoon'],
     aliases: ['City Center Gallery & Books', 'City Center Gallery']
   },
   {
@@ -608,6 +904,8 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     venue_type: 'bar',
     google_maps_url: 'https://www.google.com/maps/search/?api=1&query=100+Broadfoot+Ave+Fayetteville+NC+28305',
     apple_maps_url: 'https://maps.apple.com/?address=100+Broadfoot+Ave,+Fayetteville,+NC+28305',
+    hours_of_operation: 'Mon-Thu: 11am-10pm, Fri-Sat: 11am-12am, Sun: 11am-9pm',
+    best_time: ['afternoon', 'evening', 'night'],
     aliases: ['Haymount Truck Stop', 'HTS']
   },
   {
@@ -623,6 +921,8 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     venue_type: 'bar',
     google_maps_url: 'https://www.google.com/maps/search/?api=1&query=421+Maiden+Ln+Fayetteville+NC+28301',
     apple_maps_url: 'https://maps.apple.com/?address=421+Maiden+Ln,+Fayetteville,+NC+28301',
+    hours_of_operation: 'Tue-Thu: 4pm-10pm, Fri: 4pm-12am, Sat: 12pm-12am, Sun: 12pm-10pm, Mon: Closed',
+    best_time: ['afternoon', 'evening', 'night'],
     aliases: ["Sol's Arcade and Taproom", "Sols Arcade"]
   },
   {
@@ -639,6 +939,8 @@ const FAYETTEVILLE_VENUES: Venue[] = [
     venue_type: 'brewery',
     google_maps_url: 'https://www.google.com/maps/search/?api=1&query=304+Williams+St+Fayetteville+NC+28301',
     apple_maps_url: 'https://maps.apple.com/?address=304+Williams+St,+Fayetteville,+NC+28301',
+    hours_of_operation: 'Mon-Sun: 4pm-10pm (Sun until 8pm)',
+    best_time: ['evening', 'night'],
     aliases: ['North South Brewing Company', 'North South Brewing']
   },
   {
@@ -751,6 +1053,7 @@ async function seedVenues() {
     if (venue.apple_maps_url) { cols.push('apple_maps_url'); vals.push(`'${venue.apple_maps_url}'`); }
     if (venue.hours_of_operation) { cols.push('hours_of_operation'); vals.push(`'${venue.hours_of_operation.replace(/'/g, "''")}'`); }
     if (venue.image_url) { cols.push('image_url'); vals.push(`'${venue.image_url}'`); }
+    if (venue.best_time) { cols.push('best_time'); vals.push(`'${JSON.stringify(venue.best_time)}'`); }
 
     statements.push(
       `INSERT OR REPLACE INTO venues (${cols.join(', ')}) VALUES (${vals.join(', ')});`

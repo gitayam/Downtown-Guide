@@ -11,6 +11,7 @@ import {
   PhoneIcon,
   InformationCircleIcon,
   MapIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline'
 import type { Event } from '../lib/types'
 import { fetchEvent } from '../lib/api'
@@ -306,6 +307,26 @@ export default function EventPage() {
                   </div>
                 </div>
               )}
+
+              {/* Plan Your Day CTA */}
+              <div className="bg-gradient-to-r from-brick/5 to-capefear/5 rounded-xl p-4 border border-brick/10">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-brick/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <SparklesIcon className="w-5 h-5 text-brick" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900 text-sm">Make it a full day</p>
+                    <p className="text-xs text-stone mt-0.5">Get recommendations for before & after</p>
+                  </div>
+                </div>
+                <Link
+                  to={`/plan-date?event=${event.id}`}
+                  className="mt-3 w-full py-2.5 bg-brick hover:bg-brick-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <SparklesIcon className="w-4 h-4" />
+                  Plan Day Around This Event
+                </Link>
+              </div>
 
               {/* Divider */}
               <hr className="border-sand" />

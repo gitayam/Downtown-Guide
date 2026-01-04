@@ -27,7 +27,7 @@ export interface Venue {
 export interface ScoringContext {
   vibes: string[];
   budgetRange: string;          // '$', '$$', '$$$'
-  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night' | 'full_day';
   eventType?: string;           // 'first_date', 'anniversary', etc.
   previousStop?: Coordinates;   // For proximity scoring
 }

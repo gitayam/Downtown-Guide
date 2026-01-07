@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "Año Nuevo Lunar 2026 | Año del Caballo | Fayetteville NC",
+    "description": "¡Celebra el Año Nuevo Lunar 2026 en Fayetteville, NC! Únete a nuestra diversa comunidad asiática para juegos tradicionales, comida, vestimenta cultural y dar la bienvenida al Año del Caballo de Fuego el 17 de febrero."
+  },
+  "hero": {
+    "date": "17 de febrero de 2026",
+    "title": "Año Nuevo Lunar",
+    "subtitle": "Año del Caballo de Fuego",
+    "description": "¡Únete a la diversa comunidad asiática de Fayetteville para celebrar el Año Nuevo Lunar! Experimenta juegos tradicionales, cocina auténtica y festividades culturales.",
+    "cta": {
+      "getInvolved": "Participa",
+      "exploreActivities": "Explorar Actividades"
+    }
+  },
+  "community": {
+    "title": "Una Celebración para Todos",
+    "description1": "Fayetteville es hogar de una vibrante y creciente comunidad asiática - chinos, coreanos, vietnamitas, japoneses, tailandeses, indonesios, filipinos y muchas más culturas llaman a nuestra ciudad su hogar. El Año Nuevo Lunar es un momento para reunirnos, compartir tradiciones y celebrar el rico tapiz del patrimonio asiático aquí mismo en nuestra comunidad.",
+    "description2": "Ya sea que estés celebrando tu propia herencia o descubriendo nuevas culturas, ¡te invitamos a unirte a nosotros para dar la bienvenida al Año del Caballo!"
+  },
+  "zodiac": {
+    "title": "Año del Caballo de Fuego",
+    "description": "2026 marca el Año del Caballo de Fuego - ¡el primero desde 1966! Las personas nacidas en años del Caballo son conocidas por su energía y espíritu libre.",
+    "traits": {
+      "title": "Rasgos de Personalidad",
+      "energetic": "Energético",
+      "independent": "Independiente",
+      "adventurous": "Aventurero",
+      "passionate": "Apasionado",
+      "freeSpirited": "Espíritu libre"
+    },
+    "luckyColors": {
+      "title": "Colores de la Suerte del Caballo",
+      "subtitle": "Para los nacidos en años del Caballo",
+      "red": "Rojo",
+      "pink": "Rosa",
+      "purple": "Morado"
+    },
+    "luckyNumbers": {
+      "title": "Números de la Suerte del Caballo",
+      "subtitle": "Para los nacidos en años del Caballo"
+    },
+    "compatible": {
+      "title": "Mejores Compatibilidades",
+      "tiger": "Tigre",
+      "dog": "Perro",
+      "sheep": "Oveja"
+    }
+  },
+  "games": {
+    "title": "Juegos Tradicionales y Desafíos",
+    "description": "¡Aprende y juega juegos tradicionales de toda Asia! No se necesita experiencia - te enseñaremos todo.",
+    "difficulty": {
+      "easy": "Fácil",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "mahjong": {
+      "name": "Mahjong",
+      "origin": "Chino",
+      "description": "Un juego de fichas de habilidad, estrategia y cálculo. Aprende a emparejar fichas y construir manos ganadoras.",
+      "players": "4 jugadores"
+    },
+    "yutNori": {
+      "name": "Yut Nori",
+      "origin": "Coreano",
+      "description": "Un juego de mesa tradicional usando palos de madera. ¡Corre con tus piezas alrededor del tablero para ganar!",
+      "players": "2-4 jugadores"
+    },
+    "go": {
+      "name": "Go (Baduk/Weiqi)",
+      "origin": "Este de Asia",
+      "description": "Un antiguo juego de estrategia de control territorial. Reglas simples, profundidad infinita.",
+      "players": "2 jugadores"
+    },
+    "chineseChess": {
+      "name": "Ajedrez Chino (Xiangqi)",
+      "origin": "Chino",
+      "description": "Un juego de mesa estratégico con piezas únicas como cañones y elefantes.",
+      "players": "2 jugadores"
+    },
+    "bigTwo": {
+      "name": "Big Two (Dai Di)",
+      "origin": "Cantonés",
+      "description": "Un juego de cartas rápido donde compites por vaciar tu mano con combinaciones de cartas.",
+      "players": "4 jugadores"
+    },
+    "cauCa": {
+      "name": "Cau Ca",
+      "origin": "Vietnamita",
+      "description": "Juego tradicional de cartas de pesca jugado durante las celebraciones del Tet.",
+      "players": "2-6 jugadores"
+    }
+  },
+  "food": {
+    "title": "Comidas y Bebidas Tradicionales",
+    "description": "¡Prueba los sabores del Año Nuevo Lunar! Cada plato lleva un significado especial y deseos para el año que viene.",
+    "luckyFoods": "Comidas de la Suerte",
+    "traditionalDrinks": "Bebidas Tradicionales",
+    "jiaozi": {
+      "name": "Jiaozi (Dumplings)",
+      "origin": "Chino",
+      "description": "Dumplings en forma de media luna que simbolizan riqueza y prosperidad. ¡Imprescindibles para el Año Nuevo Chino!",
+      "symbolism": "Riqueza y fortuna (con forma de lingotes de oro antiguos)"
+    },
+    "tteokguk": {
+      "name": "Tteokguk",
+      "origin": "Coreano",
+      "description": "Sopa de pastel de arroz tradicionalmente consumida en el Día de Año Nuevo. ¡Comerla significa ganar un año de edad!",
+      "symbolism": "Longevidad y nuevos comienzos"
+    },
+    "banhChung": {
+      "name": "Banh Chung",
+      "origin": "Vietnamita",
+      "description": "Pastel cuadrado de arroz pegajoso envuelto en hojas de plátano, relleno de cerdo y frijoles mungo.",
+      "symbolism": "La tierra y gratitud a los ancestros"
+    },
+    "springRolls": {
+      "name": "Rollitos de Primavera",
+      "origin": "Varios",
+      "description": "Rollitos dorados crujientes rellenos de verduras y carne, representando lingotes de oro.",
+      "symbolism": "Riqueza y prosperidad"
+    },
+    "mochi": {
+      "name": "Mochi",
+      "origin": "Japonés",
+      "description": "Pasteles suaves de arroz en varios sabores, tradicionalmente consumidos durante las celebraciones de Año Nuevo.",
+      "symbolism": "Buena fortuna y longevidad"
+    },
+    "nianGao": {
+      "name": "Nian Gao",
+      "origin": "Chino",
+      "description": "Pastel dulce de arroz pegajoso. El nombre suena como \"año más alto\" - deseos de mejora.",
+      "symbolism": "Progreso y avance"
+    },
+    "sujeonggwa": {
+      "name": "Sujeonggwa",
+      "origin": "Coreano",
+      "description": "Ponche dulce de canela y jengibre con caquis secos. Refrescante y aromático."
+    },
+    "jasmineTea": {
+      "name": "Té de Jazmín",
+      "origin": "Chino",
+      "description": "Té verde fragante aromatizado con flores de jazmín. Un símbolo de elegancia y pureza."
+    },
+    "bobaTea": {
+      "name": "Té de Boba",
+      "origin": "Taiwanés",
+      "description": "Querido té con leche con perlas de tapioca masticables. ¡Un clásico moderno!"
+    },
+    "sake": {
+      "name": "Sake",
+      "origin": "Japonés",
+      "description": "Vino de arroz tradicional que a menudo se disfruta durante celebraciones y ceremonias."
+    },
+    "traDa": {
+      "name": "Tra Da (Té Helado)",
+      "origin": "Vietnamita",
+      "description": "Té verde helado simple y refrescante servido en todo Vietnam."
+    }
+  },
+  "attire": {
+    "title": "Vestimenta Tradicional",
+    "description": "¡Experimenta la belleza de la ropa tradicional asiática! Pruébate hermosas prendas y aprende sobre su significado cultural.",
+    "hanbok": {
+      "name": "Hanbok",
+      "origin": "Coreano",
+      "description": "Elegante vestido tradicional coreano con colores vibrantes y líneas gráciles"
+    },
+    "qipao": {
+      "name": "Qipao/Cheongsam",
+      "origin": "Chino",
+      "description": "Vestido ajustado con cuello alto, a menudo en rojo con acentos dorados"
+    },
+    "aoDai": {
+      "name": "Ao Dai",
+      "origin": "Vietnamita",
+      "description": "Túnica larga usada sobre pantalones, conocida por su elegancia fluida"
+    },
+    "kimono": {
+      "name": "Kimono",
+      "origin": "Japonés",
+      "description": "Prenda envolvente tradicional con hermosos patrones y cinturón obi"
+    }
+  },
+  "businesses": {
+    "title": "Apoya a Negocios Asiáticos Locales",
+    "description": "Fayetteville tiene increíbles restaurantes y tiendas asiáticas. ¡Visítalos para experimentar sabores auténticos durante todo el año!"
+  },
+  "participate": {
+    "title": "Comparte Tu Cultura",
+    "description": "¡Estamos buscando miembros de la comunidad para ayudar a hacer especial la celebración del Año Nuevo Lunar de Fayetteville!",
+    "waysToParticipate": "Formas de Participar",
+    "forBusinesses": "Para Negocios",
+    "items": {
+      "teachGame": "Enseña un juego tradicional o manualidad",
+      "shareRecipe": "Comparte una receta familiar o tradición culinaria",
+      "perform": "Presenta música o danza tradicional",
+      "display": "Exhibe vestimenta cultural o artefactos",
+      "sponsor": "Patrocina actividades o decoraciones",
+      "provideSamples": "Proporciona muestras de comida o demostraciones",
+      "vendorBooth": "Instala un puesto de vendedor",
+      "specialPromo": "Ofrece promociones especiales de Año Nuevo Lunar"
+    },
+    "cta": "Únete a Discord para Participar"
+  },
+  "learnMore": {
+    "title": "Aprende Más Sobre el Año Nuevo Lunar",
+    "sources": {
+      "koreaNet": {
+        "title": "Korea.net",
+        "description": "Perspectivas coreanas sobre tradiciones de Seollal y el zodiaco"
+      },
+      "nipponCom": {
+        "title": "Nippon.com",
+        "description": "Año del Caballo 2026 - tradiciones del zodiaco japonés"
+      },
+      "fireHorse": {
+        "title": "Caballo de Fuego 2026",
+        "description": "Por qué este año raro podría traer cambio y progreso"
+      },
+      "smithsonian": {
+        "title": "Smithsonian",
+        "description": "Historia cultural del Caballo en las tradiciones asiáticas"
+      }
+    }
+  },
+  "footer": {
+    "initiative": "Esta página es parte de una iniciativa comunitaria para traer celebraciones del Año Nuevo Lunar a Fayetteville, NC. Los detalles del evento están siendo planificados - ¡vuelve para actualizaciones!"
+  }
+}

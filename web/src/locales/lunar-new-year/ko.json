@@ -162,6 +162,7 @@
   "attire": {
     "title": "전통 의상 체험",
     "description": "아시아 전통 의상의 아름다움을 경험하세요! 아름다운 의상을 입어보고 그 문화적 의미를 배우세요.",
+    "learnMoreWikipedia": "위키백과에서 자세히 보기",
     "hanbok": {
       "name": "한복",
       "origin": "한국",

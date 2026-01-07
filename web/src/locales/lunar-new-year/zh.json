@@ -162,6 +162,7 @@
   "attire": {
     "title": "传统服饰体验",
     "description": "体验亚洲传统服饰之美！试穿精美服装，了解其文化意义。",
+    "learnMoreWikipedia": "在维基百科了解更多",
     "hanbok": {
       "name": "韩服",
       "origin": "韩国",

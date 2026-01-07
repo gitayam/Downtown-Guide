@@ -162,6 +162,7 @@
   "attire": {
     "title": "Vestimenta Tradicional",
     "description": "¡Experimenta la belleza de la ropa tradicional asiática! Pruébate hermosas prendas y aprende sobre su significado cultural.",
+    "learnMoreWikipedia": "Más información en Wikipedia",
     "hanbok": {
       "name": "Hanbok",
       "origin": "Coreano",

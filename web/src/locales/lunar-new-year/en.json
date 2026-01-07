@@ -162,6 +162,7 @@
   "attire": {
     "title": "Traditional Attire & Dress-Up",
     "description": "Experience the beauty of traditional Asian clothing! Try on beautiful garments and learn about their cultural significance.",
+    "learnMoreWikipedia": "Learn more on Wikipedia",
     "hanbok": {
       "name": "Hanbok",
       "origin": "Korean",

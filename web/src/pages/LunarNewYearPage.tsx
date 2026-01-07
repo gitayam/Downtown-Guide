@@ -4,6 +4,57 @@ import LanguageSwitcher from '../components/LanguageSwitcher'
 // Zodiac lucky numbers (static)
 const luckyNumbers = [2, 7]
 
+// Wikipedia article names by language (article names differ per language)
+const wikiArticles: Record<string, Record<string, string>> = {
+  hanbok: {
+    en: 'Hanbok',
+    es: 'Hanbok',
+    zh: '韩服',
+    ko: '한복',
+    vi: 'Hanbok',
+    ja: '韓服_(朝鮮の服)',
+  },
+  qipao: {
+    en: 'Cheongsam',
+    es: 'Qipao',
+    zh: '旗袍',
+    ko: '치파오',
+    vi: 'Sườn_xám',
+    ja: 'チャイナドレス',
+  },
+  aoDai: {
+    en: 'Áo_dài',
+    es: 'Áo_dài',
+    zh: '越式旗袍',
+    ko: '아오자이',
+    vi: 'Áo_dài',
+    ja: 'アオザイ',
+  },
+  kimono: {
+    en: 'Kimono',
+    es: 'Kimono',
+    zh: '和服',
+    ko: '기모노',
+    vi: 'Kimono',
+    ja: '着物',
+  },
+  horseZodiac: {
+    en: 'Horse_(zodiac)',
+    es: 'Caballo_(astrología_china)',
+    zh: '马_(生肖)',
+    ko: '말_(십이지)',
+    vi: 'Ngọ',
+    ja: '午_(十二支)',
+  },
+}
+
+// Get Wikipedia URL for a given article and language
+const getWikiUrl = (article: string, lang: string): string => {
+  const wikiLang = lang.startsWith('zh') ? 'zh' : lang.split('-')[0]
+  const articleName = wikiArticles[article]?.[wikiLang] || wikiArticles[article]?.en || article
+  return `https://${wikiLang}.wikipedia.org/wiki/${articleName}`
+}
+
 // Local businesses (not translated - proper nouns)
 const localBusinesses = [
   { name: 'Saigon Bistro', type: 'Vietnamese', area: 'Fayetteville' },
@@ -15,7 +66,8 @@ const localBusinesses = [
 ]
 
 export default function LunarNewYearPage() {
-  const { t } = useTranslation('lunarNewYear')
+  const { t, i18n } = useTranslation('lunarNewYear')
+  const currentLang = i18n.language
 
   // Game keys for iteration
   const gameKeys = ['mahjong', 'yutNori', 'go', 'chineseChess', 'bigTwo', 'cauCa'] as const
@@ -47,14 +99,6 @@ export default function LunarNewYearPage() {
     tiger: '2022, 2010, 1998, 1986, 1974',
     dog: '2018, 2006, 1994, 1982, 1970',
     sheep: '2015, 2003, 1991, 1979, 1967',
-  }
-
-  // Wikipedia links for learning more about each attire
-  const attireWikiLinks: Record<string, string> = {
-    hanbok: 'https://en.wikipedia.org/wiki/Hanbok',
-    qipao: 'https://en.wikipedia.org/wiki/Cheongsam',
-    aoDai: 'https://en.wikipedia.org/wiki/%C3%81o_d%C3%A0i',
-    kimono: 'https://en.wikipedia.org/wiki/Kimono',
   }
 
   // Difficulty colors
@@ -167,7 +211,7 @@ export default function LunarNewYearPage() {
                 ))}
               </div>
               <a
-                href="https://en.wikipedia.org/wiki/Horse_(zodiac)"
+                href={getWikiUrl('horseZodiac', currentLang)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-red-600 hover:text-red-700 hover:underline inline-flex items-center gap-1"
@@ -382,7 +426,7 @@ export default function LunarNewYearPage() {
             {attireKeys.map((attireKey) => (
               <a
                 key={attireKey}
-                href={attireWikiLinks[attireKey]}
+                href={getWikiUrl(attireKey, currentLang)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300 group"
@@ -401,7 +445,7 @@ export default function LunarNewYearPage() {
                   <p className="text-amber-600 text-sm font-medium mb-3">{t(`attire.${attireKey}.origin`)}</p>
                   <p className="text-stone text-sm mb-3">{t(`attire.${attireKey}.description`)}</p>
                   <span className="text-red-600 text-sm font-medium inline-flex items-center gap-1">
-                    Learn more on Wikipedia
+                    {t('attire.learnMoreWikipedia')}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>

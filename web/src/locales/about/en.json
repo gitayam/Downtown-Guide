@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "title": "About | Fayetteville Events",
+    "description": "Learn about how we're connecting the Fayetteville community through events and local discovery."
+  },
+  "hero": {
+    "title": "Connecting Our Community",
+    "description": "Modernizing how Fayetteville discovers, shares, and experiences local events—bringing everyone together in one place."
+  },
+  "vision": {
+    "title": "One Pulse, One Platform",
+    "description": "Fayetteville and the greater Cumberland County area are teeming with culture, commerce, and creativity. But too often, great opportunities are missed simply because the information is scattered across dozens of different websites, social media pages, and newsletters. We believe a vibrant community deserves a unified way to see the full picture."
+  },
+  "datePlanner": {
+    "badge": "New Feature",
+    "title": "Plan Your Perfect Outing",
+    "description1": "Planning a date night, family outing, or day with friends in Fayetteville shouldn't require hours of research. We've partnered directly with downtown shop owners, restaurants, and venues to curate detailed information about each location—their vibes, best times to visit, what makes them special.",
+    "description2": "Our <strong>intelligent itinerary builder</strong> takes the cognitive load out of planning. Tell us the occasion, your mood, and when you're free—we'll craft a complete day from morning coffee to evening entertainment, with venues that actually work well together.",
+    "description3": "<strong>Found an event you want to attend?</strong> Click \"Plan Day Around This Event\" on any event page, and we'll automatically build a full itinerary with the perfect spots to visit before and after—dinner reservations, pre-show drinks, or a nightcap to end the evening.",
+    "stats": {
+      "venues": "70+ curated venues",
+      "itineraries": "Event-anchored itineraries"
+    },
+    "cta": "Try the Date Planner",
+    "sampleItinerary": "Sample Itinerary",
+    "itinerary": {
+      "coffee": "Morning coffee at a local roaster",
+      "galleries": "Explore downtown galleries",
+      "lunch": "Lunch at a chef-owned spot",
+      "matinee": "Catch a matinee or live music",
+      "dinner": "Dinner with a view",
+      "nightcap": "Nightcap at a speakeasy"
+    }
+  },
+  "partners": {
+    "title": "Standing on the Shoulders of Giants",
+    "description": "This platform wouldn't exist without the incredible work of local organizations that curate and create the culture of our city. We aim to amplify their efforts by bringing their data into a common, accessible format.",
+    "organizations": {
+      "cityOfFayetteville": "Providing the essential services for our city to thrive.",
+      "coolSpring": "Fostering creativity and commerce in the heart of the city.",
+      "distinctlyFayetteville": "Positioning Cumberland County as a premier destination.",
+      "historyMuseum": "Preserving and sharing the rich history of our region.",
+      "fortBragg": "Supporting our service members and families.",
+      "chamber": "Building a resilient community through business leadership.",
+      "artsCouncil": "Connecting our community through diverse cultural experiences."
+    }
+  },
+  "openSource": {
+    "title": "Built by the Community, For the Community",
+    "description": "This project is proudly <strong>Open Source</strong>. We believe in transparency and collaboration. All data is sourced from publicly available information provided by the organizations above.",
+    "viewSource": "View Source Code",
+    "contactDiscord": "Contact Developer on Discord"
+  },
+  "features": {
+    "sync": {
+      "title": "Seamless Sync",
+      "description": "Directly sync events to your Outlook, Apple, or Google calendar. No need to check a website daily—your schedule stays up to date automatically."
+    },
+    "mobile": {
+      "title": "Modern & Mobile",
+      "description": "Built for the way we live today. Fast, responsive, and designed to put the city's pulse in your pocket."
+    },
+    "local": {
+      "title": "Supporting Local",
+      "description": "For merchants and officials: a streamlined way to ensure your events reach the widest possible audience without the noise."
+    }
+  },
+  "credit": {
+    "madeBy": "Designed, Developed, and Maintained by"
+  },
+  "cta": {
+    "exploreEvents": "Explore Events"
+  }
+}

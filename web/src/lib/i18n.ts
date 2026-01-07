@@ -2,13 +2,21 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 
-// Import translation files
+// Import translation files - Lunar New Year
 import enLunarNewYear from '../locales/lunar-new-year/en.json'
 import zhLunarNewYear from '../locales/lunar-new-year/zh.json'
 import koLunarNewYear from '../locales/lunar-new-year/ko.json'
 import viLunarNewYear from '../locales/lunar-new-year/vi.json'
 import jaLunarNewYear from '../locales/lunar-new-year/ja.json'
 import esLunarNewYear from '../locales/lunar-new-year/es.json'
+
+// Import translation files - About
+import enAbout from '../locales/about/en.json'
+import zhAbout from '../locales/about/zh.json'
+import koAbout from '../locales/about/ko.json'
+import viAbout from '../locales/about/vi.json'
+import jaAbout from '../locales/about/ja.json'
+import esAbout from '../locales/about/es.json'
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
@@ -22,12 +30,12 @@ export const SUPPORTED_LANGUAGES = [
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number]['code']
 
 const resources = {
-  en: { lunarNewYear: enLunarNewYear },
-  zh: { lunarNewYear: zhLunarNewYear },
-  ko: { lunarNewYear: koLunarNewYear },
-  vi: { lunarNewYear: viLunarNewYear },
-  ja: { lunarNewYear: jaLunarNewYear },
-  es: { lunarNewYear: esLunarNewYear },
+  en: { lunarNewYear: enLunarNewYear, about: enAbout },
+  zh: { lunarNewYear: zhLunarNewYear, about: zhAbout },
+  ko: { lunarNewYear: koLunarNewYear, about: koAbout },
+  vi: { lunarNewYear: viLunarNewYear, about: viAbout },
+  ja: { lunarNewYear: jaLunarNewYear, about: jaAbout },
+  es: { lunarNewYear: esLunarNewYear, about: esAbout },
 }
 
 i18n
@@ -37,7 +45,7 @@ i18n
     resources,
     fallbackLng: 'en',
     defaultNS: 'lunarNewYear',
-    ns: ['lunarNewYear'],
+    ns: ['lunarNewYear', 'about'],
     interpolation: {
       escapeValue: false, // React already escapes
     },

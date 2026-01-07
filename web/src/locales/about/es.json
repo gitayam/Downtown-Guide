@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "title": "Acerca de | Eventos de Fayetteville",
+    "description": "Descubre cómo conectamos a la comunidad de Fayetteville a través de eventos y descubrimiento local."
+  },
+  "hero": {
+    "title": "Conectando Nuestra Comunidad",
+    "description": "Modernizando cómo Fayetteville descubre, comparte y experimenta eventos locales—reuniendo a todos en un solo lugar."
+  },
+  "vision": {
+    "title": "Un Pulso, Una Plataforma",
+    "description": "Fayetteville y el área metropolitana del condado de Cumberland rebosan de cultura, comercio y creatividad. Pero muy a menudo, se pierden grandes oportunidades simplemente porque la información está dispersa en docenas de sitios web, páginas de redes sociales y boletines. Creemos que una comunidad vibrante merece una forma unificada de ver el panorama completo."
+  },
+  "datePlanner": {
+    "badge": "Nueva Función",
+    "title": "Planifica Tu Salida Perfecta",
+    "description1": "Planificar una cita nocturna, una salida familiar o un día con amigos en Fayetteville no debería requerir horas de investigación. Nos hemos asociado directamente con dueños de tiendas del centro, restaurantes y locales para recopilar información detallada sobre cada lugar—su ambiente, los mejores momentos para visitar, lo que los hace especiales.",
+    "description2": "Nuestro <strong>creador de itinerarios inteligente</strong> elimina la carga cognitiva de la planificación. Cuéntanos la ocasión, tu estado de ánimo y cuándo estás libre—crearemos un día completo desde el café de la mañana hasta el entretenimiento nocturno, con lugares que realmente funcionan bien juntos.",
+    "description3": "<strong>¿Encontraste un evento al que quieres asistir?</strong> Haz clic en \"Planificar Día Alrededor de Este Evento\" en cualquier página de evento, y automáticamente construiremos un itinerario completo con los lugares perfectos para visitar antes y después—reservas para cenar, bebidas antes del show, o una copa para terminar la noche.",
+    "stats": {
+      "venues": "70+ lugares seleccionados",
+      "itineraries": "Itinerarios centrados en eventos"
+    },
+    "cta": "Probar el Planificador",
+    "sampleItinerary": "Itinerario de Ejemplo",
+    "itinerary": {
+      "coffee": "Café matutino en un tostador local",
+      "galleries": "Explorar galerías del centro",
+      "lunch": "Almuerzo en un restaurante de chef",
+      "matinee": "Ver una matiné o música en vivo",
+      "dinner": "Cena con vista",
+      "nightcap": "Copa de despedida en un speakeasy"
+    }
+  },
+  "partners": {
+    "title": "Sobre Hombros de Gigantes",
+    "description": "Esta plataforma no existiría sin el increíble trabajo de las organizaciones locales que curan y crean la cultura de nuestra ciudad. Nuestro objetivo es amplificar sus esfuerzos trayendo sus datos a un formato común y accesible.",
+    "organizations": {
+      "cityOfFayetteville": "Proporcionando los servicios esenciales para que nuestra ciudad prospere.",
+      "coolSpring": "Fomentando la creatividad y el comercio en el corazón de la ciudad.",
+      "distinctlyFayetteville": "Posicionando al Condado de Cumberland como un destino premier.",
+      "historyMuseum": "Preservando y compartiendo la rica historia de nuestra región.",
+      "fortBragg": "Apoyando a nuestros miembros del servicio y sus familias.",
+      "chamber": "Construyendo una comunidad resiliente a través del liderazgo empresarial.",
+      "artsCouncil": "Conectando nuestra comunidad a través de diversas experiencias culturales."
+    }
+  },
+  "openSource": {
+    "title": "Construido por la Comunidad, Para la Comunidad",
+    "description": "Este proyecto es orgullosamente <strong>Código Abierto</strong>. Creemos en la transparencia y la colaboración. Todos los datos provienen de información pública proporcionada por las organizaciones mencionadas.",
+    "viewSource": "Ver Código Fuente",
+    "contactDiscord": "Contactar Desarrollador en Discord"
+  },
+  "features": {
+    "sync": {
+      "title": "Sincronización Perfecta",
+      "description": "Sincroniza eventos directamente con tu calendario de Outlook, Apple o Google. No necesitas revisar un sitio web diariamente—tu agenda se mantiene actualizada automáticamente."
+    },
+    "mobile": {
+      "title": "Moderno y Móvil",
+      "description": "Construido para la forma en que vivimos hoy. Rápido, responsivo y diseñado para poner el pulso de la ciudad en tu bolsillo."
+    },
+    "local": {
+      "title": "Apoyando lo Local",
+      "description": "Para comerciantes y funcionarios: una forma simplificada de asegurar que tus eventos lleguen a la audiencia más amplia posible sin el ruido."
+    }
+  },
+  "credit": {
+    "madeBy": "Diseñado, Desarrollado y Mantenido por"
+  },
+  "cta": {
+    "exploreEvents": "Explorar Eventos"
+  }
+}

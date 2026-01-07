@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "title": "Giới Thiệu | Sự Kiện Fayetteville",
+    "description": "Tìm hiểu cách chúng tôi kết nối cộng đồng Fayetteville thông qua các sự kiện và khám phá địa phương."
+  },
+  "hero": {
+    "title": "Kết Nối Cộng Đồng",
+    "description": "Hiện đại hóa cách Fayetteville khám phá, chia sẻ và trải nghiệm các sự kiện địa phương—đưa mọi người đến cùng một nơi."
+  },
+  "vision": {
+    "title": "Một Nhịp Đập, Một Nền Tảng",
+    "description": "Fayetteville và vùng Cumberland County rộng lớn tràn đầy văn hóa, thương mại và sáng tạo. Nhưng quá thường xuyên, các cơ hội tuyệt vời bị bỏ lỡ chỉ vì thông tin nằm rải rác trên hàng chục trang web, trang mạng xã hội và bản tin khác nhau. Chúng tôi tin rằng một cộng đồng sôi động xứng đáng có một cách thống nhất để nhìn thấy bức tranh toàn cảnh."
+  },
+  "datePlanner": {
+    "badge": "Tính Năng Mới",
+    "title": "Lên Kế Hoạch Cho Chuyến Đi Hoàn Hảo",
+    "description1": "Lên kế hoạch cho buổi hẹn hò, chuyến đi chơi gia đình hoặc một ngày với bạn bè ở Fayetteville không nên mất hàng giờ nghiên cứu. Chúng tôi đã hợp tác trực tiếp với chủ cửa hàng, nhà hàng và địa điểm ở trung tâm thành phố để tổng hợp thông tin chi tiết về từng địa điểm—không khí, thời điểm tốt nhất để ghé thăm, điều gì làm nên sự đặc biệt.",
+    "description2": "<strong>Công cụ xây dựng lịch trình thông minh</strong> của chúng tôi giúp giảm bớt gánh nặng lên kế hoạch. Cho chúng tôi biết dịp, tâm trạng và thời gian rảnh—chúng tôi sẽ tạo một ngày hoàn chỉnh từ cà phê sáng đến giải trí tối, với các địa điểm thực sự phù hợp với nhau.",
+    "description3": "<strong>Tìm thấy sự kiện bạn muốn tham dự?</strong> Nhấp vào \"Lên Kế Hoạch Ngày Xung Quanh Sự Kiện Này\" trên bất kỳ trang sự kiện nào, và chúng tôi sẽ tự động xây dựng lịch trình đầy đủ với những địa điểm hoàn hảo để ghé thăm trước và sau—đặt bàn ăn tối, đồ uống trước buổi diễn, hoặc ly rượu kết thúc buổi tối.",
+    "stats": {
+      "venues": "70+ địa điểm được tuyển chọn",
+      "itineraries": "Lịch trình xoay quanh sự kiện"
+    },
+    "cta": "Thử Công Cụ Lên Kế Hoạch",
+    "sampleItinerary": "Lịch Trình Mẫu",
+    "itinerary": {
+      "coffee": "Cà phê sáng tại quán rang xay địa phương",
+      "galleries": "Khám phá các phòng tranh trung tâm",
+      "lunch": "Ăn trưa tại nhà hàng của đầu bếp",
+      "matinee": "Xem buổi chiếu sáng hoặc nhạc sống",
+      "dinner": "Bữa tối với tầm nhìn đẹp",
+      "nightcap": "Ly rượu khuya tại speakeasy"
+    }
+  },
+  "partners": {
+    "title": "Đứng Trên Vai Những Người Khổng Lồ",
+    "description": "Nền tảng này sẽ không tồn tại nếu không có công việc tuyệt vời của các tổ chức địa phương đang tổ chức và tạo ra văn hóa của thành phố chúng ta. Chúng tôi hướng đến việc khuếch đại nỗ lực của họ bằng cách đưa dữ liệu của họ vào một định dạng chung, dễ tiếp cận.",
+    "organizations": {
+      "cityOfFayetteville": "Cung cấp các dịch vụ thiết yếu để thành phố phát triển.",
+      "coolSpring": "Nuôi dưỡng sự sáng tạo và thương mại ở trung tâm thành phố.",
+      "distinctlyFayetteville": "Định vị Cumberland County là điểm đến hàng đầu.",
+      "historyMuseum": "Bảo tồn và chia sẻ lịch sử phong phú của vùng.",
+      "fortBragg": "Hỗ trợ quân nhân và gia đình họ.",
+      "chamber": "Xây dựng cộng đồng vững mạnh thông qua lãnh đạo kinh doanh.",
+      "artsCouncil": "Kết nối cộng đồng thông qua các trải nghiệm văn hóa đa dạng."
+    }
+  },
+  "openSource": {
+    "title": "Xây Dựng Bởi Cộng Đồng, Cho Cộng Đồng",
+    "description": "Dự án này tự hào là <strong>Mã Nguồn Mở</strong>. Chúng tôi tin vào sự minh bạch và hợp tác. Tất cả dữ liệu được lấy từ thông tin công khai do các tổ chức trên cung cấp.",
+    "viewSource": "Xem Mã Nguồn",
+    "contactDiscord": "Liên Hệ Nhà Phát Triển trên Discord"
+  },
+  "features": {
+    "sync": {
+      "title": "Đồng Bộ Liền Mạch",
+      "description": "Đồng bộ sự kiện trực tiếp với lịch Outlook, Apple hoặc Google của bạn. Không cần kiểm tra trang web hàng ngày—lịch trình của bạn tự động cập nhật."
+    },
+    "mobile": {
+      "title": "Hiện Đại & Di Động",
+      "description": "Được xây dựng cho cách sống ngày nay. Nhanh, đáp ứng và được thiết kế để đặt nhịp đập của thành phố vào túi bạn."
+    },
+    "local": {
+      "title": "Hỗ Trợ Địa Phương",
+      "description": "Dành cho thương nhân và quan chức: một cách đơn giản để đảm bảo sự kiện của bạn tiếp cận khán giả rộng nhất có thể mà không có tiếng ồn."
+    }
+  },
+  "credit": {
+    "madeBy": "Thiết Kế, Phát Triển và Duy Trì bởi"
+  },
+  "cta": {
+    "exploreEvents": "Khám Phá Sự Kiện"
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "2026农历新年 | 马年 | 费耶特维尔",
+    "description": "在费耶特维尔庆祝2026年农历新年！加入我们多元化的亚裔社区，体验传统游戏、美食、文化服饰，共同迎接火马年。"
+  },
+  "hero": {
+    "date": "2026年2月17日",
+    "title": "农历新年",
+    "subtitle": "火马年",
+    "description": "加入费耶特维尔多元化的亚裔社区，共同庆祝农历新年！体验传统游戏、正宗美食和文化庆典。",
+    "cta": {
+      "getInvolved": "参与活动",
+      "exploreActivities": "探索活动"
+    }
+  },
+  "community": {
+    "title": "全民同庆",
+    "description1": "费耶特维尔是一个充满活力且不断发展的亚裔社区的家园——华人、韩国人、越南人、日本人、泰国人、印尼人、菲律宾人等众多文化在这座城市共同生活。农历新年是我们团聚、分享传统、庆祝亚洲丰富文化遗产的时刻。",
+    "description2": "无论您是庆祝自己的传统文化，还是探索新文化，我们都诚挚邀请您与我们一起迎接马年！"
+  },
+  "zodiac": {
+    "title": "火马年",
+    "description": "2026年是火马年——自1966年以来的第一个火马年！属马的人以精力充沛和自由奔放著称。",
+    "traits": {
+      "title": "性格特征",
+      "energetic": "精力充沛",
+      "independent": "独立自主",
+      "adventurous": "勇于冒险",
+      "passionate": "充满热情",
+      "freeSpirited": "自由奔放"
+    },
+    "luckyColors": {
+      "title": "马年幸运颜色",
+      "subtitle": "属马人的幸运颜色",
+      "red": "红色",
+      "pink": "粉色",
+      "purple": "紫色"
+    },
+    "luckyNumbers": {
+      "title": "马年幸运数字",
+      "subtitle": "属马人的幸运数字"
+    },
+    "compatible": {
+      "title": "最佳配对",
+      "tiger": "虎",
+      "dog": "狗",
+      "sheep": "羊"
+    }
+  },
+  "games": {
+    "title": "传统游戏与挑战",
+    "description": "学习和体验来自亚洲各地的传统游戏！无需经验——我们会教您一切。",
+    "difficulty": {
+      "easy": "简单",
+      "intermediate": "中等",
+      "advanced": "高级"
+    },
+    "mahjong": {
+      "name": "麻将",
+      "origin": "中国",
+      "description": "一种需要技巧、策略和计算的牌类游戏。学习配牌和组成胡牌。",
+      "players": "4人"
+    },
+    "yutNori": {
+      "name": "尤茨诺里",
+      "origin": "韩国",
+      "description": "使用木棍的传统棋盘游戏。让您的棋子绕棋盘一圈取胜！",
+      "players": "2-4人"
+    },
+    "go": {
+      "name": "围棋",
+      "origin": "东亚",
+      "description": "古老的领土控制策略游戏。规则简单，变化无穷。",
+      "players": "2人"
+    },
+    "chineseChess": {
+      "name": "象棋",
+      "origin": "中国",
+      "description": "一种战略棋盘游戏，拥有炮和象等独特棋子。",
+      "players": "2人"
+    },
+    "bigTwo": {
+      "name": "锄大地",
+      "origin": "广东",
+      "description": "一种快节奏的纸牌游戏，通过组合牌型尽快出完手牌。",
+      "players": "4人"
+    },
+    "cauCa": {
+      "name": "钓鱼牌",
+      "origin": "越南",
+      "description": "越南春节期间玩的传统钓鱼纸牌游戏。",
+      "players": "2-6人"
+    }
+  },
+  "food": {
+    "title": "传统美食与饮品",
+    "description": "品尝农历新年的美味！每道菜都承载着对新年的美好祝愿。",
+    "luckyFoods": "吉祥美食",
+    "traditionalDrinks": "传统饮品",
+    "jiaozi": {
+      "name": "饺子",
+      "origin": "中国",
+      "description": "月牙形的饺子象征财富和繁荣。春节必备美食！",
+      "symbolism": "财富与好运（形似古代金元宝）"
+    },
+    "tteokguk": {
+      "name": "年糕汤",
+      "origin": "韩国",
+      "description": "新年传统上吃的年糕汤。吃了就意味着长了一岁！",
+      "symbolism": "长寿与新开始"
+    },
+    "banhChung": {
+      "name": "粽子",
+      "origin": "越南",
+      "description": "用香蕉叶包裹的方形糯米糕，内有猪肉和绿豆馅。",
+      "symbolism": "大地与感恩祖先"
+    },
+    "springRolls": {
+      "name": "春卷",
+      "origin": "各地",
+      "description": "金黄酥脆的卷饼，内有蔬菜和肉馅，象征金条。",
+      "symbolism": "财富与繁荣"
+    },
+    "mochi": {
+      "name": "麻糬",
+      "origin": "日本",
+      "description": "各种口味的软糯年糕，新年庆典的传统食品。",
+      "symbolism": "好运与长寿"
+    },
+    "nianGao": {
+      "name": "年糕",
+      "origin": "中国",
+      "description": "甜糯米糕。「年糕」谐音「年高」——寓意步步高升。",
+      "symbolism": "进步与提升"
+    },
+    "sujeonggwa": {
+      "name": "水正果",
+      "origin": "韩国",
+      "description": "甜肉桂姜汁饮料配干柿子。清爽芳香。"
+    },
+    "jasmineTea": {
+      "name": "茉莉花茶",
+      "origin": "中国",
+      "description": "用茉莉花窨制的香片绿茶。象征优雅与纯洁。"
+    },
+    "bobaTea": {
+      "name": "珍珠奶茶",
+      "origin": "台湾",
+      "description": "深受喜爱的奶茶配Q弹珍珠。现代经典！"
+    },
+    "sake": {
+      "name": "清酒",
+      "origin": "日本",
+      "description": "庆典和仪式上常饮用的传统米酒。"
+    },
+    "traDa": {
+      "name": "冰茶",
+      "origin": "越南",
+      "description": "简单清爽的冰绿茶，在越南随处可见。"
+    }
+  },
+  "attire": {
+    "title": "传统服饰体验",
+    "description": "体验亚洲传统服饰之美！试穿精美服装，了解其文化意义。",
+    "hanbok": {
+      "name": "韩服",
+      "origin": "韩国",
+      "description": "色彩鲜艳、线条优雅的韩国传统服饰"
+    },
+    "qipao": {
+      "name": "旗袍",
+      "origin": "中国",
+      "description": "高领修身连衣裙，常为红底金边"
+    },
+    "aoDai": {
+      "name": "奥黛",
+      "origin": "越南",
+      "description": "长袍配长裤，以飘逸优雅著称"
+    },
+    "kimono": {
+      "name": "和服",
+      "origin": "日本",
+      "description": "传统包裹式服装，配有精美图案和腰带"
+    }
+  },
+  "businesses": {
+    "title": "支持本地亚洲商家",
+    "description": "费耶特维尔有很多出色的亚洲餐厅和商店。全年都可以来体验正宗风味！"
+  },
+  "participate": {
+    "title": "分享您的文化",
+    "description": "我们正在寻找社区成员，共同打造费耶特维尔的农历新年庆典！",
+    "waysToParticipate": "参与方式",
+    "forBusinesses": "商家合作",
+    "items": {
+      "teachGame": "教授传统游戏或手工艺",
+      "shareRecipe": "分享家传食谱或饮食传统",
+      "perform": "表演传统音乐或舞蹈",
+      "display": "展示文化服饰或工艺品",
+      "sponsor": "赞助活动或装饰",
+      "provideSamples": "提供美食样品或烹饪演示",
+      "vendorBooth": "设立商家展位",
+      "specialPromo": "推出农历新年特别优惠"
+    },
+    "cta": "加入Discord参与活动"
+  },
+  "learnMore": {
+    "title": "了解更多农历新年知识",
+    "sources": {
+      "koreaNet": {
+        "title": "Korea.net",
+        "description": "韩国视角下的春节传统和生肖"
+      },
+      "nipponCom": {
+        "title": "Nippon.com",
+        "description": "2026马年 - 日本生肖传统"
+      },
+      "fireHorse": {
+        "title": "2026火马年",
+        "description": "为什么这个罕见年份可能带来变革和进步"
+      },
+      "smithsonian": {
+        "title": "史密森尼学会",
+        "description": "马在亚洲传统中的文化历史"
+      }
+    }
+  },
+  "footer": {
+    "initiative": "本页面是将农历新年庆典引入费耶特维尔的社区倡议的一部分。活动详情正在筹划中——请持续关注！"
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "Tết Nguyên Đán 2026 | Năm Con Ngựa | Fayetteville NC",
+    "description": "Đón Tết Nguyên Đán 2026 tại Fayetteville, NC! Cùng cộng đồng châu Á đa dạng của chúng tôi trải nghiệm trò chơi truyền thống, ẩm thực, trang phục văn hóa và chào đón Năm Ngựa Hỏa."
+  },
+  "hero": {
+    "date": "17 tháng 2, 2026",
+    "title": "Tết Nguyên Đán",
+    "subtitle": "Năm Ngựa Hỏa",
+    "description": "Cùng cộng đồng châu Á đa dạng của Fayetteville đón mừng Tết Nguyên Đán! Trải nghiệm trò chơi truyền thống, ẩm thực đặc sắc và lễ hội văn hóa.",
+    "cta": {
+      "getInvolved": "Tham Gia",
+      "exploreActivities": "Khám Phá Hoạt Động"
+    }
+  },
+  "community": {
+    "title": "Lễ Hội Cho Tất Cả Mọi Người",
+    "description1": "Fayetteville là ngôi nhà của cộng đồng châu Á sôi động và đang phát triển - người Hoa, người Hàn, người Việt, người Nhật, người Thái, người Indonesia, người Philippines và nhiều nền văn hóa khác cùng sinh sống tại thành phố của chúng ta. Tết Nguyên Đán là thời điểm để chúng ta đoàn tụ, chia sẻ truyền thống và tôn vinh di sản văn hóa châu Á phong phú ngay tại cộng đồng của mình.",
+    "description2": "Dù bạn đang kỷ niệm di sản của mình hay khám phá văn hóa mới, chúng tôi mời bạn cùng đón chào Năm Con Ngựa!"
+  },
+  "zodiac": {
+    "title": "Năm Ngựa Hỏa",
+    "description": "2026 là Năm Ngựa Hỏa - lần đầu tiên kể từ năm 1966! Những người sinh năm Ngựa được biết đến với sự năng động và tinh thần tự do.",
+    "traits": {
+      "title": "Đặc Điểm Tính Cách",
+      "energetic": "Năng động",
+      "independent": "Độc lập",
+      "adventurous": "Thích phiêu lưu",
+      "passionate": "Đam mê",
+      "freeSpirited": "Tự do"
+    },
+    "luckyColors": {
+      "title": "Màu May Mắn Tuổi Ngựa",
+      "subtitle": "Dành cho người tuổi Ngựa",
+      "red": "Đỏ",
+      "pink": "Hồng",
+      "purple": "Tím"
+    },
+    "luckyNumbers": {
+      "title": "Số May Mắn Tuổi Ngựa",
+      "subtitle": "Dành cho người tuổi Ngựa"
+    },
+    "compatible": {
+      "title": "Hợp Nhất",
+      "tiger": "Hổ",
+      "dog": "Chó",
+      "sheep": "Dê"
+    }
+  },
+  "games": {
+    "title": "Trò Chơi Truyền Thống & Thử Thách",
+    "description": "Học và chơi các trò chơi truyền thống từ khắp châu Á! Không cần kinh nghiệm - chúng tôi sẽ hướng dẫn bạn mọi thứ.",
+    "difficulty": {
+      "easy": "Dễ",
+      "intermediate": "Trung bình",
+      "advanced": "Nâng cao"
+    },
+    "mahjong": {
+      "name": "Mạt Chược",
+      "origin": "Trung Quốc",
+      "description": "Trò chơi bài dựa trên kỹ năng, chiến thuật và tính toán. Học cách ghép bài và tạo bộ thắng.",
+      "players": "4 người"
+    },
+    "yutNori": {
+      "name": "Yut Nori",
+      "origin": "Hàn Quốc",
+      "description": "Trò chơi bàn cờ truyền thống sử dụng que gỗ. Đua quân cờ quanh bàn để giành chiến thắng!",
+      "players": "2-4 người"
+    },
+    "go": {
+      "name": "Cờ Vây",
+      "origin": "Đông Á",
+      "description": "Trò chơi chiến thuật cổ đại về kiểm soát lãnh thổ. Luật chơi đơn giản, độ sâu vô hạn.",
+      "players": "2 người"
+    },
+    "chineseChess": {
+      "name": "Cờ Tướng",
+      "origin": "Trung Quốc",
+      "description": "Trò chơi cờ chiến thuật với các quân cờ độc đáo như pháo và tượng.",
+      "players": "2 người"
+    },
+    "bigTwo": {
+      "name": "Tiến Lên",
+      "origin": "Quảng Đông",
+      "description": "Trò chơi bài nhanh, đua để hết bài trước bằng các tổ hợp bài.",
+      "players": "4 người"
+    },
+    "cauCa": {
+      "name": "Câu Cá",
+      "origin": "Việt Nam",
+      "description": "Trò chơi bài câu cá truyền thống chơi trong dịp Tết.",
+      "players": "2-6 người"
+    }
+  },
+  "food": {
+    "title": "Ẩm Thực & Đồ Uống Truyền Thống",
+    "description": "Thưởng thức hương vị của Tết Nguyên Đán! Mỗi món ăn mang ý nghĩa đặc biệt và lời chúc cho năm mới.",
+    "luckyFoods": "Món Ăn May Mắn",
+    "traditionalDrinks": "Đồ Uống Truyền Thống",
+    "jiaozi": {
+      "name": "Sủi Cảo",
+      "origin": "Trung Quốc",
+      "description": "Bánh bao hình trăng lưỡi liềm tượng trưng cho sự giàu có và thịnh vượng. Món không thể thiếu trong Tết Nguyên Đán!",
+      "symbolism": "Tài lộc & may mắn (hình dạng giống thỏi vàng cổ)"
+    },
+    "tteokguk": {
+      "name": "Tteokguk",
+      "origin": "Hàn Quốc",
+      "description": "Canh bánh gạo truyền thống ăn vào ngày đầu năm mới. Ăn món này có nghĩa là thêm một tuổi!",
+      "symbolism": "Trường thọ & khởi đầu mới"
+    },
+    "banhChung": {
+      "name": "Bánh Chưng",
+      "origin": "Việt Nam",
+      "description": "Bánh nếp vuông gói lá chuối, nhân thịt heo và đậu xanh.",
+      "symbolism": "Đất trời & lòng biết ơn tổ tiên"
+    },
+    "springRolls": {
+      "name": "Chả Giò",
+      "origin": "Đa quốc gia",
+      "description": "Cuốn giòn vàng nhân rau và thịt, tượng trưng cho thỏi vàng.",
+      "symbolism": "Tài lộc & thịnh vượng"
+    },
+    "mochi": {
+      "name": "Mochi",
+      "origin": "Nhật Bản",
+      "description": "Bánh gạo mềm nhiều hương vị, truyền thống ăn trong dịp năm mới.",
+      "symbolism": "May mắn & trường thọ"
+    },
+    "nianGao": {
+      "name": "Bánh Tổ",
+      "origin": "Trung Quốc",
+      "description": "Bánh nếp ngọt. Tên gọi đồng âm với 'năm cao' - ước vọng tiến bộ.",
+      "symbolism": "Tiến bộ & thăng tiến"
+    },
+    "sujeonggwa": {
+      "name": "Sujeonggwa",
+      "origin": "Hàn Quốc",
+      "description": "Nước quế gừng ngọt với hồng khô. Thanh mát và thơm ngát."
+    },
+    "jasmineTea": {
+      "name": "Trà Nhài",
+      "origin": "Trung Quốc",
+      "description": "Trà xanh thơm hương hoa nhài. Biểu tượng của sự thanh lịch và tinh khiết."
+    },
+    "bobaTea": {
+      "name": "Trà Sữa Trân Châu",
+      "origin": "Đài Loan",
+      "description": "Trà sữa được yêu thích với trân châu dai. Món cổ điển hiện đại!"
+    },
+    "sake": {
+      "name": "Rượu Sake",
+      "origin": "Nhật Bản",
+      "description": "Rượu gạo truyền thống thường dùng trong lễ hội và nghi lễ."
+    },
+    "traDa": {
+      "name": "Trà Đá",
+      "origin": "Việt Nam",
+      "description": "Trà xanh đá đơn giản, thanh mát phổ biến khắp Việt Nam."
+    }
+  },
+  "attire": {
+    "title": "Trải Nghiệm Trang Phục Truyền Thống",
+    "description": "Trải nghiệm vẻ đẹp của trang phục châu Á truyền thống! Thử những bộ đồ đẹp và tìm hiểu ý nghĩa văn hóa của chúng.",
+    "hanbok": {
+      "name": "Hanbok",
+      "origin": "Hàn Quốc",
+      "description": "Trang phục truyền thống Hàn Quốc thanh lịch với màu sắc rực rỡ và đường nét duyên dáng"
+    },
+    "qipao": {
+      "name": "Sườn Xám",
+      "origin": "Trung Quốc",
+      "description": "Váy ôm sát với cổ cao, thường màu đỏ với điểm nhấn vàng"
+    },
+    "aoDai": {
+      "name": "Áo Dài",
+      "origin": "Việt Nam",
+      "description": "Áo dài mặc với quần, nổi tiếng với sự thanh thoát và duyên dáng"
+    },
+    "kimono": {
+      "name": "Kimono",
+      "origin": "Nhật Bản",
+      "description": "Trang phục truyền thống quấn với hoa văn đẹp và đai obi"
+    }
+  },
+  "businesses": {
+    "title": "Ủng Hộ Doanh Nghiệp Châu Á Địa Phương",
+    "description": "Fayetteville có nhiều nhà hàng và cửa hàng châu Á tuyệt vời. Ghé thăm để trải nghiệm hương vị đặc trưng quanh năm!"
+  },
+  "participate": {
+    "title": "Chia Sẻ Văn Hóa Của Bạn",
+    "description": "Chúng tôi đang tìm kiếm thành viên cộng đồng để giúp lễ hội Tết Nguyên Đán của Fayetteville thêm đặc biệt!",
+    "waysToParticipate": "Cách Tham Gia",
+    "forBusinesses": "Dành Cho Doanh Nghiệp",
+    "items": {
+      "teachGame": "Dạy trò chơi truyền thống hoặc thủ công",
+      "shareRecipe": "Chia sẻ công thức gia truyền hoặc truyền thống ẩm thực",
+      "perform": "Biểu diễn âm nhạc hoặc múa truyền thống",
+      "display": "Trưng bày trang phục văn hóa hoặc đồ tạo tác",
+      "sponsor": "Tài trợ hoạt động hoặc trang trí",
+      "provideSamples": "Cung cấp mẫu thức ăn hoặc trình diễn nấu ăn",
+      "vendorBooth": "Thiết lập gian hàng",
+      "specialPromo": "Đưa ra khuyến mãi đặc biệt Tết Nguyên Đán"
+    },
+    "cta": "Tham Gia Discord Để Góp Sức"
+  },
+  "learnMore": {
+    "title": "Tìm Hiểu Thêm Về Tết Nguyên Đán",
+    "sources": {
+      "koreaNet": {
+        "title": "Korea.net",
+        "description": "Góc nhìn Hàn Quốc về truyền thống Seollal và cung hoàng đạo"
+      },
+      "nipponCom": {
+        "title": "Nippon.com",
+        "description": "Năm Ngựa 2026 - Truyền thống cung hoàng đạo Nhật Bản"
+      },
+      "fireHorse": {
+        "title": "Ngựa Hỏa 2026",
+        "description": "Tại sao năm hiếm này có thể mang đến thay đổi và tiến bộ"
+      },
+      "smithsonian": {
+        "title": "Smithsonian",
+        "description": "Lịch sử văn hóa của Ngựa trong truyền thống châu Á"
+      }
+    }
+  },
+  "footer": {
+    "initiative": "Trang này là một phần của sáng kiến cộng đồng nhằm đưa lễ hội Tết Nguyên Đán đến Fayetteville, NC. Chi tiết sự kiện đang được lên kế hoạch - hãy theo dõi cập nhật!"
+  }
+}

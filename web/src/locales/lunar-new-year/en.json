@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "Lunar New Year 2026 | Year of the Horse | Fayetteville NC",
+    "description": "Celebrate Lunar New Year 2026 in Fayetteville, NC! Join our diverse Asian community for traditional games, food, cultural dress-up, and welcoming the Year of the Fire Horse on February 17."
+  },
+  "hero": {
+    "date": "February 17, 2026",
+    "title": "Lunar New Year",
+    "subtitle": "Year of the Fire Horse",
+    "description": "Join Fayetteville's diverse Asian community in celebrating the Lunar New Year! Experience traditional games, authentic cuisine, and cultural festivities.",
+    "cta": {
+      "getInvolved": "Get Involved",
+      "exploreActivities": "Explore Activities"
+    }
+  },
+  "community": {
+    "title": "A Celebration for Everyone",
+    "description1": "Fayetteville is home to a vibrant and growing Asian community - Chinese, Korean, Vietnamese, Japanese, Thai, Indonesian, Filipino, and many more cultures call our city home. The Lunar New Year is a time to come together, share traditions, and celebrate the rich tapestry of Asian heritage right here in our community.",
+    "description2": "Whether you're celebrating your own heritage or discovering new cultures, we invite you to join us in welcoming the Year of the Horse!"
+  },
+  "zodiac": {
+    "title": "Year of the Fire Horse",
+    "description": "2026 marks the Year of the Fire Horse - the first since 1966! People born in Horse years are known for their energy and free spirit.",
+    "traits": {
+      "title": "Personality Traits",
+      "energetic": "Energetic",
+      "independent": "Independent",
+      "adventurous": "Adventurous",
+      "passionate": "Passionate",
+      "freeSpirited": "Free-spirited"
+    },
+    "luckyColors": {
+      "title": "Horse Year Lucky Colors",
+      "subtitle": "For those born in Horse years",
+      "red": "Red",
+      "pink": "Pink",
+      "purple": "Purple"
+    },
+    "luckyNumbers": {
+      "title": "Horse Year Lucky Numbers",
+      "subtitle": "For those born in Horse years"
+    },
+    "compatible": {
+      "title": "Best Matches",
+      "tiger": "Tiger",
+      "dog": "Dog",
+      "sheep": "Sheep"
+    }
+  },
+  "games": {
+    "title": "Traditional Games & Challenges",
+    "description": "Learn and play traditional games from across Asia! No experience needed - we'll teach you everything.",
+    "difficulty": {
+      "easy": "Easy",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "mahjong": {
+      "name": "Mahjong",
+      "origin": "Chinese",
+      "description": "A tile-based game of skill, strategy, and calculation. Learn to match tiles and build winning hands.",
+      "players": "4 players"
+    },
+    "yutNori": {
+      "name": "Yut Nori",
+      "origin": "Korean",
+      "description": "A traditional board game using wooden sticks. Race your pieces around the board to win!",
+      "players": "2-4 players"
+    },
+    "go": {
+      "name": "Go (Baduk/Weiqi)",
+      "origin": "East Asian",
+      "description": "An ancient strategy game of territorial control. Simple rules, infinite depth.",
+      "players": "2 players"
+    },
+    "chineseChess": {
+      "name": "Chinese Chess (Xiangqi)",
+      "origin": "Chinese",
+      "description": "A strategic board game with unique pieces like cannons and elephants.",
+      "players": "2 players"
+    },
+    "bigTwo": {
+      "name": "Big Two (Dai Di)",
+      "origin": "Cantonese",
+      "description": "A fast-paced card game where you race to empty your hand with card combinations.",
+      "players": "4 players"
+    },
+    "cauCa": {
+      "name": "Cau Ca",
+      "origin": "Vietnamese",
+      "description": "Traditional fishing card game played during Tet celebrations.",
+      "players": "2-6 players"
+    }
+  },
+  "food": {
+    "title": "Traditional Food & Drinks",
+    "description": "Taste the flavors of the Lunar New Year! Each dish carries special meaning and wishes for the year ahead.",
+    "luckyFoods": "Lucky Foods",
+    "traditionalDrinks": "Traditional Drinks",
+    "jiaozi": {
+      "name": "Jiaozi (Dumplings)",
+      "origin": "Chinese",
+      "description": "Crescent-shaped dumplings symbolizing wealth and prosperity. A must-have for Chinese New Year!",
+      "symbolism": "Wealth & fortune (shaped like ancient gold ingots)"
+    },
+    "tteokguk": {
+      "name": "Tteokguk",
+      "origin": "Korean",
+      "description": "Rice cake soup traditionally eaten on New Year's Day. Eating it means gaining a year of age!",
+      "symbolism": "Longevity & new beginnings"
+    },
+    "banhChung": {
+      "name": "Banh Chung",
+      "origin": "Vietnamese",
+      "description": "Square sticky rice cake wrapped in banana leaves, filled with pork and mung beans.",
+      "symbolism": "Earth & gratitude to ancestors"
+    },
+    "springRolls": {
+      "name": "Spring Rolls",
+      "origin": "Various",
+      "description": "Crispy golden rolls filled with vegetables and meat, representing gold bars.",
+      "symbolism": "Wealth & prosperity"
+    },
+    "mochi": {
+      "name": "Mochi",
+      "origin": "Japanese",
+      "description": "Soft rice cakes in various flavors, traditionally eaten during New Year celebrations.",
+      "symbolism": "Good fortune & longevity"
+    },
+    "nianGao": {
+      "name": "Nian Gao",
+      "origin": "Chinese",
+      "description": "Sweet sticky rice cake. The name sounds like \"higher year\" - wishes for improvement.",
+      "symbolism": "Progress & advancement"
+    },
+    "sujeonggwa": {
+      "name": "Sujeonggwa",
+      "origin": "Korean",
+      "description": "Sweet cinnamon and ginger punch with dried persimmons. Refreshing and aromatic."
+    },
+    "jasmineTea": {
+      "name": "Jasmine Tea",
+      "origin": "Chinese",
+      "description": "Fragrant green tea scented with jasmine blossoms. A symbol of elegance and purity."
+    },
+    "bobaTea": {
+      "name": "Boba Tea",
+      "origin": "Taiwanese",
+      "description": "Beloved milk tea with chewy tapioca pearls. A modern classic!"
+    },
+    "sake": {
+      "name": "Sake",
+      "origin": "Japanese",
+      "description": "Traditional rice wine often enjoyed during celebrations and ceremonies."
+    },
+    "traDa": {
+      "name": "Tra Da (Iced Tea)",
+      "origin": "Vietnamese",
+      "description": "Simple, refreshing iced green tea served throughout Vietnam."
+    }
+  },
+  "attire": {
+    "title": "Traditional Attire & Dress-Up",
+    "description": "Experience the beauty of traditional Asian clothing! Try on beautiful garments and learn about their cultural significance.",
+    "hanbok": {
+      "name": "Hanbok",
+      "origin": "Korean",
+      "description": "Elegant traditional Korean dress with vibrant colors and graceful lines"
+    },
+    "qipao": {
+      "name": "Qipao/Cheongsam",
+      "origin": "Chinese",
+      "description": "Form-fitting dress with high collar, often in red with gold accents"
+    },
+    "aoDai": {
+      "name": "Ao Dai",
+      "origin": "Vietnamese",
+      "description": "Long tunic worn over trousers, known for its flowing elegance"
+    },
+    "kimono": {
+      "name": "Kimono",
+      "origin": "Japanese",
+      "description": "Traditional wrapped garment with beautiful patterns and obi belt"
+    }
+  },
+  "businesses": {
+    "title": "Support Local Asian Businesses",
+    "description": "Fayetteville has amazing Asian restaurants and shops. Visit them to experience authentic flavors year-round!"
+  },
+  "participate": {
+    "title": "Share Your Culture",
+    "description": "We're looking for community members to help make Fayetteville's Lunar New Year celebration special!",
+    "waysToParticipate": "Ways to Participate",
+    "forBusinesses": "For Businesses",
+    "items": {
+      "teachGame": "Teach a traditional game or craft",
+      "shareRecipe": "Share a family recipe or food tradition",
+      "perform": "Perform traditional music or dance",
+      "display": "Display cultural attire or artifacts",
+      "sponsor": "Sponsor activities or decorations",
+      "provideSamples": "Provide food samples or demonstrations",
+      "vendorBooth": "Set up a vendor booth",
+      "specialPromo": "Offer special Lunar New Year promotions"
+    },
+    "cta": "Join Discord to Get Involved"
+  },
+  "learnMore": {
+    "title": "Learn More About Lunar New Year",
+    "sources": {
+      "koreaNet": {
+        "title": "Korea.net",
+        "description": "Korean perspectives on Seollal traditions and zodiac"
+      },
+      "nipponCom": {
+        "title": "Nippon.com",
+        "description": "Year of the Horse 2026 - Japanese zodiac traditions"
+      },
+      "fireHorse": {
+        "title": "Fire Horse 2026",
+        "description": "Why this rare year could bring change and progress"
+      },
+      "smithsonian": {
+        "title": "Smithsonian",
+        "description": "Cultural history of the Horse in Asian traditions"
+      }
+    }
+  },
+  "footer": {
+    "initiative": "This page is part of a community initiative to bring Lunar New Year celebrations to Fayetteville, NC. Event details are being planned - check back for updates!"
+  }
+}

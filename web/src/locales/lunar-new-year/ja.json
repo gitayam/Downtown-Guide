@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "2026年旧正月 | 午年 | フェイエットビル NC",
+    "description": "フェイエットビルで2026年旧正月をお祝いしましょう！多様なアジアコミュニティと一緒に伝統的なゲーム、料理、文化衣装を体験し、火の馬年を迎えましょう。"
+  },
+  "hero": {
+    "date": "2026年2月17日",
+    "title": "旧正月",
+    "subtitle": "火の馬年",
+    "description": "フェイエットビルの多様なアジアコミュニティと一緒に旧正月をお祝いしましょう！伝統的なゲーム、本格的な料理、文化的なお祭りを体験してください。",
+    "cta": {
+      "getInvolved": "参加する",
+      "exploreActivities": "アクティビティを見る"
+    }
+  },
+  "community": {
+    "title": "みんなのお祝い",
+    "description1": "フェイエットビルは活気あふれる成長中のアジアコミュニティの故郷です。中国人、韓国人、ベトナム人、日本人、タイ人、インドネシア人、フィリピン人など、多くの文化がこの街で暮らしています。旧正月は、集まり、伝統を共有し、コミュニティの豊かなアジアの遺産を祝う時です。",
+    "description2": "自分のルーツを祝うにしても、新しい文化を発見するにしても、一緒に午年を迎えましょう！"
+  },
+  "zodiac": {
+    "title": "火の馬年",
+    "description": "2026年は火の馬年です - 1966年以来初めて！午年生まれの人はエネルギッシュで自由な精神で知られています。",
+    "traits": {
+      "title": "性格の特徴",
+      "energetic": "エネルギッシュ",
+      "independent": "独立心旺盛",
+      "adventurous": "冒険好き",
+      "passionate": "情熱的",
+      "freeSpirited": "自由奔放"
+    },
+    "luckyColors": {
+      "title": "午年のラッキーカラー",
+      "subtitle": "午年生まれの方のラッキーカラー",
+      "red": "赤",
+      "pink": "ピンク",
+      "purple": "紫"
+    },
+    "luckyNumbers": {
+      "title": "午年のラッキーナンバー",
+      "subtitle": "午年生まれの方のラッキーナンバー"
+    },
+    "compatible": {
+      "title": "相性の良い干支",
+      "tiger": "寅",
+      "dog": "戌",
+      "sheep": "未"
+    }
+  },
+  "games": {
+    "title": "伝統的なゲーム＆チャレンジ",
+    "description": "アジア各地の伝統的なゲームを学んで遊びましょう！経験は不要です - すべて教えます。",
+    "difficulty": {
+      "easy": "簡単",
+      "intermediate": "中級",
+      "advanced": "上級"
+    },
+    "mahjong": {
+      "name": "麻雀",
+      "origin": "中国",
+      "description": "技術、戦略、計算が必要なタイルゲーム。牌を揃えて上がりを作る方法を学びましょう。",
+      "players": "4人"
+    },
+    "yutNori": {
+      "name": "ユンノリ",
+      "origin": "韓国",
+      "description": "木の棒を使う伝統的なボードゲーム。駒をボードの周りで動かして勝ちましょう！",
+      "players": "2-4人"
+    },
+    "go": {
+      "name": "囲碁",
+      "origin": "東アジア",
+      "description": "領土支配の古代戦略ゲーム。ルールは単純、奥深さは無限。",
+      "players": "2人"
+    },
+    "chineseChess": {
+      "name": "象棋（シャンチー）",
+      "origin": "中国",
+      "description": "砲や象などユニークな駒がある戦略ボードゲーム。",
+      "players": "2人"
+    },
+    "bigTwo": {
+      "name": "大老二",
+      "origin": "広東",
+      "description": "カードの組み合わせで手札を早く出し切る速いペースのカードゲーム。",
+      "players": "4人"
+    },
+    "cauCa": {
+      "name": "カウカ",
+      "origin": "ベトナム",
+      "description": "テト（旧正月）のお祝いで遊ぶ伝統的な釣りカードゲーム。",
+      "players": "2-6人"
+    }
+  },
+  "food": {
+    "title": "伝統的な料理＆飲み物",
+    "description": "旧正月の味を楽しみましょう！各料理には新年への特別な意味と願いが込められています。",
+    "luckyFoods": "縁起の良い食べ物",
+    "traditionalDrinks": "伝統的な飲み物",
+    "jiaozi": {
+      "name": "餃子",
+      "origin": "中国",
+      "description": "富と繁栄を象徴する三日月型の餃子。中国の正月に欠かせません！",
+      "symbolism": "富と幸運（古代の金塊の形）"
+    },
+    "tteokguk": {
+      "name": "トックク",
+      "origin": "韓国",
+      "description": "正月に伝統的に食べる餅のスープ。食べると一歳年を取ります！",
+      "symbolism": "長寿と新たな始まり"
+    },
+    "banhChung": {
+      "name": "バインチュン",
+      "origin": "ベトナム",
+      "description": "バナナの葉で包んだ四角いもち米ケーキ、豚肉と緑豆入り。",
+      "symbolism": "大地と先祖への感謝"
+    },
+    "springRolls": {
+      "name": "春巻き",
+      "origin": "各国",
+      "description": "野菜と肉が入ったサクサクの黄金色のロール、金の延べ棒を表します。",
+      "symbolism": "富と繁栄"
+    },
+    "mochi": {
+      "name": "餅",
+      "origin": "日本",
+      "description": "様々な味の柔らかい餅、正月のお祝いに伝統的に食べます。",
+      "symbolism": "幸運と長寿"
+    },
+    "nianGao": {
+      "name": "年糕",
+      "origin": "中国",
+      "description": "甘いもち米ケーキ。名前が「年が高くなる」と同じ音 - 向上を願います。",
+      "symbolism": "進歩と向上"
+    },
+    "sujeonggwa": {
+      "name": "スジョンガ",
+      "origin": "韓国",
+      "description": "干し柿入りの甘いシナモンと生姜のパンチ。爽やかで香り高い。"
+    },
+    "jasmineTea": {
+      "name": "ジャスミン茶",
+      "origin": "中国",
+      "description": "ジャスミンの花で香り付けした緑茶。優雅さと純粋さの象徴。"
+    },
+    "bobaTea": {
+      "name": "タピオカミルクティー",
+      "origin": "台湾",
+      "description": "もちもちのタピオカパールが入った人気のミルクティー。現代のクラシック！"
+    },
+    "sake": {
+      "name": "日本酒",
+      "origin": "日本",
+      "description": "お祝いや儀式でよく飲まれる伝統的な米の酒。"
+    },
+    "traDa": {
+      "name": "チャーダー（アイスティー）",
+      "origin": "ベトナム",
+      "description": "ベトナム中で提供されるシンプルで爽やかな緑茶。"
+    }
+  },
+  "attire": {
+    "title": "伝統衣装体験",
+    "description": "アジアの伝統衣装の美しさを体験しましょう！美しい衣装を試着して、その文化的意義を学びましょう。",
+    "hanbok": {
+      "name": "韓服（ハンボク）",
+      "origin": "韓国",
+      "description": "鮮やかな色と優雅なラインが特徴の韓国伝統衣装"
+    },
+    "qipao": {
+      "name": "チャイナドレス",
+      "origin": "中国",
+      "description": "高い襟のタイトなドレス、赤に金のアクセントが多い"
+    },
+    "aoDai": {
+      "name": "アオザイ",
+      "origin": "ベトナム",
+      "description": "パンツの上に着る長いチュニック、流れるような優雅さで知られる"
+    },
+    "kimono": {
+      "name": "着物",
+      "origin": "日本",
+      "description": "美しい模様と帯がある伝統的な巻き衣装"
+    }
+  },
+  "businesses": {
+    "title": "地元のアジア系ビジネスを応援",
+    "description": "フェイエットビルには素晴らしいアジア料理店やお店がたくさんあります。一年中本格的な味を体験しに訪れてください！"
+  },
+  "participate": {
+    "title": "あなたの文化を共有しましょう",
+    "description": "フェイエットビルの旧正月のお祝いを特別なものにするコミュニティメンバーを探しています！",
+    "waysToParticipate": "参加方法",
+    "forBusinesses": "ビジネス向け",
+    "items": {
+      "teachGame": "伝統的なゲームや工芸を教える",
+      "shareRecipe": "家族のレシピや食の伝統を共有する",
+      "perform": "伝統的な音楽やダンスを披露する",
+      "display": "文化衣装や工芸品を展示する",
+      "sponsor": "アクティビティや装飾をスポンサーする",
+      "provideSamples": "食のサンプルやデモを提供する",
+      "vendorBooth": "出店ブースを設置する",
+      "specialPromo": "旧正月特別プロモーションを実施する"
+    },
+    "cta": "Discordに参加して協力する"
+  },
+  "learnMore": {
+    "title": "旧正月についてもっと学ぶ",
+    "sources": {
+      "koreaNet": {
+        "title": "Korea.net",
+        "description": "韓国の設日の伝統と干支についての視点"
+      },
+      "nipponCom": {
+        "title": "Nippon.com",
+        "description": "2026年午年 - 日本の干支の伝統"
+      },
+      "fireHorse": {
+        "title": "2026年火の馬年",
+        "description": "この珍しい年が変化と進歩をもたらす理由"
+      },
+      "smithsonian": {
+        "title": "スミソニアン",
+        "description": "アジアの伝統における馬の文化史"
+      }
+    }
+  },
+  "footer": {
+    "initiative": "このページはフェイエットビルに旧正月のお祝いを広めるコミュニティイニシアチブの一部です。イベントの詳細は計画中です - 更新をお楽しみに！"
+  }
+}

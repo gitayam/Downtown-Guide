@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "title": "2026 설날 | 말띠의 해 | 페이엣빌 NC",
+    "description": "페이엣빌에서 2026년 설날을 축하하세요! 다양한 아시아 커뮤니티와 함께 전통 게임, 음식, 문화 체험, 그리고 붉은 말의 해를 맞이하세요."
+  },
+  "hero": {
+    "date": "2026년 2월 17일",
+    "title": "설날",
+    "subtitle": "붉은 말의 해",
+    "description": "페이엣빌의 다양한 아시아 커뮤니티와 함께 설날을 축하하세요! 전통 게임, 정통 음식, 문화 축제를 경험하세요.",
+    "cta": {
+      "getInvolved": "참여하기",
+      "exploreActivities": "활동 둘러보기"
+    }
+  },
+  "community": {
+    "title": "모두를 위한 축제",
+    "description1": "페이엣빌은 활기차고 성장하는 아시아 커뮤니티의 보금자리입니다 - 중국인, 한국인, 베트남인, 일본인, 태국인, 인도네시아인, 필리핀인 등 다양한 문화가 우리 도시에서 함께 살고 있습니다. 설날은 함께 모여 전통을 나누고 우리 커뮤니티의 풍부한 아시아 문화유산을 축하하는 시간입니다.",
+    "description2": "자신의 문화유산을 축하하든 새로운 문화를 발견하든, 말띠의 해를 함께 맞이하시기 바랍니다!"
+  },
+  "zodiac": {
+    "title": "붉은 말의 해",
+    "description": "2026년은 1966년 이후 처음으로 돌아오는 붉은 말의 해입니다! 말띠 사람들은 에너지와 자유로운 정신으로 알려져 있습니다.",
+    "traits": {
+      "title": "성격 특성",
+      "energetic": "에너지 넘침",
+      "independent": "독립적",
+      "adventurous": "모험적",
+      "passionate": "열정적",
+      "freeSpirited": "자유로운 영혼"
+    },
+    "luckyColors": {
+      "title": "말띠 행운의 색상",
+      "subtitle": "말띠 분들을 위한 행운의 색",
+      "red": "빨강",
+      "pink": "분홍",
+      "purple": "보라"
+    },
+    "luckyNumbers": {
+      "title": "말띠 행운의 숫자",
+      "subtitle": "말띠 분들을 위한 행운의 숫자"
+    },
+    "compatible": {
+      "title": "최고의 궁합",
+      "tiger": "호랑이",
+      "dog": "개",
+      "sheep": "양"
+    }
+  },
+  "games": {
+    "title": "전통 게임 & 도전",
+    "description": "아시아 전역의 전통 게임을 배우고 즐기세요! 경험이 없어도 됩니다 - 모든 것을 가르쳐 드립니다.",
+    "difficulty": {
+      "easy": "쉬움",
+      "intermediate": "중급",
+      "advanced": "고급"
+    },
+    "mahjong": {
+      "name": "마작",
+      "origin": "중국",
+      "description": "기술, 전략, 계산이 필요한 타일 게임입니다. 타일을 맞추고 승리 패를 만드는 방법을 배우세요.",
+      "players": "4명"
+    },
+    "yutNori": {
+      "name": "윷놀이",
+      "origin": "한국",
+      "description": "나무 막대기를 사용하는 전통 보드 게임입니다. 말을 보드 주위로 돌려 이기세요!",
+      "players": "2-4명"
+    },
+    "go": {
+      "name": "바둑",
+      "origin": "동아시아",
+      "description": "영토를 차지하는 고대 전략 게임입니다. 규칙은 간단하지만 깊이는 무한합니다.",
+      "players": "2명"
+    },
+    "chineseChess": {
+      "name": "장기",
+      "origin": "중국",
+      "description": "포와 상 같은 독특한 기물이 있는 전략 보드 게임입니다.",
+      "players": "2명"
+    },
+    "bigTwo": {
+      "name": "빅투",
+      "origin": "광둥",
+      "description": "카드 조합으로 손에 있는 카드를 빨리 없애는 빠른 카드 게임입니다.",
+      "players": "4명"
+    },
+    "cauCa": {
+      "name": "까우까",
+      "origin": "베트남",
+      "description": "뗏(Tet) 축제 동안 즐기는 전통 낚시 카드 게임입니다.",
+      "players": "2-6명"
+    }
+  },
+  "food": {
+    "title": "전통 음식 & 음료",
+    "description": "설날의 맛을 경험하세요! 각 음식에는 새해에 대한 특별한 의미와 소원이 담겨 있습니다.",
+    "luckyFoods": "행운의 음식",
+    "traditionalDrinks": "전통 음료",
+    "jiaozi": {
+      "name": "자오쯔 (만두)",
+      "origin": "중국",
+      "description": "부와 번영을 상징하는 초승달 모양의 만두입니다. 중국 설날 필수 음식!",
+      "symbolism": "부와 행운 (고대 금괴 모양)"
+    },
+    "tteokguk": {
+      "name": "떡국",
+      "origin": "한국",
+      "description": "설날에 전통적으로 먹는 떡국입니다. 먹으면 나이를 한 살 먹는다는 의미가 있습니다!",
+      "symbolism": "장수와 새로운 시작"
+    },
+    "banhChung": {
+      "name": "반쯩",
+      "origin": "베트남",
+      "description": "바나나 잎으로 싼 네모난 찹쌀떡으로, 돼지고기와 녹두가 들어 있습니다.",
+      "symbolism": "대지와 조상에 대한 감사"
+    },
+    "springRolls": {
+      "name": "춘권",
+      "origin": "다양",
+      "description": "야채와 고기가 들어간 바삭한 황금빛 롤로, 금괴를 상징합니다.",
+      "symbolism": "부와 번영"
+    },
+    "mochi": {
+      "name": "모찌",
+      "origin": "일본",
+      "description": "다양한 맛의 부드러운 떡으로, 새해 축제 때 전통적으로 먹습니다.",
+      "symbolism": "행운과 장수"
+    },
+    "nianGao": {
+      "name": "녠까오",
+      "origin": "중국",
+      "description": "달콤한 찹쌀떡입니다. 이름이 '해마다 높이'라는 뜻과 발음이 비슷하여 발전을 기원합니다.",
+      "symbolism": "발전과 향상"
+    },
+    "sujeonggwa": {
+      "name": "수정과",
+      "origin": "한국",
+      "description": "곶감이 들어간 달콤한 계피 생강 음료입니다. 상쾌하고 향긋합니다."
+    },
+    "jasmineTea": {
+      "name": "자스민 차",
+      "origin": "중국",
+      "description": "자스민 꽃향이 나는 녹차입니다. 우아함과 순수함의 상징입니다."
+    },
+    "bobaTea": {
+      "name": "버블티",
+      "origin": "대만",
+      "description": "쫄깃한 타피오카 펄이 들어간 사랑받는 밀크티입니다. 현대의 클래식!"
+    },
+    "sake": {
+      "name": "사케",
+      "origin": "일본",
+      "description": "축제와 의식에서 자주 즐기는 전통 쌀 와인입니다."
+    },
+    "traDa": {
+      "name": "짜다 (아이스티)",
+      "origin": "베트남",
+      "description": "베트남 전역에서 마시는 단순하고 상쾌한 아이스 녹차입니다."
+    }
+  },
+  "attire": {
+    "title": "전통 의상 체험",
+    "description": "아시아 전통 의상의 아름다움을 경험하세요! 아름다운 의상을 입어보고 그 문화적 의미를 배우세요.",
+    "hanbok": {
+      "name": "한복",
+      "origin": "한국",
+      "description": "선명한 색상과 우아한 선이 특징인 한국 전통 의상"
+    },
+    "qipao": {
+      "name": "치파오/청삼",
+      "origin": "중국",
+      "description": "높은 칼라의 몸에 맞는 드레스로, 빨간색에 금색 장식이 많습니다"
+    },
+    "aoDai": {
+      "name": "아오자이",
+      "origin": "베트남",
+      "description": "바지 위에 입는 긴 튜닉으로, 흐르는 듯한 우아함으로 유명합니다"
+    },
+    "kimono": {
+      "name": "기모노",
+      "origin": "일본",
+      "description": "아름다운 무늬와 오비 벨트가 있는 전통 랩 의상"
+    }
+  },
+  "businesses": {
+    "title": "지역 아시아 상점 지원하기",
+    "description": "페이엣빌에는 훌륭한 아시아 레스토랑과 상점이 많습니다. 일년 내내 정통 맛을 경험하러 방문하세요!"
+  },
+  "participate": {
+    "title": "문화를 나누세요",
+    "description": "페이엣빌의 설날 축제를 특별하게 만들어 줄 커뮤니티 멤버를 찾고 있습니다!",
+    "waysToParticipate": "참여 방법",
+    "forBusinesses": "비즈니스를 위해",
+    "items": {
+      "teachGame": "전통 게임이나 공예 가르치기",
+      "shareRecipe": "가족 레시피나 음식 전통 나누기",
+      "perform": "전통 음악이나 춤 공연하기",
+      "display": "문화 의상이나 유물 전시하기",
+      "sponsor": "활동이나 장식 후원하기",
+      "provideSamples": "음식 샘플이나 시연 제공하기",
+      "vendorBooth": "판매 부스 설치하기",
+      "specialPromo": "설날 특별 프로모션 제공하기"
+    },
+    "cta": "Discord에 참여하여 함께하세요"
+  },
+  "learnMore": {
+    "title": "설날에 대해 더 알아보기",
+    "sources": {
+      "koreaNet": {
+        "title": "Korea.net",
+        "description": "설날 전통과 띠에 대한 한국의 시각"
+      },
+      "nipponCom": {
+        "title": "Nippon.com",
+        "description": "2026 말띠의 해 - 일본의 띠 전통"
+      },
+      "fireHorse": {
+        "title": "2026 붉은 말의 해",
+        "description": "이 희귀한 해가 변화와 발전을 가져올 수 있는 이유"
+      },
+      "smithsonian": {
+        "title": "스미소니언",
+        "description": "아시아 전통에서 말의 문화적 역사"
+      }
+    }
+  },
+  "footer": {
+    "initiative": "이 페이지는 페이엣빌에 설날 축제를 도입하기 위한 커뮤니티 이니셔티브의 일부입니다. 이벤트 세부 정보가 계획 중입니다 - 업데이트를 확인하세요!"
+  }
+}
